@@ -1330,6 +1330,14 @@ fn diarize_from_source_aware_stems(
         return Some(stem_result);
     };
 
+    // Multi-party system-stem diarization is opt-in. Without it, all remote
+    // audio stays as SPEAKER_1 (the 2-speaker default). When enabled, the ML
+    // engine clusters remote participants into SPEAKER_1, SPEAKER_2, etc.,
+    // and SPEAKER_0 remains the local user from the voice stem.
+    if !config.diarization.diarize_system_stem {
+        return Some(stem_result);
+    }
+
     let Some(remote_result) = run_diarization_engine(&stems.system, config, resolved_engine) else {
         tracing::warn!(
             system_stem = %stems.system.display(),
@@ -1338,7 +1346,13 @@ fn diarize_from_source_aware_stems(
         return Some(stem_result);
     };
 
-    let remapped_remote = remap_diarization_labels(&remote_result, 2);
+    // Remap remote speakers starting at SPEAKER_1 so a 3-person meeting
+    // (user + 2 remote) yields SPEAKER_0, SPEAKER_1, SPEAKER_2 — not
+    // SPEAKER_0, SPEAKER_2, SPEAKER_3. For a 2-person meeting the single
+    // remote cluster maps to SPEAKER_1, which is identical to the stem-only
+    // result; has_meaningful_system_stem_labels returns false in that case
+    // and we fall back to stem_result, so 2-person meetings are unaffected.
+    let remapped_remote = remap_diarization_labels(&remote_result, 1);
     if !has_meaningful_remote_structure(&remapped_remote) {
         tracing::info!(
             remote_speakers = remapped_remote.num_speakers,

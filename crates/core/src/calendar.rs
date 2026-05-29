@@ -7,6 +7,11 @@ use chrono::{DateTime, Local};
 #[cfg(target_os = "macos")]
 use chrono::{Datelike, Timelike};
 
+// Link EventKit framework for the in-process calendar permission request.
+#[cfg(target_os = "macos")]
+#[link(name = "EventKit", kind = "framework")]
+extern "C" {}
+
 // ──────────────────────────────────────────────────────────────
 // Calendar integration — upcoming meetings from macOS Calendar.
 //
@@ -25,7 +30,7 @@ const SUBPROCESS_TIMEOUT: Duration = Duration::from_secs(3);
 #[cfg(any(test, target_os = "macos"))]
 const EVENTKIT_OVERLAP_LOOKAHEAD_MINUTES: u32 = 120;
 #[cfg(any(test, target_os = "macos"))]
-const EVENTKIT_OVERLAP_LOOKBACK_MINUTES: u32 = 120;
+const EVENTKIT_OVERLAP_LOOKBACK_MINUTES: u32 = 15;
 
 /// Run a Command with a timeout. Returns None if the process hangs or fails to start.
 ///
@@ -227,6 +232,95 @@ pub fn events_overlapping_now() -> Vec<CalendarEvent> {
     }
 }
 
+/// Request EventKit full calendar access from the main app process.
+///
+/// On MDM-managed Macs the TCC prompt is attributed to the calling process.
+/// Because `calendar-events` runs as a subprocess, the prompt is attributed
+/// to it — not to `com.useminutes.desktop` — and MDM policy silently blocks
+/// it. Calling this from the Tauri main process ensures the prompt appears
+/// attributed to the app, after which the helper inherits the permission.
+///
+/// Fire-and-forget: returns immediately. The OS permission dialog appears
+/// when the run loop processes it. Safe to call multiple times; only issues
+/// the OS request once per process when status is `notDetermined`.
+#[cfg(target_os = "macos")]
+pub fn request_calendar_access_if_needed() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static REQUESTED: AtomicBool = AtomicBool::new(false);
+    if REQUESTED.swap(true, Ordering::Relaxed) {
+        eprintln!("[calendar] permission request already attempted in this process");
+        return;
+    }
+
+    eprintln!("[calendar] checking calendar permission status");
+
+    unsafe {
+        use objc2::runtime::{AnyClass, AnyObject, Bool};
+        use objc2::{msg_send, rc::Retained, sel};
+
+        let Some(cls) = AnyClass::get(c"EKEventStore") else {
+            eprintln!("[calendar] EKEventStore class unavailable — skipping permission request");
+            return;
+        };
+
+        // EKEntityTypeEvent = 0
+        // EKAuthorizationStatus raw values (newer SDKs):
+        // 0=notDetermined, 1=restricted, 2=denied, 3=authorized (legacy),
+        // 4=fullAccess, 5=writeOnly.
+        // Request only when status is notDetermined or writeOnly; skip for
+        // denied/restricted/already-authorized states to avoid noisy retries.
+        let status: isize = msg_send![cls, authorizationStatusForEntityType: 0usize];
+        eprintln!("[calendar] authorization status before request: {}", status);
+        if status != 0 && status != 5 {
+            // Already determined — do not re-request to avoid duplicate prompts.
+            eprintln!(
+                "[calendar] permission request skipped (status already determined: {})",
+                status
+            );
+            return;
+        }
+
+        let store: Retained<AnyObject> = msg_send![cls, new];
+
+        let block = block2::RcBlock::new(|granted: Bool, _error: *mut AnyObject| {
+            eprintln!(
+                "[calendar] permission request returned: granted={}",
+                granted.as_bool()
+            );
+        });
+
+        // macOS 14+ uses requestFullAccessToEventsWithCompletion:;
+        // older releases use the deprecated requestAccessToEntityType:completion:.
+        let responds: Bool = msg_send![
+            &*store,
+            respondsToSelector: sel!(requestFullAccessToEventsWithCompletion:)
+        ];
+        if responds.as_bool() {
+            eprintln!("[calendar] requesting full calendar access via requestFullAccessToEventsWithCompletion:");
+            let _: () = msg_send![
+                &*store,
+                requestFullAccessToEventsWithCompletion: &*block
+            ];
+        } else {
+            eprintln!("[calendar] requesting calendar access via deprecated requestAccessToEntityType:completion:");
+            let _: () = msg_send![
+                &*store,
+                requestAccessToEntityType: 0usize,
+                completion: &*block
+            ];
+        }
+
+        // Intentionally leak the store so it outlives this stack frame.
+        // EKEventStore retains itself internally while a request is pending,
+        // but we leak our reference to guarantee it stays alive until the
+        // callback fires. This is a one-time allocation (~100 bytes).
+        std::mem::forget(store);
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn request_calendar_access_if_needed() {}
+
 /// Returns `false` when the user has set `[calendar] enabled = false`.
 /// Every caller in this module consults this before touching Calendar so
 /// an opted-out user never sees AppleScript launch Calendar.app.
@@ -420,6 +514,12 @@ fn query_via_eventkit(lookahead_minutes: u32) -> Option<Vec<CalendarEvent>> {
     let output = output_with_timeout(cmd, SUBPROCESS_TIMEOUT)?;
 
     if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!(
+            "[calendar] EventKit helper failed (status={}): {}",
+            output.status,
+            stderr.trim()
+        );
         return None;
     }
 

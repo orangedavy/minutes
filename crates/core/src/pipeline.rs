@@ -560,6 +560,56 @@ impl Drop for MixedStemTempFile {
     }
 }
 
+fn stage_voice_only_fallback(
+    canonical_mov: &Path,
+    voice_stem: &Path,
+) -> Result<MixedStemTempFile, MinutesError> {
+    let stem_name = canonical_mov
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown");
+    let unique_suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let tmp = std::env::temp_dir().join(format!(
+        "minutes-voice-fallback-{}-{}-{}.wav",
+        std::process::id(),
+        unique_suffix,
+        stem_name
+    ));
+
+    std::fs::copy(voice_stem, &tmp).map_err(|e| {
+        crate::error::TranscribeError::NativeCaptureStemMixUnavailable {
+            reason: format!(
+                "failed to stage voice-only fallback for {} from {}: {}",
+                canonical_mov.display(),
+                voice_stem.display(),
+                e
+            ),
+        }
+    })?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600)).ok();
+    }
+
+    eprintln!(
+        "[native-call] system stem unavailable; using voice-only fallback for transcription: {}",
+        voice_stem.display()
+    );
+    tracing::warn!(
+        audio = %canonical_mov.display(),
+        voice = %voice_stem.display(),
+        staged = %tmp.display(),
+        "system stem unavailable for native call capture; transcribing voice stem only"
+    );
+
+    Ok(MixedStemTempFile { path: tmp })
+}
+
 /// Prepare the input handed to the transcription coordinator, working around
 /// the macOS 26 SCRecordingOutput dual-track `.mov` 2x decode bug (#234).
 ///
@@ -579,11 +629,9 @@ impl Drop for MixedStemTempFile {
 ///   transcriber and accepts whatever the decoder does with it).
 /// - `Ok(Some(handle))` — input is a native-call `.mov` and stems mixed cleanly.
 /// - `Err(MinutesError::Transcribe(NativeCaptureStemMixUnavailable))` — input is
-///   a native-call `.mov` (one or both stems present, indicating a SCRecording-
-///   Output capture) but the mix cannot be produced. This is the "should-have-
-///   mixed-but-couldn't" case from PR #235 review item #4: silent fallback to
-///   the broken `.mov` decode would re-enter exactly the bug this helper exists
-///   to prevent, so the caller is forced to propagate.
+///   a native-call `.mov` where no usable transcription path exists
+///   (for example voice stem missing/empty, or ffmpeg mix failed and no voice-
+///   only fallback could be staged).
 ///
 /// Path handling: the `.mov` is canonicalized before stem lookup so a symlinked
 /// recording resolves to its target before sibling lookup (#237 touched the
@@ -624,6 +672,7 @@ fn prepare_transcription_input(
     let stems = match plan {
         Some(crate::diarize::SourceAwareDiarizationPlan::FullStems(paths)) => paths,
         Some(crate::diarize::SourceAwareDiarizationPlan::SystemStemOnly(system)) => {
+            // No usable voice stem means there is no transcribable channel.
             return Err(
                 crate::error::TranscribeError::NativeCaptureStemMixUnavailable {
                     reason: format!(
@@ -637,17 +686,10 @@ fn prepare_transcription_input(
             );
         }
         Some(crate::diarize::SourceAwareDiarizationPlan::SilentSystemStem(paths)) => {
-            return Err(
-                crate::error::TranscribeError::NativeCaptureStemMixUnavailable {
-                    reason: format!(
-                        "system stem at {} is empty (voice stem present at {}). \
-                     Partial-crash signature; mix would substitute silence for the far-side audio.",
-                        paths.system.display(),
-                        paths.voice.display()
-                    ),
-                }
-                .into(),
-            );
+            // Preserve partial transcripts instead of hard-failing the job.
+            // The far-side audio is lost, but the local voice stem is usable.
+            let handle = stage_voice_only_fallback(&canonical, &paths.voice)?;
+            return Ok(Some(handle));
         }
         None => {
             // `discover_stem_plan` returns None for two semantically different
@@ -662,23 +704,14 @@ fn prepare_transcription_input(
             // review of PR #235 v2 caught this.
             //
             // Distinguish by independently checking for a usable sibling
-            // voice stem. If one exists, surface the same typed error as
-            // the other should-have-mixed-but-couldn't branches.
+            // voice stem. If one exists, transcribe that stem directly so
+            // we still recover local-user notes when far-side audio is lost.
             if let Some(parent) = canonical.parent() {
                 if let Some(stem_name) = canonical.file_stem().and_then(|s| s.to_str()) {
                     let voice = parent.join(format!("{}.voice.wav", stem_name));
                     if voice.exists() && crate::diarize::stem_has_audio(&voice) {
-                        return Err(
-                            crate::error::TranscribeError::NativeCaptureStemMixUnavailable {
-                                reason: format!(
-                                    "voice stem present at {} but system stem is missing from disk. \
-                                     Partial-crash signature; mix would substitute silence for the \
-                                     far-side audio.",
-                                    voice.display()
-                                ),
-                            }
-                            .into(),
-                        );
+                        let handle = stage_voice_only_fallback(&canonical, &voice)?;
+                        return Ok(Some(handle));
                     }
                 }
             }
@@ -3162,15 +3195,23 @@ fn select_calendar_event(
         .map(str::trim)
         .filter(|title| !title.is_empty());
 
-    events
-        .iter()
-        .filter(|event| {
-            explicit_title
-                .map(|title| title_overlap(title, &event.title) > 0)
-                .unwrap_or(true)
-        })
-        .min_by_key(|event| event.minutes_until.abs())
-        .cloned()
+    let closest = || {
+        events
+            .iter()
+            .min_by_key(|event| event.minutes_until.abs())
+            .cloned()
+    };
+
+    if let Some(title) = explicit_title {
+        let overlapped = events
+            .iter()
+            .filter(|event| title_overlap(title, &event.title) > 0)
+            .min_by_key(|event| event.minutes_until.abs())
+            .cloned();
+        return overlapped.or_else(closest);
+    }
+
+    closest()
 }
 
 fn merge_attendees(existing: &[String], additions: &[String]) -> Vec<String> {
@@ -5449,7 +5490,7 @@ mod tests {
     }
 
     #[test]
-    fn select_calendar_event_requires_overlap_with_explicit_title() {
+    fn select_calendar_event_falls_back_when_explicit_title_has_no_overlap() {
         let selected = select_calendar_event(
             &[crate::calendar::CalendarEvent {
                 title: "Mat & Supernal Coding Meeting".into(),
@@ -5459,9 +5500,10 @@ mod tests {
                 url: None,
             }],
             Some("Wesley prep session recovery"),
-        );
+        )
+        .expect("expected fallback to nearest event");
 
-        assert!(selected.is_none());
+        assert_eq!(selected.title, "Mat & Supernal Coding Meeting");
     }
 
     #[test]
@@ -6583,7 +6625,7 @@ mod prepare_transcription_input_tests {
     }
 
     #[test]
-    fn errors_when_voice_present_and_system_stem_file_absent() {
+    fn falls_back_to_voice_only_when_system_stem_file_absent() {
         // Codex review of PR #235 v2 caught this: `discover_stem_plan`
         // returns None for both the "no stems at all" case AND the
         // "voice ok, system absent from disk" case. The second case is
@@ -6604,27 +6646,17 @@ mod prepare_transcription_input_tests {
         // returned None from discover_stem_plan and would have silently
         // fallen through to the broken `.mov` decode without this fix.
 
-        let result = prepare_transcription_input(&mov);
-        match result {
-            Err(MinutesError::Transcribe(
-                crate::error::TranscribeError::NativeCaptureStemMixUnavailable { reason },
-            )) => {
-                assert!(
-                    reason.to_lowercase().contains("system stem")
-                        && reason.to_lowercase().contains("missing"),
-                    "error reason must call out the missing system stem; got: {}",
-                    reason
-                );
-            }
-            other => panic!(
-                "expected NativeCaptureStemMixUnavailable, got: {:?}",
-                other.map(|opt| opt.is_some())
-            ),
-        }
+        let result = prepare_transcription_input(&mov)
+            .expect("missing system stem should fall back to voice-only transcript");
+        let handle = result.expect("voice-only fallback must return staged input");
+        assert!(
+            handle.as_path().exists(),
+            "voice-only staged file must exist on disk"
+        );
     }
 
     #[test]
-    fn errors_when_system_stem_is_zero_byte_partial_crash() {
+    fn falls_back_to_voice_only_when_system_stem_is_zero_byte_partial_crash() {
         let dir = tempfile::TempDir::new().unwrap();
         let mov = dir.path().join("partial-system.mov");
         let voice = dir.path().join("partial-system.voice.wav");
@@ -6636,15 +6668,12 @@ mod prepare_transcription_input_tests {
         // `stem_has_audio` (which discover_stem_plan invokes) catches it.
         fs::write(&system, b"").unwrap();
 
-        let result = prepare_transcription_input(&mov);
+        let result = prepare_transcription_input(&mov)
+            .expect("zero-byte system stem should fall back to voice-only transcript");
+        let handle = result.expect("voice-only fallback must return staged input");
         assert!(
-            matches!(
-                result,
-                Err(MinutesError::Transcribe(
-                    crate::error::TranscribeError::NativeCaptureStemMixUnavailable { .. }
-                ))
-            ),
-            "zero-byte system stem must hard-error, not silently fall through to the .mov"
+            handle.as_path().exists(),
+            "voice-only staged file must exist on disk"
         );
     }
 

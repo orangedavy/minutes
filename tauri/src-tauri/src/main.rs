@@ -247,8 +247,8 @@ fn show_main_window(app: &tauri::AppHandle) {
         // Empty title hides the centered "Minutes" text in any native chrome.
         // The in-app brand mark (italic m + recording dot) carries the identity.
         .title("")
-        .inner_size(560.0, 700.0)
-        .min_inner_size(460.0, 520.0)
+        .inner_size(760.0, 880.0)
+        .min_inner_size(600.0, 680.0)
         .transparent(true)
         .content_protected(Config::load().privacy.hide_from_screen_share)
         .focused(true);
@@ -878,12 +878,16 @@ fn notify_update_available(
 const MAX_CALENDAR_ITEMS: usize = 3;
 const CALENDAR_REFRESH_SECS: u64 = 60;
 const CALENDAR_LOOKAHEAD_MINUTES: u32 = 240; // 4 hours
-const MEETING_NOTIFY_MINUTES: i64 = 3; // Show prompt this many minutes before
+const MEETING_NOTIFY_EARLY_MINUTES: i64 = 1; // Show prompt this many minutes before
+const MEETING_NOTIFY_LATE_GRACE_MINUTES: i64 = 1; // Keep prompt this many minutes after start
+const MEETING_PROMPT_WIDTH: f64 = 440.0;
+const MEETING_PROMPT_HEIGHT: f64 = 100.0;
 
 struct CalendarMenuState {
     items: Vec<MenuItem<tauri::Wry>>,
     separator: Option<MenuItem<tauri::Wry>>,
-    /// Event titles we've already sent a notification for (prevents repeat alerts)
+    /// Event keys (`title|start`) already prompted (prevents repeat alerts
+    /// while still allowing distinct meetings with the same title).
     notified: std::collections::HashSet<String>,
 }
 
@@ -969,23 +973,27 @@ fn show_meeting_prompt(app: &tauri::AppHandle, event: &minutes_core::calendar::C
         }
     }
 
-    // Position: top-right of main screen, below menu bar
-    let (pos_x, pos_y) = get_top_right_position(380.0, 240.0);
+    // Position: top-right of active/primary display using actual monitor geometry.
+    let (pos_x, pos_y) = get_top_right_position(app, MEETING_PROMPT_WIDTH, MEETING_PROMPT_HEIGHT);
 
     let url = format!("meeting-prompt.html?t={}", token);
     match WebviewWindowBuilder::new(app, "meeting-prompt", WebviewUrl::App(url.into()))
         .title("Upcoming Meeting")
-        .inner_size(380.0, 240.0)
+        .inner_size(MEETING_PROMPT_WIDTH, MEETING_PROMPT_HEIGHT)
         .position(pos_x, pos_y)
         .resizable(false)
         .decorations(false)
+        .transparent(true)
+        .shadow(false)
         .content_protected(Config::load().privacy.hide_from_screen_share)
         .always_on_top(true)
         .focused(true)
         .skip_taskbar(true)
         .build()
     {
-        Ok(_) => eprintln!("[calendar] meeting prompt shown for: {}", event.title),
+        Ok(_win) => {
+            eprintln!("[calendar] meeting prompt shown for: {}", event.title);
+        }
         Err(e) => {
             eprintln!("[calendar] failed to show meeting prompt: {}", e);
             // Window never opened, so no JS will consume the entry. Drop it
@@ -997,19 +1005,39 @@ fn show_meeting_prompt(app: &tauri::AppHandle, event: &minutes_core::calendar::C
     }
 }
 
-/// Calculate position for top-right placement, 16px from screen edge.
-fn get_top_right_position(width: f64, height: f64) -> (f64, f64) {
-    let _ = height;
-    // Default to a reasonable position; Tauri doesn't expose screen size easily
-    // from a non-window context, so we use a heuristic for common displays.
-    // The window will be placed at x=screen_width - window_width - 16, y=38 (below menu bar).
-    // For a 1440px-wide MacBook display at 2x: logical width ~1440
-    // For a 1920px-wide external: logical width ~1920
-    // We'll use 1440 as a safe default — the window stays visible on any Mac screen.
-    let screen_width = 1440.0;
-    let x = screen_width - width - 16.0;
-    let y = 38.0; // Below the macOS menu bar
-    (x, y)
+/// Calculate top-right placement from monitor geometry instead of heuristics.
+fn get_top_right_position(
+    app: &tauri::AppHandle,
+    width: f64,
+    height: f64,
+) -> (f64, f64) {
+    const MARGIN_X: f64 = 16.0;
+    const MARGIN_Y: f64 = 14.0;
+    const TOP_INSET: f64 = 38.0;
+
+    let monitor = app.primary_monitor().ok().flatten().or_else(|| {
+        app.available_monitors()
+            .ok()
+            .and_then(|mut monitors| monitors.drain(..).next())
+    });
+
+    if let Some(monitor) = monitor {
+        let scale = monitor.scale_factor();
+        let pos = monitor.position().to_logical::<f64>(scale);
+        let size = monitor.size().to_logical::<f64>(scale);
+
+        let max_x = pos.x + size.width - width - MARGIN_X;
+        let min_x = pos.x + MARGIN_X;
+        let x = max_x.max(min_x);
+
+        let min_y = pos.y + TOP_INSET;
+        let max_y = pos.y + size.height - height - MARGIN_Y;
+        let y = min_y.min(max_y.max(min_y));
+
+        return (x, y);
+    }
+
+    (1440.0 - width - MARGIN_X, TOP_INSET)
 }
 
 fn refresh_calendar_items(
@@ -1040,14 +1068,16 @@ fn refresh_calendar_items(
     for e in &all_events {
         eprintln!("[calendar]   {} — in {} min", e.title, e.minutes_until);
     }
-    // Show meeting prompt overlay for meetings starting in ≤ MEETING_NOTIFY_MINUTES (once per event)
+    // Show meeting prompt from 1 minute before start through 1 minute after
+    // start so users can still join+record if they are slightly late.
     for e in &all_events {
-        if e.minutes_until >= 0
-            && e.minutes_until <= MEETING_NOTIFY_MINUTES
-            && !state.notified.contains(&e.title)
+        let event_key = format!("{}|{}", e.title, e.start);
+        if e.minutes_until <= MEETING_NOTIFY_EARLY_MINUTES
+            && e.minutes_until >= -MEETING_NOTIFY_LATE_GRACE_MINUTES
+            && !state.notified.contains(&event_key)
         {
             show_meeting_prompt(app, e);
-            state.notified.insert(e.title.clone());
+            state.notified.insert(event_key);
             eprintln!(
                 "[calendar] prompted: {} (in {} min)",
                 e.title, e.minutes_until
@@ -1056,10 +1086,10 @@ fn refresh_calendar_items(
     }
 
     // Clean up old notifications (events that have passed)
-    state.notified.retain(|title| {
+    state.notified.retain(|event_key| {
         all_events
             .iter()
-            .any(|e| &e.title == title && e.minutes_until >= -5)
+            .any(|e| format!("{}|{}", e.title, e.start) == *event_key && e.minutes_until >= -5)
     });
 
     let events: Vec<_> = all_events
@@ -1537,6 +1567,14 @@ fn main() {
 
             #[cfg(target_os = "macos")]
             install_macos_terminate_hook(app.handle());
+
+            // Request calendar access from the main process so macOS attributes
+            // the TCC prompt to com.useminutes.desktop. On MDM-managed Macs the
+            // subprocess path never shows the prompt; this call fires it once
+            // when the authorization status is notDetermined.
+            if startup_config.calendar.enabled {
+                minutes_core::calendar::request_calendar_access_if_needed();
+            }
 
             spawn_meetings_refresh_watcher(app.handle(), startup_config.output_dir.clone());
 
@@ -2282,6 +2320,9 @@ fn main() {
                     // Hide main window on close instead of quitting (app stays in tray)
                     // PTY session persists — user can reopen and resume where they left off
                     api.prevent_close();
+                    // Persist window geometry before hiding so it's remembered on next open.
+                    use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+                    window.app_handle().save_window_state(StateFlags::SIZE | StateFlags::POSITION).ok();
                     window.hide().ok();
                 }
                 tauri::WindowEvent::Focused(false) if window.label() == "palette" => {

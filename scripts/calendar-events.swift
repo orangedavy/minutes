@@ -24,18 +24,11 @@ let lookaheadMinutes = Int(CommandLine.arguments.count > 1 ? CommandLine.argumen
 let lookbackMinutes = Int(CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "0") ?? 0
 let referenceEpochSeconds = CommandLine.arguments.count > 3 ? Double(CommandLine.arguments[3]) : nil
 let store = EKEventStore()
-let semaphore = DispatchSemaphore(value: 0)
 
 let encoder = JSONEncoder()
 encoder.outputFormatting = [] // compact, single-line
 
-store.requestFullAccessToEvents { granted, error in
-    defer { semaphore.signal() }
-    guard granted else {
-        return
-    }
-
-    let now = referenceEpochSeconds.map(Date.init(timeIntervalSince1970:)) ?? Date()
+func queryAndPrintEvents(now: Date) {
     guard let end = Calendar.current.date(byAdding: .minute, value: lookaheadMinutes, to: now) else { return }
     let start: Date
     if lookbackMinutes > 0 {
@@ -80,4 +73,30 @@ store.requestFullAccessToEvents { granted, error in
     }
 }
 
-semaphore.wait()
+let now = referenceEpochSeconds.map(Date.init(timeIntervalSince1970:)) ?? Date()
+let status = EKEventStore.authorizationStatus(for: .event)
+let rawStatus = status.rawValue
+
+if status == .notDetermined {
+    let semaphore = DispatchSemaphore(value: 0)
+    store.requestFullAccessToEvents { granted, error in
+        defer { semaphore.signal() }
+        guard granted else {
+            let msg = error?.localizedDescription ?? "unknown error"
+            fputs("[calendar-helper] permission request not granted: \(msg)\n", stderr)
+            exit(2)
+        }
+        queryAndPrintEvents(now: now)
+    }
+    semaphore.wait()
+
+// Explicitly treat denied/restricted as unavailable. For any other already-
+// determined status value, try querying events so unknown future enum values
+// (or SDK/runtime mismatches) don't incorrectly get treated as hard failures.
+} else if status == .denied || status == .restricted {
+    fputs("[calendar-helper] calendar access unavailable (status=\(rawStatus))\n", stderr)
+    exit(2)
+
+} else {
+    queryAndPrintEvents(now: now)
+}

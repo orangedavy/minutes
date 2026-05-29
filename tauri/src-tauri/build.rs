@@ -2,6 +2,22 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// Returns true if `output` doesn't exist or any of `inputs` is newer than it.
+fn needs_recompile(output: &Path, inputs: &[&Path]) -> bool {
+    let Ok(out_meta) = fs::metadata(output) else {
+        return true;
+    };
+    let Ok(out_mtime) = out_meta.modified() else {
+        return true;
+    };
+    inputs.iter().any(|input| {
+        fs::metadata(input)
+            .and_then(|m| m.modified())
+            .map(|t| t > out_mtime)
+            .unwrap_or(true)
+    })
+}
+
 fn main() {
     compile_system_audio_helper();
     compile_calendar_helper();
@@ -96,6 +112,15 @@ fn compile_system_audio_helper() {
     println!("cargo:rerun-if-changed={}", source.display());
     std::fs::create_dir_all(&bin_dir).expect("failed to create helper bin dir");
 
+    // Skip recompilation if the output is already up-to-date. This prevents an
+    // activation loop in `cargo tauri dev`: Tauri changes TAURI_CONFIG on each
+    // restart, forcing the build script to re-run; without this guard, swiftc
+    // would unconditionally overwrite the binary, Tauri's watcher would fire,
+    // and the cycle would repeat indefinitely.
+    if !needs_recompile(&target_binary, &[source.as_path()]) {
+        return;
+    }
+
     let output = Command::new("swiftc")
         .args(["-parse-as-library"])
         .arg(&source)
@@ -147,6 +172,12 @@ fn compile_calendar_helper() {
     println!("cargo:rerun-if-changed={}", info_plist.display());
 
     fs::create_dir_all(&bin_dir).expect("failed to create helper bin dir");
+
+    // Skip recompilation if the output is already up-to-date (same guard as
+    // compile_system_audio_helper — prevents the TAURI_CONFIG activation loop).
+    if !needs_recompile(&target_binary, &[source.as_path(), info_plist.as_path()]) {
+        return;
+    }
 
     // Mirrors `scripts/build.sh` / `scripts/install-dev-app.sh`: `-sectcreate
     // __TEXT __info_plist` embeds the plist so macOS can display the

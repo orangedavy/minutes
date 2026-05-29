@@ -225,6 +225,14 @@ pub struct DiarizationConfig {
     /// to disable the collapse and rely on per-window energy attribution.
     /// Default 0.85 preserves historical behavior.
     pub stem_correlation_threshold: f32,
+    /// Run ML speaker diarization on the system audio stem to distinguish
+    /// individual remote participants in multi-party calls. When true, the
+    /// pyannote-rs engine clusters remote voices into SPEAKER_1, SPEAKER_2,
+    /// SPEAKER_3, etc. instead of collapsing all remote audio to SPEAKER_1.
+    /// SPEAKER_0 always remains the local user (from the voice/mic stem).
+    /// Default: false — preserves the original 2-speaker behavior and avoids
+    /// extra ML inference time for users who don't need per-remote labeling.
+    pub diarize_system_stem: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -812,6 +820,7 @@ impl Default for DiarizationConfig {
             threshold: 0.4,
             embedding_model: "cam++".into(),
             stem_correlation_threshold: 0.85,
+            diarize_system_stem: false,
         }
     }
 }

@@ -3236,6 +3236,7 @@ name = "minutes-core"
 version = "0.18.4"
 dependencies = [
  "base64 0.22.1",
+ "block2",
  "chrono",
  "cidre",
  "cpal",

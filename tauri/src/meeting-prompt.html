@@ -56,8 +56,9 @@
       --surface-fill: rgba(255, 255, 255, 0.02);
       --inset-shadow: rgba(0, 0, 0, 0.14);
       --shadow:
-        0 18px 36px rgba(0, 0, 0, 0.34),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        0 14px 34px rgba(0, 0, 0, 0.46),
+        0 4px 12px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
 
     @media (prefers-color-scheme: light) {
@@ -78,8 +79,9 @@
         --surface-fill:   rgba(0, 0, 0, 0.03);
         --inset-shadow:   rgba(0, 0, 0, 0.08);
         --shadow:
-          0 18px 36px rgba(0, 0, 0, 0.12),
-          inset 0 1px 0 rgba(0, 0, 0, 0.03);
+          0 12px 28px rgba(0, 0, 0, 0.16),
+          0 3px 10px rgba(0, 0, 0, 0.10),
+          inset 0 1px 0 rgba(0, 0, 0, 0.02);
       }
     }
 
@@ -90,59 +92,42 @@
 
     body {
       font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
+      background: transparent;
       color: var(--text);
-      padding: 0;
+      padding: 10px;
       -webkit-user-select: none;
       user-select: none;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .prompt {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid var(--border-mid);
+      height: calc(100% - 0px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
       background: var(--bg);
-      box-shadow: var(--shadow);
-      animation: slideIn 220ms ease-out;
-    }
-
-    .header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
+      animation: slideIn 180ms ease-out;
     }
 
     .meeting-info {
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      align-items: center;
+      gap: 8px;
       min-width: 0;
-      flex: 1;
-    }
-
-    .eyebrow {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 4px;
     }
 
     .calendar-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 9px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 12px;
       background: var(--accent-soft);
       color: var(--accent);
       flex-shrink: 0;
@@ -150,89 +135,60 @@
 
     .meeting-text {
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .meeting-title {
-      font-family: 'Instrument Serif', ui-serif, Georgia, serif;
-      font-size: 22px;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 600;
       color: var(--text);
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      white-space: nowrap;
       overflow: hidden;
-      padding-bottom: 2px;
+      text-overflow: ellipsis;
     }
 
     .meeting-countdown {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      width: fit-content;
-      margin-top: 8px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
       font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      line-height: 1.2;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .meeting-countdown.urgent {
-      background: var(--red-bg);
-      color: var(--red);
-    }
-
-    .close-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--surface-fill);
-      color: var(--text-tertiary);
-      font-size: 13px;
-      cursor: pointer;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .close-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
-
-    .summary {
-      font-size: 12px;
-      line-height: 1.45;
       color: var(--text-secondary);
-      min-height: 34px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: auto;
     }
 
     .btn {
-      padding: 9px 14px;
-      border-radius: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
       border: none;
       font-family: inherit;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.12s ease;
-      min-height: 44px;
+      min-height: 38px;
       display: flex;
       align-items: center;
       justify-content: center;
+      white-space: nowrap;
+      outline: none;
+    }
+
+    .btn:focus-visible {
+      box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
     .btn-primary {
       background: var(--accent);
       color: var(--bg);
-      flex: 1;
+      min-width: 120px;
       box-shadow: inset 0 -1px 0 var(--inset-shadow);
     }
 
@@ -247,16 +203,24 @@
     }
 
     .btn-secondary {
-      background: transparent;
+      background: var(--surface-fill);
       color: var(--text-secondary);
-      border: 1px solid var(--border-mid);
+      border: 1px solid var(--border);
+      min-width: 56px;
     }
 
     .btn-secondary:hover { background: var(--bg-hover); color: var(--text); }
     .btn-secondary:active { transform: scale(0.97); }
 
     .error-text {
-      font-size: 12px;
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: 44px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: var(--red-bg);
+      font-size: 11px;
       color: var(--red);
       display: none;
       line-height: 1.4;
@@ -285,29 +249,22 @@
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-12px); }
+      from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body role="alertdialog" aria-label="Upcoming meeting">
   <div class="prompt">
-    <div class="header">
-      <div class="meeting-info">
-        <span class="calendar-icon">📅</span>
-        <div class="meeting-text">
-          <div class="eyebrow">Upcoming meeting</div>
-          <div class="meeting-title" id="title"></div>
-          <div class="meeting-countdown" id="countdown"></div>
-        </div>
+    <div class="meeting-info">
+      <span class="calendar-icon">•</span>
+      <div class="meeting-text">
+        <div class="meeting-title" id="title"></div>
+        <div class="meeting-countdown" id="countdown"></div>
       </div>
-      <button class="close-btn" id="close-btn" aria-label="Dismiss">✕</button>
     </div>
-    <div class="summary" id="summary"></div>
-    <div class="actions">
-      <button class="btn btn-primary" id="primary-btn" autofocus></button>
-      <button class="btn btn-secondary" id="dismiss-btn">Dismiss</button>
-    </div>
+    <button class="btn btn-primary" id="primary-btn" autofocus></button>
+    <button class="btn btn-secondary" id="dismiss-btn">Later</button>
     <div class="error-text" id="error-text"></div>
   </div>
   <div class="toast" id="toast">Recording started ✓</div>
@@ -324,7 +281,6 @@
     const primaryBtn = document.getElementById('primary-btn');
     const errorEl = document.getElementById('error-text');
     const toast = document.getElementById('toast');
-    const summaryEl = document.getElementById('summary');
 
     // Populated from cmd_get_meeting_prompt below
     let title = 'Meeting';
@@ -337,18 +293,15 @@
       titleEl.title = title || 'Meeting'; // full text on hover
 
       if (minutesUntil <= 0) {
-        countdownEl.textContent = 'starting now';
+        countdownEl.textContent = 'Starting now';
         countdownEl.classList.add('urgent');
       } else if (minutesUntil === 1) {
-        countdownEl.textContent = 'in 1 minute';
+        countdownEl.textContent = 'Starts in 1 minute';
       } else {
-        countdownEl.textContent = `in ${minutesUntil} minutes`;
+        countdownEl.textContent = `Starts in ${minutesUntil} minutes`;
       }
 
       primaryBtn.textContent = hasUrl ? 'Join & Record' : 'Record';
-      summaryEl.textContent = hasUrl
-        ? 'Minutes can open the meeting link and start a local recording before the conversation gets away from you.'
-        : 'Minutes can start a local recording now so the transcript, decisions, and action items are captured from the beginning.';
     }
 
     function closeWindow() {
@@ -409,7 +362,7 @@
         }
 
         // Start recording
-        await invoke('cmd_start_recording');
+        await invoke('cmd_start_recording', { title });
 
         // Success toast
         toast.classList.add('show');
@@ -431,19 +384,19 @@
 
     primaryBtn.addEventListener('click', startRecording);
     document.getElementById('dismiss-btn').addEventListener('click', dismiss);
-    document.getElementById('close-btn').addEventListener('click', dismiss);
 
     // Keyboard: Escape to dismiss
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') dismiss();
     });
 
-    // Auto-dismiss after 60 seconds
+    // Auto-dismiss after 2 minutes so a prompt shown at T-1 remains visible
+    // through T+1 (matching the scheduling window in main.rs).
     setTimeout(() => {
       document.body.style.transition = 'opacity 300ms ease-out';
       document.body.style.opacity = '0';
       setTimeout(() => getCurrentWebviewWindow().close(), 300);
-    }, 60000);
+    }, 120000);
   </script>
 </body>
 </html>
