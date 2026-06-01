@@ -26,8 +26,8 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-card {
   overflow-y: auto;
 }
 
-/* Top bar — close button on the right (out of the traffic-light zone),
-   title hidden in the toolbar. Big serif H1 sits in the scroll body. */
+/* Top bar — back chevron on the LEFT (after traffic lights), like
+   playground st-back. Title hidden in the toolbar. */
 body.is-playground-shell .about-overlay#settings-overlay .about-top {
   position: sticky;
   top: -8px;
@@ -39,7 +39,8 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top {
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .settings-title {
@@ -79,16 +80,20 @@ body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
   position: relative;
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close::before {
-  content: "✕";
-  color: var(--text-secondary);
-  font-size: 12px;
+  content: "\2039"; /* ‹ */
+  color: var(--text);
+  font-size: 18px;
   font-weight: 400;
   line-height: 1;
+  margin-top: -2px;
 }
 
-/* Section: label OUTSIDE, rows grouped as a single card. */
+/* Section: label OUTSIDE, each row is its own card. Some sections mix
+   .about-controls rows with sibling .about-controls-meta paragraphs and
+   plain text, so grouping rows into one shared card breaks visually.
+   Per-row cards with consistent spacing is the resilient pattern. */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section {
-  margin: 0 0 24px 0;
+  margin: 0 0 28px 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-item-title {
@@ -101,33 +106,27 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-section > .ab
   font-weight: 500;
 }
 
-/* Each .about-controls row becomes a card row. Stacked siblings share
-   one rounded border by collapsing top borders + rounding ends. */
+/* Each .about-controls row becomes its own rounded card with spacing. */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls {
   background: var(--bg-elevated, var(--neutral-tint));
   border: 1px solid var(--border);
-  border-top-width: 0;
-  margin: 0;
+  border-radius: 12px;
+  margin: 0 0 8px 0;
   padding: 14px 16px;
   gap: 14px;
 }
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:first-of-type {
-  border-top-width: 1px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-}
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:last-of-type {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  margin-bottom: 0;
 }
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:only-of-type {
-  border-top-width: 1px;
-  border-radius: 12px;
-}
-/* Internal separator between stacked rows (instead of full row border) */
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls + .about-controls {
-  border-top-width: 1px;
-  border-top-color: var(--border);
+
+/* Stray meta paragraphs that live as section children (not row children)
+   look like quiet captions sitting between cards. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  padding: 0 4px;
+  margin: -4px 0 8px 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .about-controls-copy {
