@@ -27,27 +27,30 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-card {
   border-radius: 0;
   box-shadow: none;
   background: var(--bg);
-  padding: 8px 38px 60px 38px;
+  /* Top padding reserves room for the position:fixed .about-top bar
+     below so first-section content doesn't slide under it. */
+  padding: 44px 38px 60px 38px;
   overflow-y: auto;
 }
 
-/* Top bar — back chevron on the LEFT (after traffic lights), matching
-   playground .st-tb. The macOS traffic lights are REAL widgets at
-   default inset (~12, 12) from the window edge with 12px diameter →
-   center ≈ y=18. Playground .st-tb is 44px tall with align-items:center;
-   we use 36px so the bar feels anchored under the lights instead of
-   floating in empty whitespace. Negative margin-top pulls the bar to
-   the window's y=0 so the back button's geometric center (y=18) lands
-   on the lights' center (y=18). */
+/* Top bar — back chevron on the LEFT (after traffic lights). Pinned
+   with position:fixed so card padding / parent transforms / cascade
+   from .about-card can't push it below the macOS traffic lights.
+   Traffic lights live at LogicalPosition(16, 16) per main.rs (see
+   `.traffic_light_position`), so their geometric center is y=22 (with
+   12px diameter). Bar height 44px + align-items:center → back button
+   center at y=22. Matches exactly. */
 body.is-playground-shell .about-overlay#settings-overlay .about-top {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
   background: var(--bg);
-  z-index: 5;
-  margin: -8px -38px 0 -38px;
-  padding: 0 16px 0 82px; /* 82px clears the macOS traffic-light cluster */
-  height: 36px;
   border-bottom: 1px solid var(--border);
+  z-index: 5;
+  margin: 0;
+  padding: 0 16px 0 82px; /* 82px clears the macOS traffic-light cluster */
   display: flex;
   align-items: center;
   justify-content: flex-start;
