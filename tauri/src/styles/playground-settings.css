@@ -4,6 +4,11 @@
    look: bigger panel, section labels OUTSIDE rounded cards, pill toggles.
    No DOM changes — IDs and bindings stay identical. */
 
+/* The Health section uses playground-native .st-* classes and is only
+   meaningful inside the playground shell. Hide it everywhere else. */
+.pg-health-section { display: none; }
+body.is-playground-shell .pg-health-section { display: block; }
+
 body.is-playground-shell .about-overlay#settings-overlay {
   /* Fill the window edge-to-edge rather than floating as a small modal,
      matching playground.html's full-panel settings surface. */
@@ -205,4 +210,69 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-field {
   border-radius: 8px;
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Playground st-card / st-row / st-health primitives
+   Copied 1:1 from tauri/src/playground.html L1560-L1605 so the Health
+   section renders with grouped rows + internal hairline dividers +
+   right-aligned health pip — the canonical playground settings look.
+   ──────────────────────────────────────────────────────────────────── */
+body.is-playground-shell .st-section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 0 10px 4px;
+}
+body.is-playground-shell .st-card {
+  background: var(--bg-elevated, var(--neutral-tint));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+body.is-playground-shell .st-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+body.is-playground-shell .st-row:last-child { border-bottom: 0; }
+body.is-playground-shell .st-row-label {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+body.is-playground-shell .st-row-help {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+body.is-playground-shell .st-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+body.is-playground-shell .st-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .st-health.ok { color: var(--accent, #30D158); }
+body.is-playground-shell .st-health.warn { color: #FFD60A; }
+body.is-playground-shell .st-health.err { color: var(--red, #FF453A); }
+body.is-playground-shell .st-health .st-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }

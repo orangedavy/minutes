@@ -5669,6 +5669,48 @@
           </button>
         </div>
 
+        <!-- HEALTH (playground-shell only; populated by loadSettingsHealth) -->
+        <div class="settings-section pg-health-section" data-pg-only>
+          <div class="st-section-label">Health</div>
+          <div class="st-card" id="pg-health-card">
+            <div class="st-row" data-health-row="whisper">
+              <div>
+                <div class="st-row-label">Whisper model</div>
+                <div class="st-row-help" data-health-help>—</div>
+              </div>
+              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+            </div>
+            <div class="st-row" data-health-row="diarization">
+              <div>
+                <div class="st-row-label">Speaker diarization</div>
+                <div class="st-row-help" data-health-help>—</div>
+              </div>
+              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+            </div>
+            <div class="st-row" data-health-row="microphone">
+              <div>
+                <div class="st-row-label">Microphone</div>
+                <div class="st-row-help" data-health-help>—</div>
+              </div>
+              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+            </div>
+            <div class="st-row" data-health-row="screen">
+              <div>
+                <div class="st-row-label">Screen recording</div>
+                <div class="st-row-help" data-health-help>For system audio capture on calls</div>
+              </div>
+              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+            </div>
+            <div class="st-row" data-health-row="voices">
+              <div>
+                <div class="st-row-label">Voice profiles</div>
+                <div class="st-row-help" data-health-help>~/.minutes/voices.db · used for speaker attribution</div>
+              </div>
+              <span class="st-value" data-health-value>—</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Identity -->
         <div class="settings-section">
           <div class="about-item-title">IDENTITY</div>
@@ -10400,6 +10442,7 @@
       function openSettings() {
         settingsOverlay.classList.add("active");
         loadSettings();
+        loadSettingsHealth().catch((e) => console.warn("health load:", e));
       }
       function closeSettings() {
         settingsOverlay.classList.remove("active");
@@ -10999,6 +11042,116 @@
         b.classList.toggle("is-on", !!on);
         b.setAttribute("aria-pressed", on ? "true" : "false");
         return true;
+      }
+
+      // Populate the playground Health card with live data from existing
+      // tauri commands. Only renders the pip + status text; the static
+      // skeleton in #pg-health-card supplies the labels and order.
+      async function loadSettingsHealth() {
+        const card = document.getElementById("pg-health-card");
+        if (!card) return;
+        const setRow = (key, { status, tone, help, value }) => {
+          const row = card.querySelector(`[data-health-row="${key}"]`);
+          if (!row) return;
+          if (help !== undefined) {
+            const h = row.querySelector("[data-health-help]");
+            if (h) h.textContent = help;
+          }
+          if (value !== undefined) {
+            const v = row.querySelector("[data-health-value]");
+            if (v) v.textContent = value;
+          }
+          if (status !== undefined) {
+            const s = row.querySelector("[data-health-status]");
+            if (s) s.textContent = status;
+          }
+          if (tone !== undefined) {
+            const pill = row.querySelector("[data-health-pill]");
+            if (pill) {
+              pill.classList.remove("ok", "warn", "err");
+              if (tone) pill.classList.add(tone);
+            }
+          }
+        };
+
+        // Pull settings (we already have most of what we need here) +
+        // permission center + device list + voices count in parallel.
+        const [settings, perms, devices, voices] = await Promise.all([
+          invoke("cmd_get_settings").catch(() => null),
+          invoke("cmd_permission_center").catch(() => null),
+          invoke("cmd_list_devices").catch(() => null),
+          invoke("cmd_list_voices").catch(() => null),
+        ]);
+
+        // Whisper / transcription model
+        try {
+          const tx = (settings && settings.transcription) || {};
+          const backend = tx.backend || "whisper";
+          const model = tx.model || "default";
+          const accel =
+            tx.metal === false ? "CPU" : "Apple Silicon Metal";
+          setRow("whisper", {
+            help: `${backend} · ${model} · ${accel}`,
+            status: "ready",
+            tone: "ok",
+          });
+        } catch (_) {
+          setRow("whisper", { status: "unknown", tone: "warn" });
+        }
+
+        // Diarization
+        try {
+          const d = (settings && settings.diarization) || {};
+          const on = d.enabled !== false;
+          setRow("diarization", {
+            help: on ? "pyannote-rs · ONNX" : "disabled",
+            status: on ? "ready" : "off",
+            tone: on ? "ok" : "warn",
+          });
+        } catch (_) {
+          setRow("diarization", { status: "unknown", tone: "warn" });
+        }
+
+        // Microphone
+        try {
+          const micPerm =
+            perms && perms.microphone ? perms.microphone.status : null;
+          const def =
+            devices && Array.isArray(devices.inputs)
+              ? devices.inputs.find((d) => d.is_default) || devices.inputs[0]
+              : null;
+          const granted = micPerm === "granted" || micPerm === "authorized";
+          setRow("microphone", {
+            help: def ? `${def.label || def.name || "Default input"}` : "—",
+            status: granted ? "granted" : micPerm || "not granted",
+            tone: granted ? "ok" : "warn",
+          });
+        } catch (_) {
+          setRow("microphone", { status: "unknown", tone: "warn" });
+        }
+
+        // Screen recording
+        try {
+          const scrPerm =
+            perms && perms.screen_recording
+              ? perms.screen_recording.status
+              : null;
+          const granted = scrPerm === "granted" || scrPerm === "authorized";
+          setRow("screen", {
+            status: granted ? "granted" : scrPerm || "not granted",
+            tone: granted ? "ok" : "warn",
+          });
+        } catch (_) {
+          setRow("screen", { status: "unknown", tone: "warn" });
+        }
+
+        // Voice profiles
+        try {
+          const count = Array.isArray(voices) ? voices.length : 0;
+          setRow("voices", { value: `${count} enrolled` });
+        } catch (_) {
+          setRow("voices", { value: "—" });
+        }
       }
       function desktopContextStateLabel(
         state,
