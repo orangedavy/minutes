@@ -31,23 +31,25 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-card {
   overflow-y: auto;
 }
 
-/* Top bar — back chevron on the LEFT (after traffic lights), like
-   playground st-back. Title hidden in the toolbar. Traffic lights are
-   real macOS widgets at default inset (~12, 12) from the window edge
-   with 12px diameter → center ≈ y=18. We align the back button to that
-   center by anchoring it with align-items:flex-start + margin-top:3px
-   so its 30px box centers on the lights. */
+/* Top bar — back chevron on the LEFT (after traffic lights), matching
+   playground .st-tb. The macOS traffic lights are REAL widgets at
+   default inset (~12, 12) from the window edge with 12px diameter →
+   center ≈ y=18. Playground .st-tb is 44px tall with align-items:center;
+   we use 36px so the bar feels anchored under the lights instead of
+   floating in empty whitespace. Negative margin-top pulls the bar to
+   the window's y=0 so the back button's geometric center (y=18) lands
+   on the lights' center (y=18). */
 body.is-playground-shell .about-overlay#settings-overlay .about-top {
   position: sticky;
-  top: -8px;
+  top: 0;
   background: var(--bg);
   z-index: 5;
   margin: -8px -38px 0 -38px;
   padding: 0 16px 0 82px; /* 82px clears the macOS traffic-light cluster */
-  height: 52px;
+  height: 36px;
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-start;
   gap: 10px;
 }
@@ -75,16 +77,19 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  width: 30px;
-  height: 30px;
+  /* Match playground .st-back: 28×28 with 7px radius. align-items:center
+     on the parent bar centers the button naturally at y=18 to meet the
+     macOS traffic-light centers. */
+  width: 28px;
+  height: 28px;
   min-width: 0;
   padding: 0;
-  margin-top: 3px; /* Centers on the macOS traffic lights (~y=18) */
+  margin: 0;
   font-size: 0;
   color: transparent;
   background: var(--bg-elevated, var(--neutral-tint));
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
   position: relative;
