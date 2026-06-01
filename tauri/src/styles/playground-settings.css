@@ -1,0 +1,209 @@
+/* PLAYGROUND SETTINGS RESTYLE
+   Scoped under body.is-playground-shell. Reshapes the existing Settings
+   overlay markup (kept intact for cmd_* + JS bindings) into the playground
+   look: bigger panel, section labels OUTSIDE rounded cards, pill toggles.
+   No DOM changes — IDs and bindings stay identical. */
+
+body.is-playground-shell .about-overlay#settings-overlay {
+  /* Fill the window edge-to-edge rather than floating as a small modal,
+     matching playground.html's full-panel settings surface. */
+  padding: 0;
+  background: var(--bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .settings-card {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg);
+  padding: 8px 38px 60px 38px;
+  overflow-y: auto;
+}
+
+/* Top bar — close button on the right (out of the traffic-light zone),
+   title hidden in the toolbar. Big serif H1 sits in the scroll body. */
+body.is-playground-shell .about-overlay#settings-overlay .about-top {
+  position: sticky;
+  top: -8px;
+  background: var(--bg);
+  z-index: 5;
+  margin: -8px -38px 0 -38px;
+  padding: 8px 14px 8px 78px; /* 78px clears the macOS traffic-light cluster */
+  height: 44px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .settings-title {
+  display: none;
+}
+
+/* Big H1 lives in the scroll body, above the first section.
+   Use `.about-top + .settings-section` because `:first-of-type` matches
+   on element type (div) — and `.about-top` is the first div sibling. */
+body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section {
+  position: relative;
+}
+body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section::before {
+  content: "Settings";
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1;
+  color: var(--text);
+  margin: 22px 0 26px 0;
+}
+
+body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  padding: 0;
+  font-size: 0;
+  color: transparent;
+  background: var(--surface-fill, transparent);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close::before {
+  content: "✕";
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Section: label OUTSIDE, rows grouped as a single card. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section {
+  margin: 0 0 24px 0;
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-item-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 0 10px 4px;
+  font-weight: 500;
+}
+
+/* Each .about-controls row becomes a card row. Stacked siblings share
+   one rounded border by collapsing top borders + rounding ends. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls {
+  background: var(--bg-elevated, var(--neutral-tint));
+  border: 1px solid var(--border);
+  border-top-width: 0;
+  margin: 0;
+  padding: 14px 16px;
+  gap: 14px;
+}
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:first-of-type {
+  border-top-width: 1px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:last-of-type {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:only-of-type {
+  border-top-width: 1px;
+  border-radius: 12px;
+}
+/* Internal separator between stacked rows (instead of full row border) */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls + .about-controls {
+  border-top-width: 1px;
+  border-top-color: var(--border);
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-copy {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+
+/* Pill toggle. .is-on is added by setSettingsToggle (index.html). */
+body.is-playground-shell .about-overlay#settings-overlay .toggle-btn {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 20px;
+  padding: 0 !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08)) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 999px !important;
+  position: relative;
+  cursor: pointer;
+  opacity: 1 !important;
+  transition: background 140ms;
+}
+body.is-playground-shell .about-overlay#settings-overlay .toggle-btn::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: all 140ms ease;
+}
+body.is-playground-shell .about-overlay#settings-overlay .toggle-btn.is-on {
+  background: var(--accent, #30D158) !important;
+  border-color: var(--accent, #30D158) !important;
+}
+body.is-playground-shell .about-overlay#settings-overlay .toggle-btn.is-on::after {
+  left: 17px;
+  background: var(--bg, #000);
+}
+
+/* Shortcut chip + monospace input field tweaks to match playground hint style */
+body.is-playground-shell .about-overlay#settings-overlay .settings-shortcut-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-fill, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  height: 26px;
+  padding: 0 10px;
+}
+body.is-playground-shell .about-overlay#settings-overlay .settings-hint-link {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
+body.is-playground-shell .about-overlay#settings-overlay .settings-field {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

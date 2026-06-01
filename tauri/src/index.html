@@ -6948,6 +6948,7 @@
     <link rel="stylesheet" href="styles/playground-shell.css" />
     <link rel="stylesheet" href="styles/playground-home.css" />
     <link rel="stylesheet" href="styles/playground-detail.css" />
+    <link rel="stylesheet" href="styles/playground-settings.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
     <script src="vendor/xterm/xterm.js"></script>
@@ -10994,6 +10995,8 @@
         }
         b.textContent = on ? "On" : "Off";
         b.style.opacity = on ? "1" : "0.5";
+        b.classList.toggle("is-on", !!on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
         return true;
       }
       function desktopContextStateLabel(
