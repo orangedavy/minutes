@@ -32,18 +32,22 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-card {
 }
 
 /* Top bar — back chevron on the LEFT (after traffic lights), like
-   playground st-back. Title hidden in the toolbar. */
+   playground st-back. Title hidden in the toolbar. Traffic lights are
+   real macOS widgets at default inset (~12, 12) from the window edge
+   with 12px diameter → center ≈ y=18. We align the back button to that
+   center by anchoring it with align-items:flex-start + margin-top:3px
+   so its 30px box centers on the lights. */
 body.is-playground-shell .about-overlay#settings-overlay .about-top {
   position: sticky;
   top: -8px;
   background: var(--bg);
   z-index: 5;
   margin: -8px -38px 0 -38px;
-  padding: 8px 14px 8px 78px; /* 78px clears the macOS traffic-light cluster */
-  height: 44px;
+  padding: 0 16px 0 82px; /* 82px clears the macOS traffic-light cluster */
+  height: 52px;
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 10px;
 }
@@ -71,34 +75,47 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   min-width: 0;
   padding: 0;
+  margin-top: 3px; /* Centers on the macOS traffic lights (~y=18) */
   font-size: 0;
   color: transparent;
-  background: var(--surface-fill, transparent);
+  background: var(--bg-elevated, var(--neutral-tint));
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   position: relative;
+  transition: background 120ms, border-color 120ms;
+}
+body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close:hover {
+  background: var(--bg-elev-2, var(--neutral-tint));
+  border-color: var(--text-tertiary);
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close::before {
   content: "\2039"; /* ‹ */
   color: var(--text);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 400;
   line-height: 1;
   margin-top: -2px;
 }
 
-/* Section: label OUTSIDE, each row is its own card. Some sections mix
-   .about-controls rows with sibling .about-controls-meta paragraphs and
-   plain text, so grouping rows into one shared card breaks visually.
-   Per-row cards with consistent spacing is the resilient pattern. */
+/* ────────────────────────────────────────────────────────────────────
+   GROUPED SECTION CARDS — matches the Health card pattern.
+   The section itself stays a transparent margin container; the LABEL
+   sits above as a quiet caption; the contiguous .about-controls rows
+   below paint themselves as ONE rounded card with internal hairlines.
+   This avoids overflow:hidden / negative-margin gymnastics and means
+   sections with stray .about-controls-meta paragraphs degrade cleanly
+   (the meta line just sits between cards as a quiet aside).
+   ──────────────────────────────────────────────────────────────────── */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section {
   margin: 0 0 28px 0;
+  background: transparent;
+  border: 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-item-title {
@@ -107,31 +124,53 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-section > .ab
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  margin: 0 0 10px 4px;
   font-weight: 500;
+  margin: 0 0 10px 4px;
+  padding: 0;
 }
 
-/* Each .about-controls row becomes its own rounded card with spacing. */
+/* Each .about-controls is a flush row. Together they look like one card
+   because first-of-type / last-of-type round the outer corners and
+   sibling combinators draw an internal hairline. */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls {
   background: var(--bg-elevated, var(--neutral-tint));
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin: 0 0 8px 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  margin: 0;
   padding: 14px 16px;
   gap: 14px;
 }
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:first-of-type {
+  border-top: 1px solid var(--border);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:last-of-type {
-  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+/* Internal hairline between consecutive rows. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls + .about-controls {
+  border-top: 1px solid var(--border);
+}
+/* Hide rows production marks .is-hidden (e.g. parakeet block when engine
+   is whisper) so we don't render orphan dividers. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls.is-hidden {
+  display: none;
 }
 
-/* Stray meta paragraphs that live as section children (not row children)
-   look like quiet captions sitting between cards. */
+/* Stray .about-controls-meta paragraphs as direct section children: a
+   quiet caption between cards, not a card row. */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls-meta {
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--text-tertiary);
-  padding: 0 4px;
-  margin: -4px 0 8px 0;
+  padding: 8px 4px 0 4px;
+  margin: 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .about-controls-copy {
@@ -146,6 +185,37 @@ body.is-playground-shell .about-overlay#settings-overlay .about-controls-meta {
   font-size: 10.5px;
   color: var(--text-tertiary);
   margin-top: 3px;
+}
+
+/* Inputs / selects span the full row width inside the grouped card. */
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group {
+  flex: 1;
+  min-width: 0;
+}
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group .settings-field,
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group select.settings-field {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: var(--bg, #000);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+/* Make native <select> show full option text and own the row. */
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group select.settings-field {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }
 
 /* Pill toggle. .is-on is added by setSettingsToggle (index.html). */
