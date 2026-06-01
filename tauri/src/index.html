@@ -4626,6 +4626,53 @@
       ></div>
 
       <!-- ────────────────────────────────────────────────────────────
+           PLAYGROUND SIDEBAR DRAWER (S / hamburger button to open).
+           Markup mirrors tauri/src/playground.html L2691-2750 so the
+           classes (.sb-item, .sb-tag-dot, .sb-foot-btn) match the
+           playground CSS spec exactly. Click handlers below dispatch to
+           existing cmd_* surfaces where they exist; cosmetic-only items
+           (Home, Action items, tag rows) just close the drawer for now.
+           ──────────────────────────────────────────────────────────── -->
+      <div class="sidebar-scrim" id="pg-sidebar-scrim" hidden></div>
+      <aside class="sidebar" id="pg-sidebar" aria-hidden="true">
+        <div class="sb-brand">Minutes</div>
+        <div class="sidebar-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="pg-sidebar-search" placeholder="Search meetings, transcripts…" />
+          <span class="kbd">⌘K</span>
+        </div>
+        <div class="sb-item is-active" data-sb-item="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+          Home
+        </div>
+        <div class="sb-item" data-sb-item="recall">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-3.5-7.1L21 3v6h-6"/></svg>
+          Recall
+        </div>
+        <div class="sb-item" data-sb-item="actions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><polyline points="8 12 11 15 16 9"/></svg>
+          Action items
+          <span class="sb-count" id="pg-sb-actions-count"></span>
+        </div>
+        <div class="sb-section">Tags</div>
+        <div class="sb-item is-tag" style="color: var(--text-tertiary)" data-sb-item="new-tag">
+          <span class="sb-tag-dot" style="background: transparent; border: 1px dashed var(--text-tertiary)"></span>
+          New tag
+        </div>
+        <div class="sb-spacer"></div>
+        <div class="sb-foot">
+          <button class="sb-foot-btn" id="pg-sb-settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </button>
+          <button class="sb-foot-btn" id="pg-sb-health" title="Health">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Health
+          </button>
+        </div>
+      </aside>
+
+      <!-- ────────────────────────────────────────────────────────────
            PLAYGROUND SHELL (visible when body.is-playground-shell).
            This is the new chrome — extracted from tauri/src/playground.html.
            Production chrome below is hidden by playground-shell.css and
@@ -4637,6 +4684,18 @@
         <div class="traffic" data-tauri-drag-region aria-hidden="true"></div>
         <div class="tb-spacer" data-tauri-drag-region></div>
         <div class="tb-actions">
+          <button
+            class="icon-btn"
+            id="pg-btn-sidebar"
+            title="Sidebar (S)"
+            aria-label="Toggle sidebar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="4" y1="12" x2="20" y2="12"/>
+              <line x1="4" y1="18" x2="20" y2="18"/>
+            </svg>
+          </button>
           <button
             class="tb-btn has-dot"
             id="pg-btn-live"
@@ -9976,6 +10035,92 @@
       document
         .getElementById("pg-btn-settings")
         ?.addEventListener("click", () => pgClick("btn-settings"));
+
+      // ────────────────────────────────────────────────────────────
+      // Sidebar drawer (S / hamburger button) — playground parity.
+      // Markup at top of <body>. We open/close .is-open on both the
+      // scrim and the drawer; Esc + scrim-click close it; clicking the
+      // Settings foot button dispatches into the existing settings flow.
+      // Home / Recall / Action items / tag rows are visual-only for now
+      // and just close the drawer; they'll grow real wiring in later
+      // slices (palette overlay, recall room, actions inbox).
+      (function wireSidebar() {
+        const sidebar = document.getElementById("pg-sidebar");
+        const scrim = document.getElementById("pg-sidebar-scrim");
+        const toggleBtn = document.getElementById("pg-btn-sidebar");
+        if (!sidebar || !scrim) return;
+        const open = () => {
+          scrim.hidden = false;
+          // Force reflow so the transition runs even when hidden was
+          // just removed in the same tick.
+          // eslint-disable-next-line no-unused-expressions
+          scrim.offsetWidth;
+          scrim.classList.add("is-open");
+          sidebar.classList.add("is-open");
+          sidebar.setAttribute("aria-hidden", "false");
+        };
+        const close = () => {
+          scrim.classList.remove("is-open");
+          sidebar.classList.remove("is-open");
+          sidebar.setAttribute("aria-hidden", "true");
+          // Hide scrim after the fade completes so it doesn't trap
+          // clicks; matches the 180ms opacity transition.
+          setTimeout(() => {
+            if (!scrim.classList.contains("is-open")) scrim.hidden = true;
+          }, 200);
+        };
+        const toggle = () => {
+          if (sidebar.classList.contains("is-open")) close();
+          else open();
+        };
+        toggleBtn?.addEventListener("click", toggle);
+        scrim.addEventListener("click", close);
+        document
+          .getElementById("pg-sb-settings")
+          ?.addEventListener("click", () => {
+            close();
+            openSettings();
+          });
+        document
+          .getElementById("pg-sb-health")
+          ?.addEventListener("click", () => {
+            close();
+            openSettings();
+          });
+        // Cosmetic items: close the drawer; real surfaces land later.
+        sidebar.querySelectorAll(".sb-item").forEach((el) => {
+          el.addEventListener("click", () => close());
+        });
+        // Global S shortcut (ignore when typing in a field).
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && sidebar.classList.contains("is-open")) {
+            close();
+            return;
+          }
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          const t = e.target;
+          const tag = (t && t.tagName) || "";
+          if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            (t && t.isContentEditable)
+          )
+            return;
+          if (e.key === "s" || e.key === "S") {
+            e.preventDefault();
+            toggle();
+          }
+        });
+        // Populate the Action items count from cmd_list_action_items
+        // if the command exists; silently no-op otherwise.
+        invoke("cmd_list_action_items")
+          .then((items) => {
+            const el = document.getElementById("pg-sb-actions-count");
+            if (el && Array.isArray(items))
+              el.textContent = String(items.length);
+          })
+          .catch(() => {});
+      })();
 
       // Ask pill: clicking anywhere opens Recall; Enter submits to assistant.
       const pgAskPill = document.getElementById("pg-ask-pill");

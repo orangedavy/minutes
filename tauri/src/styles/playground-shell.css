@@ -340,3 +340,168 @@ body.is-playground-shell.has-recall .recall-panel {
 body.is-playground-shell.has-recall .split-handle {
   display: block !important;
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   SIDEBAR DRAWER — playground parity (S to toggle, hamburger button,
+   scrim click to dismiss). CSS ported from tauri/src/playground.html
+   L530-640 with var() fallbacks so it inherits the production theme
+   instead of the playground-only --bg-elev tokens.
+   ──────────────────────────────────────────────────────────────────── */
+body.is-playground-shell .sidebar-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 70;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+body.is-playground-shell .sidebar-scrim.is-open { opacity: 1; }
+body.is-playground-shell .sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 264px;
+  background: var(--bg, var(--background));
+  border-right: 1px solid var(--border);
+  z-index: 80;
+  transform: translateX(-100%);
+  transition: transform 220ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  flex-direction: column;
+  padding-top: 44px;
+}
+body.is-playground-shell .sidebar.is-open { transform: translateX(0); }
+body.is-playground-shell .sb-brand {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  padding: 4px 16px 14px 16px;
+}
+body.is-playground-shell .sidebar-search {
+  margin: 0 12px 18px 12px;
+  height: 36px;
+  background: var(--bg-elevated, var(--neutral-tint));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .sidebar-search input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+body.is-playground-shell .sidebar-search input::placeholder { color: var(--text-tertiary); }
+body.is-playground-shell .sidebar-search .kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-elevated, var(--neutral-tint));
+}
+body.is-playground-shell .sb-section {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  padding: 18px 18px 8px 18px;
+}
+body.is-playground-shell .sb-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px 9px 14px;
+  margin: 1px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  letter-spacing: -0.005em;
+  transition: background 100ms;
+}
+body.is-playground-shell .sb-item:hover { background: var(--bg-elevated, var(--neutral-tint)); }
+body.is-playground-shell .sb-item.is-active {
+  background: var(--bg-elevated, var(--neutral-tint));
+  color: var(--text);
+}
+body.is-playground-shell .sb-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+body.is-playground-shell .sb-item.is-active svg { color: var(--accent); }
+body.is-playground-shell .sb-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+body.is-playground-shell .sb-item.is-tag {
+  padding: 7px 12px 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+body.is-playground-shell .sb-item.is-tag:hover { color: var(--text); }
+body.is-playground-shell .sb-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+body.is-playground-shell .sb-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+body.is-playground-shell .sb-spacer { flex: 1; min-height: 8px; }
+body.is-playground-shell .sb-foot {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+body.is-playground-shell .sb-foot-btn {
+  flex: 1;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+body.is-playground-shell .sb-foot-btn:hover {
+  background: var(--bg-elevated, var(--neutral-tint));
+  color: var(--text);
+}
+body.is-playground-shell .sb-foot-btn svg { width: 14px; height: 14px; }
