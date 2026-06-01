@@ -1,402 +1,438 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upcoming Meeting</title>
-  <style>
-    @font-face {
-      font-family: 'Instrument Serif';
-      font-style: normal;
-      font-weight: 400;
-      src: url('fonts/InstrumentSerif-Regular.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Instrument Serif';
-      font-style: italic;
-      font-weight: 400;
-      src: url('fonts/InstrumentSerif-Italic.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Geist';
-      font-style: normal;
-      font-weight: 400;
-      src: url('fonts/Geist-Regular.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Geist';
-      font-style: normal;
-      font-weight: 500;
-      src: url('fonts/Geist-Medium.woff2') format('woff2');
-    }
-    @font-face {
-      font-family: 'Geist';
-      font-style: normal;
-      font-weight: 600;
-      src: url('fonts/Geist-SemiBold.woff2') format('woff2');
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upcoming Meeting</title>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: normal;
+        font-weight: 400;
+        src: url("fonts/InstrumentSerif-Regular.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Instrument Serif";
+        font-style: italic;
+        font-weight: 400;
+        src: url("fonts/InstrumentSerif-Italic.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-style: normal;
+        font-weight: 400;
+        src: url("fonts/Geist-Regular.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-style: normal;
+        font-weight: 500;
+        src: url("fonts/Geist-Medium.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Geist";
+        font-style: normal;
+        font-weight: 600;
+        src: url("fonts/Geist-SemiBold.woff2") format("woff2");
+      }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    :root {
-      color-scheme: light dark;
-      --bg: #0D0D0B;
-      --bg-elevated: #141412;
-      --bg-hover: #1C1C1A;
-      --border: rgba(255, 255, 255, 0.06);
-      --border-mid: #2A2924;
-      --text: #E8E4DA;
-      --text-secondary: #6B6760;
-      --text-tertiary: #3D3B38;
-      --accent: #30D158;
-      --accent-hover: #4ADE70;
-      --accent-soft: rgba(48, 209, 88, 0.12);
-      --red: #FF453A;
-      --red-bg: rgba(255, 69, 58, 0.12);
-      --surface-fill: rgba(255, 255, 255, 0.02);
-      --inset-shadow: rgba(0, 0, 0, 0.14);
-      --shadow:
-        0 14px 34px rgba(0, 0, 0, 0.46),
-        0 4px 12px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
-
-    @media (prefers-color-scheme: light) {
       :root {
-        --bg:             #F8F4ED;
-        --bg-elevated:    #EFEBE2;
-        --bg-hover:       #E8E2D8;
-        --border:         rgba(0, 0, 0, 0.07);
-        --border-mid:     rgba(0, 0, 0, 0.13);
-        --text:           #1A1916;
-        --text-secondary: #8C8880;
-        --text-tertiary:  #BDB9B0;
-        --accent:         #C96B4E;
-        --accent-hover:   #B85A3E;
-        --accent-soft:    rgba(201, 107, 78, 0.10);
-        --red:            #C0392B;
-        --red-bg:         rgba(192, 57, 43, 0.12);
-        --surface-fill:   rgba(0, 0, 0, 0.03);
-        --inset-shadow:   rgba(0, 0, 0, 0.08);
+        color-scheme: light dark;
+        --bg: #0d0d0b;
+        --bg-elevated: #141412;
+        --bg-hover: #1c1c1a;
+        --border: rgba(255, 255, 255, 0.06);
+        --border-mid: #2a2924;
+        --text: #e8e4da;
+        --text-secondary: #6b6760;
+        --text-tertiary: #3d3b38;
+        --accent: #30d158;
+        --accent-hover: #4ade70;
+        --accent-soft: rgba(48, 209, 88, 0.12);
+        --red: #ff453a;
+        --red-bg: rgba(255, 69, 58, 0.12);
+        --surface-fill: rgba(255, 255, 255, 0.02);
+        --inset-shadow: rgba(0, 0, 0, 0.14);
         --shadow:
-          0 12px 28px rgba(0, 0, 0, 0.16),
-          0 3px 10px rgba(0, 0, 0, 0.10),
-          inset 0 1px 0 rgba(0, 0, 0, 0.02);
+          0 14px 34px rgba(0, 0, 0, 0.46), 0 4px 12px rgba(0, 0, 0, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
-    }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f8f4ed;
+          --bg-elevated: #efebe2;
+          --bg-hover: #e8e2d8;
+          --border: rgba(0, 0, 0, 0.07);
+          --border-mid: rgba(0, 0, 0, 0.13);
+          --text: #1a1916;
+          --text-secondary: #8c8880;
+          --text-tertiary: #bdb9b0;
+          --accent: #c96b4e;
+          --accent-hover: #b85a3e;
+          --accent-soft: rgba(201, 107, 78, 0.1);
+          --red: #c0392b;
+          --red-bg: rgba(192, 57, 43, 0.12);
+          --surface-fill: rgba(0, 0, 0, 0.03);
+          --inset-shadow: rgba(0, 0, 0, 0.08);
+          --shadow:
+            0 12px 28px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(0, 0, 0, 0.02);
+        }
+      }
 
-    body {
-      font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: transparent;
-      color: var(--text);
-      padding: 10px;
-      -webkit-user-select: none;
-      user-select: none;
-      overflow: visible;
-    }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
 
-    .prompt {
-      height: calc(100% - 0px);
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      animation: slideIn 180ms ease-out;
-    }
+      body {
+        font-family:
+          "Geist",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: transparent;
+        color: var(--text);
+        padding: 10px;
+        -webkit-user-select: none;
+        user-select: none;
+        overflow: visible;
+      }
 
-    .meeting-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
+      .prompt {
+        height: calc(100% - 0px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        animation: slideIn 180ms ease-out;
+      }
 
-    .calendar-icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      flex-shrink: 0;
-    }
+      .meeting-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
 
-    .meeting-text {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+      .calendar-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        flex-shrink: 0;
+      }
 
-    .meeting-title {
-      font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 14px;
-      line-height: 1.2;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .meeting-text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
 
-    .meeting-countdown {
-      font-size: 11px;
-      line-height: 1.2;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .meeting-title {
+        font-family:
+          "Geist",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.2;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .meeting-countdown.urgent {
-      color: var(--text-secondary);
-    }
+      .meeting-countdown {
+        font-size: 11px;
+        line-height: 1.2;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .btn {
-      padding: 8px 14px;
-      border-radius: 10px;
-      border: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.12s ease;
-      min-height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-      outline: none;
-    }
+      .meeting-countdown.urgent {
+        color: var(--text-secondary);
+      }
 
-    .btn:focus-visible {
-      box-shadow: 0 0 0 2px var(--accent-soft);
-    }
+      .btn {
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: none;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.12s ease;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        outline: none;
+      }
 
-    .btn-primary {
-      background: var(--accent);
-      color: var(--bg);
-      min-width: 120px;
-      box-shadow: inset 0 -1px 0 var(--inset-shadow);
-    }
+      .btn:focus-visible {
+        box-shadow: 0 0 0 2px var(--accent-soft);
+      }
 
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-primary:active { transform: scale(0.97); }
-    .btn-primary:disabled {
-      background: var(--bg-hover);
-      color: var(--text-tertiary);
-      cursor: default;
-      transform: none;
-      box-shadow: none;
-    }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--bg);
+        min-width: 120px;
+        box-shadow: inset 0 -1px 0 var(--inset-shadow);
+      }
 
-    .btn-secondary {
-      background: var(--surface-fill);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-      min-width: 56px;
-    }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-primary:active {
+        transform: scale(0.97);
+      }
+      .btn-primary:disabled {
+        background: var(--bg-hover);
+        color: var(--text-tertiary);
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+      }
 
-    .btn-secondary:hover { background: var(--bg-hover); color: var(--text); }
-    .btn-secondary:active { transform: scale(0.97); }
+      .btn-secondary {
+        background: var(--surface-fill);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        min-width: 56px;
+      }
 
-    .error-text {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 44px;
-      padding: 6px 8px;
-      border-radius: 8px;
-      background: var(--red-bg);
-      font-size: 11px;
-      color: var(--red);
-      display: none;
-      line-height: 1.4;
-    }
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+      }
+      .btn-secondary:active {
+        transform: scale(0.97);
+      }
 
-    .toast {
-      position: fixed;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%) translateY(30px);
-      background: var(--accent);
-      color: var(--bg);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 20px;
-      opacity: 0;
-      transition: all 0.25s ease;
-      pointer-events: none;
-      white-space: nowrap;
-    }
+      .error-text {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: 44px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: var(--red-bg);
+        font-size: 11px;
+        color: var(--red);
+        display: none;
+        line-height: 1.4;
+      }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+      .toast {
+        position: fixed;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%) translateY(30px);
+        background: var(--accent);
+        color: var(--bg);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 20px;
+        opacity: 0;
+        transition: all 0.25s ease;
+        pointer-events: none;
+        white-space: nowrap;
+      }
 
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-</head>
-<body role="alertdialog" aria-label="Upcoming meeting">
-  <div class="prompt">
-    <div class="meeting-info">
-      <span class="calendar-icon">•</span>
-      <div class="meeting-text">
-        <div class="meeting-title" id="title"></div>
-        <div class="meeting-countdown" id="countdown"></div>
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body role="alertdialog" aria-label="Upcoming meeting">
+    <div class="prompt">
+      <div class="meeting-info">
+        <span class="calendar-icon">•</span>
+        <div class="meeting-text">
+          <div class="meeting-title" id="title"></div>
+          <div class="meeting-countdown" id="countdown"></div>
+        </div>
       </div>
+      <button class="btn btn-primary" id="primary-btn" autofocus></button>
+      <button class="btn btn-secondary" id="dismiss-btn">Later</button>
+      <div class="error-text" id="error-text"></div>
     </div>
-    <button class="btn btn-primary" id="primary-btn" autofocus></button>
-    <button class="btn btn-secondary" id="dismiss-btn">Later</button>
-    <div class="error-text" id="error-text"></div>
-  </div>
-  <div class="toast" id="toast">Recording started ✓</div>
+    <div class="toast" id="toast">Recording started ✓</div>
 
-  <script>
-    const invoke = window.__TAURI__?.core?.invoke || (async () => null);
-    const getCurrentWebviewWindow =
-      window.__TAURI__?.webviewWindow?.getCurrentWebviewWindow ||
-      (() => ({ close: () => window.close() }));
+    <script>
+      const invoke = window.__TAURI__?.core?.invoke || (async () => null);
+      const getCurrentWebviewWindow =
+        window.__TAURI__?.webviewWindow?.getCurrentWebviewWindow ||
+        (() => ({ close: () => window.close() }));
 
-    // Element refs
-    const titleEl = document.getElementById('title');
-    const countdownEl = document.getElementById('countdown');
-    const primaryBtn = document.getElementById('primary-btn');
-    const errorEl = document.getElementById('error-text');
-    const toast = document.getElementById('toast');
+      // Element refs
+      const titleEl = document.getElementById("title");
+      const countdownEl = document.getElementById("countdown");
+      const primaryBtn = document.getElementById("primary-btn");
+      const errorEl = document.getElementById("error-text");
+      const toast = document.getElementById("toast");
 
-    // Populated from cmd_get_meeting_prompt below
-    let title = 'Meeting';
-    let minutesUntil = 0;
-    let meetingUrl = '';
-    let hasUrl = false;
+      // Populated from cmd_get_meeting_prompt below
+      let title = "Meeting";
+      let minutesUntil = 0;
+      let meetingUrl = "";
+      let hasUrl = false;
 
-    function renderFromState() {
-      titleEl.textContent = title || 'Meeting';
-      titleEl.title = title || 'Meeting'; // full text on hover
+      function renderFromState() {
+        titleEl.textContent = title || "Meeting";
+        titleEl.title = title || "Meeting"; // full text on hover
 
-      if (minutesUntil <= 0) {
-        countdownEl.textContent = 'Starting now';
-        countdownEl.classList.add('urgent');
-      } else if (minutesUntil === 1) {
-        countdownEl.textContent = 'Starts in 1 minute';
-      } else {
-        countdownEl.textContent = `Starts in ${minutesUntil} minutes`;
-      }
-
-      primaryBtn.textContent = hasUrl ? 'Join & Record' : 'Record';
-    }
-
-    function closeWindow() {
-      try { getCurrentWebviewWindow().close(); } catch { window.close(); }
-    }
-
-    (async () => {
-      // Parse the staging token. The overlay is only meaningful if it was
-      // opened by show_meeting_prompt with a token; otherwise we have no
-      // meeting context to render and should quietly close rather than show
-      // a phantom "Meeting · starting now · Record" overlay.
-      const tokenStr = new URLSearchParams(window.location.search).get('t');
-      const token = tokenStr === null ? NaN : Number(tokenStr);
-      if (!Number.isFinite(token)) {
-        console.warn('meeting-prompt opened without staging token; closing');
-        closeWindow();
-        return;
-      }
-
-      let data = null;
-      try {
-        data = await invoke('cmd_get_meeting_prompt', { token });
-      } catch (e) {
-        // IPC itself failed (command not registered, state missing, etc.).
-        // This is operator-visible in devtools/stderr; for the user, close
-        // silently rather than render a context-free overlay.
-        console.warn('cmd_get_meeting_prompt failed:', e);
-        closeWindow();
-        return;
-      }
-
-      if (!data) {
-        // Token was already drained (rapid-reopen race) or never staged.
-        // Either way the overlay has nothing to show — close it.
-        console.warn('meeting-prompt token', token, 'returned no data; closing');
-        closeWindow();
-        return;
-      }
-
-      title = data.title ?? 'Meeting';
-      minutesUntil = Number.isFinite(data.minutesUntil) ? data.minutesUntil : 0;
-      meetingUrl = typeof data.url === 'string' ? data.url : '';
-      hasUrl = meetingUrl.length > 0;
-
-      renderFromState();
-      primaryBtn.focus();
-    })();
-
-    // Actions
-    async function startRecording() {
-      primaryBtn.disabled = true;
-      primaryBtn.textContent = 'Starting...';
-
-      try {
-        // Open meeting URL first if available
-        if (hasUrl) {
-          await invoke('cmd_open_meeting_url', { url: meetingUrl });
+        if (minutesUntil <= 0) {
+          countdownEl.textContent = "Starting now";
+          countdownEl.classList.add("urgent");
+        } else if (minutesUntil === 1) {
+          countdownEl.textContent = "Starts in 1 minute";
+        } else {
+          countdownEl.textContent = `Starts in ${minutesUntil} minutes`;
         }
 
-        // Start recording
-        await invoke('cmd_start_recording', { title });
-
-        // Success toast
-        toast.classList.add('show');
-        setTimeout(() => {
-          toast.classList.remove('show');
-          setTimeout(() => getCurrentWebviewWindow().close(), 200);
-        }, 600);
-      } catch (e) {
-        primaryBtn.disabled = false;
-        primaryBtn.textContent = hasUrl ? 'Join & Record' : 'Record';
-        errorEl.textContent = String(e);
-        errorEl.style.display = 'block';
+        primaryBtn.textContent = hasUrl ? "Join & Record" : "Record";
       }
-    }
 
-    function dismiss() {
-      getCurrentWebviewWindow().close();
-    }
+      function closeWindow() {
+        try {
+          getCurrentWebviewWindow().close();
+        } catch {
+          window.close();
+        }
+      }
 
-    primaryBtn.addEventListener('click', startRecording);
-    document.getElementById('dismiss-btn').addEventListener('click', dismiss);
+      (async () => {
+        // Parse the staging token. The overlay is only meaningful if it was
+        // opened by show_meeting_prompt with a token; otherwise we have no
+        // meeting context to render and should quietly close rather than show
+        // a phantom "Meeting · starting now · Record" overlay.
+        const tokenStr = new URLSearchParams(window.location.search).get("t");
+        const token = tokenStr === null ? NaN : Number(tokenStr);
+        if (!Number.isFinite(token)) {
+          console.warn("meeting-prompt opened without staging token; closing");
+          closeWindow();
+          return;
+        }
 
-    // Keyboard: Escape to dismiss
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') dismiss();
-    });
+        let data = null;
+        try {
+          data = await invoke("cmd_get_meeting_prompt", { token });
+        } catch (e) {
+          // IPC itself failed (command not registered, state missing, etc.).
+          // This is operator-visible in devtools/stderr; for the user, close
+          // silently rather than render a context-free overlay.
+          console.warn("cmd_get_meeting_prompt failed:", e);
+          closeWindow();
+          return;
+        }
 
-    // Auto-dismiss after 2 minutes so a prompt shown at T-1 remains visible
-    // through T+1 (matching the scheduling window in main.rs).
-    setTimeout(() => {
-      document.body.style.transition = 'opacity 300ms ease-out';
-      document.body.style.opacity = '0';
-      setTimeout(() => getCurrentWebviewWindow().close(), 300);
-    }, 120000);
-  </script>
-</body>
+        if (!data) {
+          // Token was already drained (rapid-reopen race) or never staged.
+          // Either way the overlay has nothing to show — close it.
+          console.warn(
+            "meeting-prompt token",
+            token,
+            "returned no data; closing",
+          );
+          closeWindow();
+          return;
+        }
+
+        title = data.title ?? "Meeting";
+        minutesUntil = Number.isFinite(data.minutesUntil)
+          ? data.minutesUntil
+          : 0;
+        meetingUrl = typeof data.url === "string" ? data.url : "";
+        hasUrl = meetingUrl.length > 0;
+
+        renderFromState();
+        primaryBtn.focus();
+      })();
+
+      // Actions
+      async function startRecording() {
+        primaryBtn.disabled = true;
+        primaryBtn.textContent = "Starting...";
+
+        try {
+          // Open meeting URL first if available
+          if (hasUrl) {
+            await invoke("cmd_open_meeting_url", { url: meetingUrl });
+          }
+
+          // Start recording
+          await invoke("cmd_start_recording", { title });
+
+          // Success toast
+          toast.classList.add("show");
+          setTimeout(() => {
+            toast.classList.remove("show");
+            setTimeout(() => getCurrentWebviewWindow().close(), 200);
+          }, 600);
+        } catch (e) {
+          primaryBtn.disabled = false;
+          primaryBtn.textContent = hasUrl ? "Join & Record" : "Record";
+          errorEl.textContent = String(e);
+          errorEl.style.display = "block";
+        }
+      }
+
+      function dismiss() {
+        getCurrentWebviewWindow().close();
+      }
+
+      primaryBtn.addEventListener("click", startRecording);
+      document.getElementById("dismiss-btn").addEventListener("click", dismiss);
+
+      // Keyboard: Escape to dismiss
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") dismiss();
+      });
+
+      // Auto-dismiss after 2 minutes so a prompt shown at T-1 remains visible
+      // through T+1 (matching the scheduling window in main.rs).
+      setTimeout(() => {
+        document.body.style.transition = "opacity 300ms ease-out";
+        document.body.style.opacity = "0";
+        setTimeout(() => getCurrentWebviewWindow().close(), 300);
+      }, 120000);
+    </script>
+  </body>
 </html>
