@@ -147,9 +147,13 @@ body.is-playground-shell .pg-head .nav-arrow:hover {
   color: var(--text);
 }
 
-/* BOTTOM BAR — fixed at base of main shell, orb + ask pill */
+/* BOTTOM BAR — pinned to the actual viewport bottom. Must be `fixed`
+   rather than `absolute` because production's `html { zoom: 1.1 }`
+   makes body height (100vh) exceed the visible viewport by 10%, so
+   `bottom: 0` against `.app-left` lands ~10% below the visible edge.
+   Fixed is relative to the layout viewport, which is what we want. */
 body.is-playground-shell .pg-bottom-bar {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   bottom: 0;

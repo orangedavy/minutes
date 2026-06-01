@@ -247,8 +247,9 @@ fn show_main_window(app: &tauri::AppHandle) {
         // Empty title hides the centered "Minutes" text in any native chrome.
         // The in-app brand mark (italic m + recording dot) carries the identity.
         .title("")
-        .inner_size(760.0, 880.0)
-        .min_inner_size(600.0, 680.0)
+        // Playground spec: 660×960 (Granola-sized). See tauri/src/playground.html.
+        .inner_size(660.0, 960.0)
+        .min_inner_size(560.0, 720.0)
         .transparent(true)
         .content_protected(Config::load().privacy.hide_from_screen_share)
         .focused(true);

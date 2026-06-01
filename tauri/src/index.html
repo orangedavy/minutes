@@ -13209,8 +13209,9 @@
       const assistantBtn = document.getElementById("btn-assistant");
       const splitHandle = document.getElementById("split-handle");
 
-      const COLLAPSED_WIDTH = 520;
-      const EXPANDED_WIDTH = 960;
+      const COLLAPSED_WIDTH = 660;
+      const EXPANDED_WIDTH = 1100;
+      const PLAYGROUND_HEIGHT = 960;
       const DEFAULT_RECALL_RATIO = 0.5;
       const MIN_RECALL_RATIO = 0.25;
       const MAX_RECALL_RATIO = 0.667;
@@ -13451,7 +13452,7 @@
           }
 
           await currentWindow.setSize(
-            new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, 640),
+            new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, PLAYGROUND_HEIGHT),
           );
         }
 
@@ -13489,7 +13490,7 @@
         setTimeout(async () => {
           if (!isFullscreen) {
             await currentWindow.setSize(
-              new window.__TAURI__.window.LogicalSize(COLLAPSED_WIDTH, 640),
+              new window.__TAURI__.window.LogicalSize(COLLAPSED_WIDTH, PLAYGROUND_HEIGHT),
             );
           }
           recallExpanded = false;
@@ -15101,7 +15102,7 @@
         if (wasFullscreen && !fs && recallExpanded) {
           await currentWindow
             .setSize(
-              new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, 640),
+              new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, PLAYGROUND_HEIGHT),
             )
             .catch(() => {});
           if (recallFitAddon) recallFitAddon.fit();
@@ -16175,7 +16176,12 @@
           recallWorkspaceState = null;
         }
         if (!recallWorkspaceState) {
-          if (localStorage.getItem("minutes.recallExpanded") === "true") {
+          // Playground shell hides Recall by default; do NOT auto-open it
+          // on startup. User must explicitly open via the Ask pill or palette.
+          if (
+            !document.body.classList.contains("is-playground-shell") &&
+            localStorage.getItem("minutes.recallExpanded") === "true"
+          ) {
             setTimeout(() => openRecall("assistant"), 500);
           }
           return;
@@ -16194,7 +16200,10 @@
           }
         }
 
-        if (recallWorkspaceState.recallExpanded) {
+        if (
+          recallWorkspaceState.recallExpanded &&
+          !document.body.classList.contains("is-playground-shell")
+        ) {
           setTimeout(async () => {
             await openRecall("assistant");
             if (recallWorkspaceState.recallPhase) {
