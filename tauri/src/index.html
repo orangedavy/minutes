@@ -6948,6 +6948,7 @@
     <link rel="stylesheet" href="styles/playground-tokens.css" />
     <link rel="stylesheet" href="styles/playground-shell.css" />
     <link rel="stylesheet" href="styles/playground-home.css" />
+    <link rel="stylesheet" href="styles/playground-detail.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
     <script src="vendor/xterm/xterm.js"></script>
@@ -9643,11 +9644,18 @@
 
             const body = document.createElement("div");
             body.className = "detail-section-body";
-            setHighlightedText(
-              body,
-              section.content || "No content",
-              activeSearchQuery,
-            );
+            // Render as markdown so nested ##/###, lists, emphasis,
+            // code, links etc. all surface with proper hierarchy.
+            // Falls back to plain text if marked isn't loaded yet.
+            if (typeof renderMarkdownToElement === "function" && section.content) {
+              renderMarkdownToElement(body, section.content);
+            } else {
+              setHighlightedText(
+                body,
+                section.content || "No content",
+                activeSearchQuery,
+              );
+            }
 
             sectionEl.appendChild(heading);
             sectionEl.appendChild(body);

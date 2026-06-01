@@ -159,7 +159,7 @@ body.is-playground-shell .pg-bottom-bar {
   align-items: center;
   background: linear-gradient(
     to top,
-    var(--bg) 65%,
+    var(--bg) 70%,
     rgba(0, 0, 0, 0) 100%
   );
   z-index: 20;
@@ -168,14 +168,21 @@ body.is-playground-shell .pg-record-orb {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--bg-elev);
-  border: 1px solid var(--border-mid);
+  background: #25241f;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
   display: grid;
   place-items: center;
-  color: var(--text-secondary);
+  color: var(--text);
   flex-shrink: 0;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+body.is-playground-shell .pg-record-orb:active {
+  transform: scale(0.94);
 }
 body.is-playground-shell .pg-record-orb:hover {
   background: var(--bg-elev-2);
@@ -225,16 +232,23 @@ body.is-playground-shell .pg-audio-bars span:nth-child(5) {
 body.is-playground-shell .pg-ask-pill {
   flex: 1;
   height: 40px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border-mid);
+  background: #1f1e1b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   border-radius: var(--radius-pill);
   padding: 0 18px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 13px;
   cursor: text;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+body.is-playground-shell .pg-ask-pill input::placeholder {
+  color: var(--text-secondary);
 }
 body.is-playground-shell .pg-ask-pill:focus-within {
   border-color: var(--text-quaternary);
@@ -303,4 +317,22 @@ body.is-playground-shell .pg-titlebar {
 body.is-playground-shell .pg-scroll {
   flex: 1;
   min-height: 0;
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   RIGHT-PANE — Recall PTY is not part of the playground home view.
+   Hide .app-right + .split-handle by default. Opening Recall (via the
+   Ask pill, ⌘K, or Live button) adds body.has-recall to reveal it.
+   ──────────────────────────────────────────────────────────────────── */
+body.is-playground-shell .app-right,
+body.is-playground-shell .recall-panel,
+body.is-playground-shell .split-handle {
+  display: none !important;
+}
+body.is-playground-shell.has-recall .app-right,
+body.is-playground-shell.has-recall .recall-panel {
+  display: flex !important;
+}
+body.is-playground-shell.has-recall .split-handle {
+  display: block !important;
 }

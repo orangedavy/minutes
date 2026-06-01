@@ -1,0 +1,352 @@
+/* Playground detail-overlay restyle — applies playground aesthetic to
+   the existing #detail-overlay DOM. We don't rewrite the markup because
+   renderDetailSections() pushes deeply-structured content into
+   #detail-scroll (action items, decisions, transcript, artifacts,
+   speaker maps, etc.). Restyling preserves all that logic intact.
+   See tauri/src/playground.html lines 358-435 for source styling. */
+
+body.is-playground-shell .detail-overlay.active {
+  /* Take the full window — playground uses an in-place .detail view */
+  background: var(--bg);
+}
+body.is-playground-shell .detail-overlay .detail-card {
+  background: var(--bg);
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+
+/* Close button → playground icon-btn in top-right */
+body.is-playground-shell .detail-overlay .detail-close-x {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 10;
+}
+body.is-playground-shell .detail-overlay .detail-close-x:hover {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+
+/* Header band: serif title + meta + chip-style actions */
+body.is-playground-shell .detail-overlay .detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 48px 6px;
+  border-bottom: none;
+  background: transparent;
+}
+body.is-playground-shell .detail-overlay .detail-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+body.is-playground-shell .detail-overlay .detail-title {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  text-wrap: balance;
+  margin: 0;
+}
+body.is-playground-shell .detail-overlay .detail-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Action button row: convert to chips */
+body.is-playground-shell .detail-overlay .detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  border-radius: 8px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  min-height: 0;
+  letter-spacing: -0.003em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn:hover {
+  background: var(--bg-elev-2);
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn-primary {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn-primary:hover {
+  background: var(--text);
+  opacity: 0.92;
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn-danger {
+  color: var(--red);
+  background: transparent;
+}
+body.is-playground-shell .detail-overlay .detail-actions .btn-danger:hover {
+  background: var(--red-bg);
+  border-color: var(--red);
+}
+
+/* Scroll body: generous gutters, no card frame */
+body.is-playground-shell .detail-overlay .detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 48px 130px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-elev-2) transparent;
+}
+body.is-playground-shell .detail-overlay .detail-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+body.is-playground-shell
+  .detail-overlay
+  .detail-scroll::-webkit-scrollbar-thumb {
+  background: var(--bg-elev-2);
+  border-radius: 4px;
+}
+
+/* Section cards used by renderDetailSections — quiet them down,
+   let typography do the lifting */
+body.is-playground-shell .detail-overlay .detail-section,
+body.is-playground-shell .detail-overlay .detail-card-section,
+body.is-playground-shell .detail-overlay .detail-artifacts {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 8px 0;
+  margin-bottom: 18px;
+}
+
+/* Section headings — only the top-level section title (the YAML heading)
+   gets the playground-style `#` prefix. Inside the body, rendered markdown
+   gets a real visual hierarchy: h1 > h2 > h3, no `#` decoration. */
+body.is-playground-shell .detail-overlay .detail-section-title {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  margin: 22px 0 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+body.is-playground-shell .detail-overlay .detail-section-title::before {
+  content: "#";
+  color: var(--text-quaternary);
+  font-weight: 400;
+}
+
+/* Markdown headings INSIDE a section body — no `#` decoration, proper hierarchy */
+body.is-playground-shell .detail-overlay .detail-section-body h1 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 18px 0 8px;
+  line-height: 1.2;
+}
+body.is-playground-shell .detail-overlay .detail-section-body h2 {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 16px 0 6px;
+  letter-spacing: -0.005em;
+}
+body.is-playground-shell .detail-overlay .detail-section-body h3 {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin: 14px 0 4px;
+}
+body.is-playground-shell .detail-overlay .detail-section-body h4,
+body.is-playground-shell .detail-overlay .detail-section-body h5,
+body.is-playground-shell .detail-overlay .detail-section-body h6 {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 12px 0 4px;
+}
+body.is-playground-shell .detail-overlay .detail-section-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+body.is-playground-shell .detail-overlay .detail-section-body em {
+  color: var(--text);
+  font-style: italic;
+}
+body.is-playground-shell .detail-overlay .detail-section-body a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+body.is-playground-shell .detail-overlay .detail-section-body a:hover {
+  border-bottom-color: var(--accent);
+}
+body.is-playground-shell .detail-overlay .detail-section-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-elev-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text);
+}
+body.is-playground-shell .detail-overlay .detail-section-body pre {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-elev-2);
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+body.is-playground-shell .detail-overlay .detail-section-body blockquote {
+  border-left: 2px solid var(--border-mid);
+  padding-left: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 8px 0;
+}
+
+/* Lists in playground style — custom bullets, comfortable line-height */
+body.is-playground-shell .detail-overlay .detail-section ul {
+  list-style: none;
+  padding-left: 6px;
+  margin: 0;
+}
+body.is-playground-shell .detail-overlay .detail-section ul ul {
+  padding-left: 20px;
+}
+body.is-playground-shell .detail-overlay .detail-section li {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  position: relative;
+  padding: 2px 0 2px 16px;
+}
+body.is-playground-shell .detail-overlay .detail-section li::before {
+  content: "•";
+  position: absolute;
+  left: 3px;
+  color: var(--text-quaternary);
+}
+body.is-playground-shell .detail-overlay .detail-section ul ul li::before {
+  content: "◦";
+}
+
+/* Paragraphs */
+body.is-playground-shell .detail-overlay .detail-section p,
+body.is-playground-shell .detail-overlay .detail-paragraph {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+/* Transcript lines — playground mono grid */
+body.is-playground-shell .detail-overlay .transcript-line,
+body.is-playground-shell .detail-overlay .tx-line {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+}
+body.is-playground-shell .detail-overlay .transcript-time {
+  color: var(--text-quaternary);
+  font-size: 10.5px;
+  padding-top: 2px;
+}
+body.is-playground-shell .detail-overlay .transcript-speaker {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 11px;
+  padding-top: 2px;
+}
+body.is-playground-shell .detail-overlay .transcript-text {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+/* Empty state recentered */
+body.is-playground-shell .detail-overlay .detail-empty {
+  text-align: left;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 28px 0;
+}
+
+/* Feedback toast strip */
+body.is-playground-shell .detail-overlay .detail-feedback {
+  margin: 0 48px 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: var(--font-ui);
+}
+
+/* Reduced motion preserves entrance fade but disables transforms */
+@media (prefers-reduced-motion: reduce) {
+  body.is-playground-shell .detail-overlay,
+  body.is-playground-shell .detail-overlay .detail-card {
+    transition: none !important;
+    animation: none !important;
+  }
+}
