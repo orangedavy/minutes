@@ -127,12 +127,9 @@ const comparisons = [
   ["Agent-agnostic", "No", "No", "No", "Yes"],
 ] as const;
 
-function SectionLabel({ n, label }: { n: string; label: string }) {
+function SectionLabel({ label }: { label: string }) {
   return (
     <div className="mb-8 flex items-center gap-3">
-      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--accent)]">
-        {n}
-      </span>
       <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
         {label}
       </span>
@@ -222,7 +219,7 @@ export default function Home() {
         >
           minutes
         </a>
-        <div className="flex flex-wrap justify-end gap-x-6 gap-y-2 text-sm text-[var(--text-secondary)] max-sm:gap-x-4 max-sm:text-xs">
+        <div className="flex flex-wrap justify-end gap-x-6 gap-y-2 text-sm text-[var(--text-secondary)] max-sm:gap-x-4 max-sm:text-xs [&>a]:py-2">
           <a href="https://github.com/silverstein/minutes" className="hover:text-[var(--accent)]">
             GitHub
           </a>
@@ -252,7 +249,7 @@ export default function Home() {
           v{MINUTES_RELEASE_VERSION} • {MINUTES_MCP_TOOL_COUNT} MCP tools •{" "}
           {MINUTES_CLI_COMMAND_COUNT} CLI commands • {MINUTES_TEST_COUNT}+ tests
         </p>
-        <h1 className="mx-auto max-w-[720px] font-serif text-[40px] leading-[0.98] tracking-[-0.045em] text-[var(--text)] sm:text-[58px]">
+        <h1 className="mx-auto max-w-[720px] font-serif text-[40px] leading-[0.98] tracking-[-0.03em] text-[var(--text)] sm:text-[58px]">
           Every meeting, memo, and voice note,
           <br />
           <span className="italic text-[var(--accent)]">structured and searchable.</span>
@@ -405,7 +402,6 @@ export default function Home() {
       </section>
 
       <section className="border-t border-[color:var(--border)] py-16">
-        <SectionLabel n="01" label="Proof" />
         <h2 className="font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           Start with the evidence, not the pitch.
         </h2>
@@ -450,7 +446,7 @@ export default function Home() {
       </section>
 
       <section id="pipeline" className="border-t border-[color:var(--border)] py-16">
-        <SectionLabel n="02" label="Pipeline" />
+        <SectionLabel label="Pipeline" />
         <h2 className="font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           How it works
         </h2>
@@ -471,7 +467,6 @@ export default function Home() {
       </section>
 
       <section className="border-t border-[color:var(--border)] py-16">
-        <SectionLabel n="03" label="Audience" />
         <h2 className="max-w-[620px] font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           Capture it anywhere. Find it everywhere.
         </h2>
@@ -496,7 +491,6 @@ export default function Home() {
       </section>
 
       <section className="border-t border-[color:var(--border)] py-16">
-        <SectionLabel n="04" label="Features" />
         <h2 className="font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           What you get
         </h2>
@@ -527,7 +521,7 @@ export default function Home() {
       </section>
 
       <section className="border-t border-[color:var(--border)] py-16">
-        <SectionLabel n="05" label="Comparison" />
+        <SectionLabel label="Comparison" />
         <h2 className="font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           How it compares
         </h2>

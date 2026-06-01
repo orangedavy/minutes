@@ -91,3 +91,7 @@ tmp/
 docs/assets/demo*
 .agents/napkin.md
 .claude/scheduled_tasks.lock
+
+.claude/
+.agents/
+.vscode/
