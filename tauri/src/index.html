@@ -4625,6 +4625,171 @@
         data-tauri-drag-region
         aria-hidden="true"
       ></div>
+
+      <!-- ────────────────────────────────────────────────────────────
+           PLAYGROUND SHELL (visible when body.is-playground-shell).
+           This is the new chrome — extracted from tauri/src/playground.html.
+           Production chrome below is hidden by playground-shell.css and
+           kept alive only so existing JS (recording state, cmd_* calls,
+           overlays) keeps working. Adapter buttons here forward clicks
+           to the canonical hidden controls. See PLAN.md.command-palette.
+           ──────────────────────────────────────────────────────────── -->
+      <div class="pg-titlebar" data-tauri-drag-region>
+        <div class="traffic" data-tauri-drag-region aria-hidden="true"></div>
+        <div class="tb-spacer" data-tauri-drag-region></div>
+        <div class="tb-actions">
+          <button
+            class="tb-btn has-dot"
+            id="pg-btn-live"
+            title="Start live transcript — your agent can coach mid-meeting"
+          >
+            Live
+          </button>
+          <button
+            class="tb-btn"
+            id="pg-btn-quick"
+            title="Capture a quick voice or text thought"
+          >
+            + Quick Thought
+          </button>
+          <button
+            class="icon-btn"
+            id="pg-btn-settings"
+            title="Settings (⌘,)"
+            aria-label="Settings"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="pg-scroll" id="pg-scroll">
+        <div class="pg-head">
+          <h1>Minutes</h1>
+          <div class="nav-arrows">
+            <button
+              class="nav-arrow"
+              id="pg-nav-prev"
+              aria-label="Previous"
+              title="Previous"
+            >
+              ‹
+            </button>
+            <button
+              class="nav-arrow"
+              id="pg-nav-next"
+              aria-label="Next"
+              title="Next"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero "now recording" card — only visible while a session is
+             active. Mirrors state from the hidden #recording-bar. -->
+        <div class="pg-hero-now" id="pg-hero-now" hidden>
+          <div class="pg-hero-now-kicker">
+            <span class="hn-pulse" aria-hidden="true"></span>
+            <span id="pg-hero-now-status">Recording now</span>
+          </div>
+          <h2 id="pg-hero-now-title">Live session</h2>
+          <div class="pg-hero-now-meta">
+            <span id="pg-hero-now-timer">0:00</span>
+          </div>
+          <div class="pg-hero-now-wave" id="pg-hero-now-wave">
+            <span style="height:35%"></span><span style="height:65%"></span
+            ><span style="height:45%"></span><span style="height:80%"></span
+            ><span style="height:55%"></span><span style="height:70%"></span
+            ><span style="height:40%"></span><span style="height:85%"></span
+            ><span style="height:50%"></span><span style="height:75%"></span
+            ><span style="height:45%"></span><span style="height:60%"></span
+            ><span style="height:80%"></span><span style="height:35%"></span
+            ><span style="height:70%"></span><span style="height:50%"></span
+            ><span style="height:65%"></span><span style="height:45%"></span
+            ><span style="height:80%"></span><span style="height:55%"></span>
+          </div>
+          <div class="pg-hero-now-actions">
+            <button class="hn-ghost" id="pg-hero-add-note" type="button">
+              Add note
+            </button>
+            <button class="hn-cta" id="pg-hero-stop" type="button">
+              Stop recording
+            </button>
+          </div>
+        </div>
+
+        <!-- Today's calendar — wired from cmd_upcoming_meetings if available -->
+        <div class="pg-coming-up" id="pg-coming-up" hidden></div>
+
+        <!-- Meeting list (rendered by renderMeetingsPlayground) -->
+        <div id="pg-meetings-scroll">
+          <div class="empty-state">
+            <div class="title">No meetings yet</div>
+            <div class="sub">
+              Record your first conversation to get started.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-bottom-bar">
+        <button
+          class="pg-record-orb"
+          id="pg-btn-record"
+          type="button"
+          title="Start recording"
+          aria-label="Start recording"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="6" />
+          </svg>
+        </button>
+        <label class="pg-ask-pill" id="pg-ask-pill" for="pg-ask-input">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            style="color: var(--text-tertiary); flex-shrink: 0"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            id="pg-ask-input"
+            type="text"
+            placeholder="Ask Recall anything…"
+            autocomplete="off"
+          />
+          <span class="ask-kbd" aria-hidden="true">⌘/</span>
+        </label>
+      </div>
+      <!-- end playground shell -->
+
       <div class="header" data-tauri-drag-region>
         <div class="brand" data-tauri-drag-region>
           <span
@@ -9530,6 +9695,7 @@
         if (!meetings || meetings.length === 0) {
           footer.classList.add("footer-hidden");
           renderSetupEmptyState();
+          renderMeetingsPlayground([]);
           return;
         }
 
@@ -9619,7 +9785,207 @@
             meetingsScroll.appendChild(item);
           }
         }
+
+        renderMeetingsPlayground(meetings);
       }
+
+      // ── Playground shell renderers ─────────────────────────────────
+      // renderMeetingsPlayground mirrors renderMeetings into the new
+      // #pg-meetings-scroll container using playground .pg-row markup.
+      // Click + chat handlers reuse the same openMeetingDetail / openRecall
+      // entry points as the production renderer.
+
+      const PG_AVATAR_CLASSES = [
+        "av-1",
+        "av-2",
+        "av-3",
+        "av-4",
+        "av-5",
+        "av-6",
+      ];
+
+      function pgAvatarClass(seed) {
+        const s = String(seed || "");
+        let h = 0;
+        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+        return PG_AVATAR_CLASSES[Math.abs(h) % PG_AVATAR_CLASSES.length];
+      }
+
+      function pgFormatRowTime(dateStr) {
+        // 12-hour time with subtle am/pm — playground style "10:00 AM"
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return "";
+          let h = d.getHours();
+          const m = String(d.getMinutes()).padStart(2, "0");
+          const ampm = h >= 12 ? "PM" : "AM";
+          h = h % 12 || 12;
+          return `${h}:${m} <span class="ampm">${ampm}</span>`;
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function renderMeetingsPlayground(meetings) {
+        const root = document.getElementById("pg-meetings-scroll");
+        if (!root) return;
+        root.replaceChildren();
+
+        if (!meetings || meetings.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.innerHTML =
+            '<div class="title">No meetings yet</div>' +
+            '<div class="sub">Record your first conversation to get started.</div>';
+          root.appendChild(empty);
+          return;
+        }
+
+        const groups = groupByDate(meetings);
+        for (const [label, items] of Object.entries(groups)) {
+          const group = document.createElement("div");
+          group.className = "pg-day-group";
+
+          const heading = document.createElement("div");
+          heading.className = "pg-day-label is-bold";
+          const titleEl = document.createElement("span");
+          titleEl.textContent = label;
+          const countEl = document.createElement("span");
+          countEl.className = "dl-count";
+          countEl.textContent =
+            items.length === 1 ? "1 meeting" : items.length + " meetings";
+          heading.appendChild(titleEl);
+          heading.appendChild(countEl);
+          group.appendChild(heading);
+
+          items.forEach((m, idx) => {
+            const row = document.createElement("div");
+            row.className = "pg-row";
+            row.style.setProperty("--i", String(idx));
+            row.addEventListener("click", () => openMeetingDetail(m.path));
+
+            const avatar = document.createElement("div");
+            avatar.className = "pg-avatar " + pgAvatarClass(m.title || m.path);
+            avatar.textContent = (m.title || "U").trim().charAt(0).toUpperCase();
+
+            const text = document.createElement("div");
+            text.className = "pg-row-text";
+            const title = document.createElement("div");
+            title.className = "pg-row-title";
+            title.textContent = m.title || "Untitled";
+            text.appendChild(title);
+            if (m.content_type && m.content_type !== "meeting") {
+              const sub = document.createElement("div");
+              sub.className = "pg-row-attendees";
+              sub.textContent = m.content_type;
+              text.appendChild(sub);
+            }
+
+            const meta = document.createElement("div");
+            meta.className = "pg-row-meta";
+            const time = document.createElement("span");
+            time.className = "pg-row-time";
+            time.innerHTML = pgFormatRowTime(m.date);
+            meta.appendChild(time);
+
+            row.appendChild(avatar);
+            row.appendChild(text);
+            row.appendChild(meta);
+            group.appendChild(row);
+          });
+
+          root.appendChild(group);
+        }
+      }
+
+      // ── Playground adapter buttons ─────────────────────────────────
+      // The new chrome forwards clicks to the canonical (hidden) controls
+      // so all existing event handlers, recording state, cmd_* flows,
+      // and lifecycle wiring continue to operate unchanged.
+      function pgClick(targetId) {
+        const el = document.getElementById(targetId);
+        if (el) el.click();
+      }
+
+      document
+        .getElementById("pg-btn-record")
+        ?.addEventListener("click", () => pgClick("btn-record"));
+      document
+        .getElementById("pg-hero-stop")
+        ?.addEventListener("click", () => pgClick("btn-stop"));
+      document
+        .getElementById("pg-hero-add-note")
+        ?.addEventListener("click", () => pgClick("btn-note-inline"));
+      document
+        .getElementById("pg-btn-live")
+        ?.addEventListener("click", () => pgClick("btn-live"));
+      document
+        .getElementById("pg-btn-quick")
+        ?.addEventListener("click", () => pgClick("btn-quick-thought"));
+      document
+        .getElementById("pg-btn-settings")
+        ?.addEventListener("click", () => pgClick("btn-settings"));
+
+      // Ask pill: clicking anywhere opens Recall; Enter submits to assistant.
+      const pgAskPill = document.getElementById("pg-ask-pill");
+      const pgAskInput = document.getElementById("pg-ask-input");
+      if (pgAskPill && pgAskInput) {
+        pgAskPill.addEventListener("click", (e) => {
+          if (e.target === pgAskInput) return;
+          pgAskInput.focus();
+        });
+        pgAskInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            pgClick("btn-assistant");
+          } else if (e.key === "Escape") {
+            pgAskInput.blur();
+          }
+        });
+      }
+
+      // Mirror recording state from the hidden #recording-bar into the
+      // hero card + record orb. Uses MutationObserver so we don't have to
+      // touch the existing recording lifecycle code.
+      (function mirrorRecordingState() {
+        const recBar = document.getElementById("recording-bar");
+        const orb = document.getElementById("pg-btn-record");
+        const heroNow = document.getElementById("pg-hero-now");
+        const heroTimer = document.getElementById("pg-hero-now-timer");
+        const heroStatus = document.getElementById("pg-hero-now-status");
+        const heroTitle = document.getElementById("pg-hero-now-title");
+        const recTimeEl = document.getElementById("recording-time");
+        const recLabelEl = document.getElementById("recording-label");
+        if (!recBar || !orb || !heroNow) return;
+
+        const sync = () => {
+          const isActive = recBar.classList.contains("active");
+          orb.classList.toggle("is-recording", isActive);
+          heroNow.hidden = !isActive;
+          orb.title = isActive ? "Stop recording" : "Start recording";
+          if (isActive) {
+            if (recTimeEl && heroTimer)
+              heroTimer.textContent = recTimeEl.textContent || "0:00";
+            if (recLabelEl && heroStatus)
+              heroStatus.textContent =
+                recLabelEl.textContent || "Recording now";
+            if (heroTitle) heroTitle.textContent = "Live session";
+          }
+        };
+
+        new MutationObserver(sync).observe(recBar, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+        if (recTimeEl) {
+          new MutationObserver(sync).observe(recTimeEl, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+          });
+        }
+        sync();
+      })();
 
       async function loadMeetings() {
         try {

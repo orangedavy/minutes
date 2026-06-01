@@ -260,3 +260,47 @@ body.is-playground-shell .pg-ask-pill .ask-kbd {
   border: 1px solid var(--border);
   border-radius: 4px;
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   APP-LEFT LAYOUT — make .app-left a positioning context so the
+   .pg-bottom-bar can absolutely-pin to its base, and let .pg-scroll
+   take the remaining height. The production .header / .footer /
+   recording-bar / search-wrap / etc. are kept in the DOM (so existing
+   cmd_* JS keeps firing) but hidden visually.
+   ──────────────────────────────────────────────────────────────────── */
+body.is-playground-shell .app-left {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+body.is-playground-shell .app-left > .window-drag-strip {
+  display: none;
+}
+body.is-playground-shell .app-left > .header,
+body.is-playground-shell .app-left > .recording-bar,
+body.is-playground-shell .app-left > .live-bar,
+body.is-playground-shell .app-left > .note-inline-bar,
+body.is-playground-shell .app-left > .search-wrap,
+body.is-playground-shell .app-left > .upcoming,
+body.is-playground-shell .app-left > .meetings-scroll,
+body.is-playground-shell .app-left > .footer {
+  display: none !important;
+}
+/* Banners that toggle visibility via JS — neutralize their default
+   "hidden" semantics aren't affected, but if they're shown via class
+   we still want them out of view in playground shell for now. They're
+   surfaced via the ⌘K palette / pg-coming-up card in future slices. */
+body.is-playground-shell .app-left > .call-detected,
+body.is-playground-shell .app-left > .call-ended,
+body.is-playground-shell .app-left > .update-banner {
+  display: none !important;
+}
+
+/* New playground stack fills the column */
+body.is-playground-shell .pg-titlebar {
+  flex-shrink: 0;
+}
+body.is-playground-shell .pg-scroll {
+  flex: 1;
+  min-height: 0;
+}
