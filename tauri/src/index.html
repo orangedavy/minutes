@@ -6949,6 +6949,7 @@
     <link rel="stylesheet" href="styles/playground-home.css" />
     <link rel="stylesheet" href="styles/playground-detail.css" />
     <link rel="stylesheet" href="styles/playground-settings.css" />
+    <link rel="stylesheet" href="styles/playground-recall.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
     <script src="vendor/xterm/xterm.js"></script>
@@ -13461,6 +13462,7 @@
         applyRecallRatio(getStoredRecallRatio());
         recallPanel.classList.add("expanded");
         splitHandle.classList.add("visible");
+        document.body.classList.add("has-recall");
         assistantBtn.setAttribute("aria-expanded", "true");
         recallExpanded = true;
         expandAnimating = false;
@@ -13483,6 +13485,7 @@
 
         recallPanel.classList.remove("expanded");
         splitHandle.classList.remove("visible");
+        document.body.classList.remove("has-recall");
         assistantBtn.setAttribute("aria-expanded", "false");
 
         const isFullscreen = await currentWindow

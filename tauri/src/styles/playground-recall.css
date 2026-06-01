@@ -1,0 +1,160 @@
+/* PLAYGROUND RECALL PANEL RESTYLE
+   Scoped under body.is-playground-shell.has-recall. Reshapes the existing
+   right-pane PTY panel chrome (header, buttons, note row) to match the
+   playground rr-tb style. xterm.js itself is left to its own theme. */
+
+/* Drop the rounded shoulders + heavy elevated bg of the production panel
+   so the Recall panel reads as a flat extension of the home view. */
+body.is-playground-shell .recall-panel {
+  background: var(--bg);
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Playground-style toolbar: 44px, single bottom border, tight padding. */
+body.is-playground-shell .recall-panel .recall-header {
+  height: 44px;
+  padding: 0 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  gap: 8px;
+}
+
+body.is-playground-shell .recall-panel .recall-header-info {
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+body.is-playground-shell .recall-panel .recall-phase-dot {
+  width: 6px;
+  height: 6px;
+}
+
+body.is-playground-shell .recall-panel .recall-phase-label {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+
+body.is-playground-shell .recall-panel .recall-context-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+}
+
+/* Small, tight action buttons matching playground .rr-new / chip style. */
+body.is-playground-shell .recall-panel .recall-header-actions {
+  gap: 6px;
+}
+
+body.is-playground-shell .recall-panel .recall-header-actions .btn {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-fill, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+body.is-playground-shell .recall-panel .recall-header-actions .btn:hover {
+  color: var(--text);
+  border-color: var(--border-mid, var(--border));
+}
+
+body.is-playground-shell .recall-panel .recall-close {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  background: transparent;
+}
+
+body.is-playground-shell .recall-panel .recall-close:hover {
+  color: var(--text);
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
+}
+
+/* Quick-note row: collapse the inset frame, flatten input, mono font. */
+body.is-playground-shell .recall-panel .recall-note {
+  padding: 10px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+body.is-playground-shell .recall-panel .recall-note-row {
+  gap: 8px;
+}
+
+body.is-playground-shell .recall-panel #recall-note-input {
+  flex: 1;
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+body.is-playground-shell .recall-panel #recall-note-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+body.is-playground-shell .recall-panel #btn-recall-note-save {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+}
+
+/* Loading + exit banner: tighten and use mono labels. */
+body.is-playground-shell .recall-panel .recall-status,
+body.is-playground-shell .recall-panel .recall-exit-banner {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  padding: 14px 18px;
+  gap: 10px;
+}
+
+/* xterm container — full-bleed under the toolbar, no extra rounding. */
+body.is-playground-shell .recall-panel .recall-terminal {
+  margin: 0;
+  padding: 8px 8px 0;
+  background: var(--bg);
+  border-radius: 0;
+  border: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Split handle — thinner hairline so the panel feels co-equal with home. */
+body.is-playground-shell .split-handle {
+  width: 4px;
+  background: transparent;
+  border-left: 1px solid var(--border);
+  border-right: 0;
+}
+body.is-playground-shell .split-handle:hover,
+body.is-playground-shell .split-handle.dragging {
+  background: var(--accent-soft, rgba(255, 255, 255, 0.04));
+  border-left-color: var(--accent);
+}
