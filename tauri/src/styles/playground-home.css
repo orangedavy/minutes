@@ -1,0 +1,417 @@
+/* Playground home — hero-now (live recording card), coming-up (today
+   calendar), day-group + row (meeting list). Lifted from
+   tauri/src/playground.html lines 224-340, 1213-1290.
+   Scoped under body.is-playground-shell so it only attaches to the
+   rewritten home view. */
+
+/* COMING UP — today's calendar card */
+body.is-playground-shell .pg-coming-up {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  margin-bottom: 26px;
+}
+body.is-playground-shell .cu-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 18px;
+  padding: 4px 0;
+}
+body.is-playground-shell .cu-row + .cu-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-mid);
+}
+body.is-playground-shell .cu-date {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+body.is-playground-shell .cu-date-num {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--text);
+}
+body.is-playground-shell .cu-date-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+body.is-playground-shell .cu-date-meta .month {
+  color: var(--text);
+  font-weight: 600;
+}
+body.is-playground-shell .today-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--red);
+  margin-left: 3px;
+  transform: translateY(-2px);
+}
+body.is-playground-shell .cu-events {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border-mid);
+}
+body.is-playground-shell .cu-event {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  padding: 2px 0;
+}
+body.is-playground-shell .cu-event-bar {
+  width: 2px;
+  align-self: stretch;
+  background: var(--accent);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+body.is-playground-shell .cu-event-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+body.is-playground-shell .cu-event-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.005em;
+}
+body.is-playground-shell .cu-event-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+/* DAY GROUPS + ROWS */
+body.is-playground-shell .pg-day-group + .pg-day-group {
+  margin-top: 18px;
+}
+body.is-playground-shell .pg-day-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 0 4px 6px 4px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+body.is-playground-shell .pg-day-label.is-bold {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.015em;
+  text-transform: none;
+  padding-top: 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+body.is-playground-shell .pg-day-label .dl-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .pg-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px;
+  border-radius: var(--radius-row);
+  cursor: pointer;
+  transition: background 140ms var(--ease-out-quart);
+  animation: pgRowIn 320ms var(--ease-out-quart) backwards;
+  animation-delay: calc(var(--i, 0) * 22ms);
+}
+body.is-playground-shell .pg-row:hover,
+body.is-playground-shell .pg-row.is-active {
+  background: var(--bg-elev);
+}
+@keyframes pgRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+body.is-playground-shell .pg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.94);
+  flex-shrink: 0;
+}
+body.is-playground-shell .pg-avatar.av-1 {
+  background: var(--av-1);
+}
+body.is-playground-shell .pg-avatar.av-2 {
+  background: var(--av-2);
+}
+body.is-playground-shell .pg-avatar.av-3 {
+  background: var(--av-3);
+}
+body.is-playground-shell .pg-avatar.av-4 {
+  background: var(--av-4);
+}
+body.is-playground-shell .pg-avatar.av-5 {
+  background: var(--av-5);
+}
+body.is-playground-shell .pg-avatar.av-6 {
+  background: var(--av-6);
+}
+body.is-playground-shell .pg-row-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+body.is-playground-shell .pg-row-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.003em;
+}
+body.is-playground-shell .pg-row-attendees {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.is-playground-shell .pg-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .pg-row-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  min-width: 56px;
+  text-align: right;
+}
+body.is-playground-shell .pg-row-time .ampm {
+  opacity: 0.55;
+  margin-left: 1px;
+}
+body.is-playground-shell .pg-row-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px 0 6px;
+  border-radius: 999px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 120ms,
+    border-color 120ms,
+    color 120ms;
+}
+body.is-playground-shell .pg-row-tag:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+body.is-playground-shell .pg-row-tag.is-empty {
+  color: var(--text-tertiary);
+  border-style: dashed;
+}
+body.is-playground-shell .pg-row-tag.is-empty:hover {
+  color: var(--accent);
+}
+body.is-playground-shell .pg-row-tag .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+/* HERO NOW — live recording card with waveform, replaces production
+   .recording-bar when a session is active */
+body.is-playground-shell .pg-hero-now {
+  position: relative;
+  margin: 6px 0 22px 0;
+  padding: 22px 22px 20px 22px;
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(
+      120% 80% at 0% 0%,
+      var(--accent-soft) 0%,
+      transparent 55%
+    ),
+    var(--bg-elev);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+body.is-playground-shell .pg-hero-now::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    60% 80% at 100% 100%,
+    var(--accent-soft) 0%,
+    transparent 70%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+body.is-playground-shell .pg-hero-now > * {
+  position: relative;
+}
+body.is-playground-shell .pg-hero-now-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+body.is-playground-shell .pg-hero-now-kicker .hn-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent);
+  animation: pgHnPulse 1.8s ease-in-out infinite;
+}
+@keyframes pgHnPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+body.is-playground-shell .pg-hero-now h2 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1.05;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+body.is-playground-shell .pg-hero-now-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 18px;
+}
+body.is-playground-shell .pg-hero-now-wave {
+  height: 36px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+body.is-playground-shell .pg-hero-now-wave span {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+  animation: pgHnWave 1.4s ease-in-out infinite;
+}
+@keyframes pgHnWave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.85;
+  }
+}
+body.is-playground-shell .pg-hero-now-actions {
+  display: flex;
+  gap: 8px;
+}
+body.is-playground-shell .pg-hero-now-actions .hn-cta {
+  height: 30px;
+  padding: 0 14px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  cursor: pointer;
+}
+body.is-playground-shell .pg-hero-now-actions .hn-ghost {
+  height: 30px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+body.is-playground-shell .pg-hero-now-actions .hn-ghost:hover {
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+
+/* Reduced motion: collapse the entrance + pulse + waveform animations */
+@media (prefers-reduced-motion: reduce) {
+  body.is-playground-shell .pg-row,
+  body.is-playground-shell .pg-record-orb,
+  body.is-playground-shell .pg-hero-now-kicker .hn-pulse,
+  body.is-playground-shell .pg-hero-now-wave span {
+    animation: none !important;
+  }
+}
