@@ -18,6 +18,17 @@ body.is-playground-shell .about-overlay#settings-overlay {
   -webkit-backdrop-filter: none;
 }
 
+/* Kill the entrance transform — `transform: scale(1)` (even at scale 1)
+   creates a containing block, which would scope position:fixed children
+   to the card instead of the viewport. With this off, the fixed top bar
+   correctly anchors to the window edge where the macOS traffic lights
+   live. */
+body.is-playground-shell .about-overlay#settings-overlay > .about-card,
+body.is-playground-shell .about-overlay#settings-overlay.active > .about-card {
+  transform: none !important;
+  transition: opacity 240ms var(--ease-out-quart);
+}
+
 body.is-playground-shell .about-overlay#settings-overlay .settings-card {
   width: 100%;
   max-width: 100%;
