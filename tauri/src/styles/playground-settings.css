@@ -218,6 +218,37 @@ body.is-playground-shell .about-overlay#settings-overlay .about-controls-group s
   background-repeat: no-repeat;
 }
 
+/* Hide native number-input spinners — they clash with the mono input
+   chrome and ship a different focus ring than our selects/text fields. */
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group input[type="number"].settings-field {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group input[type="number"].settings-field::-webkit-outer-spin-button,
+body.is-playground-shell .about-overlay#settings-overlay .about-controls-group input[type="number"].settings-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Trailing "Config file: …" caption under the last section. Production
+   wraps it in .about-footer.settings-footer.about-footer-small with a
+   top border — looked orphaned next to the grouped cards. Render it as
+   a quiet mono caption with no border, matching .about-controls-meta. */
+body.is-playground-shell .about-overlay#settings-overlay .about-footer.settings-footer {
+  border-top: 0;
+  padding: 4px 4px 0 4px;
+  margin-top: -8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  line-height: 1.45;
+}
+body.is-playground-shell .about-overlay#settings-overlay .about-footer.settings-footer .settings-config-path {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
 /* Pill toggle. .is-on is added by setSettingsToggle (index.html). */
 body.is-playground-shell .about-overlay#settings-overlay .toggle-btn {
   width: 36px !important;
