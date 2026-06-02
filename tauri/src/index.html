@@ -4867,6 +4867,54 @@
       </div>
       <!-- end playground shell -->
 
+      <!-- ── Recall Workspace Room (W shortcut) ──────────────────── -->
+      <div class="recall-room" id="recall-room">
+        <div class="rr-tb" data-tauri-drag-region>
+          <div class="traffic" data-tauri-drag-region aria-hidden="true"></div>
+          <button class="rr-back" id="rr-back" title="Back">‹</button>
+          <span class="rr-title-tb">Recall</span>
+          <div class="rr-tb-spacer" data-tauri-drag-region></div>
+          <button class="rr-new" id="rr-new-thread">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            New thread
+          </button>
+        </div>
+        <div class="rr-body">
+          <div class="rr-rail" id="rr-rail">
+            <div class="rr-rail-section">Threads</div>
+            <div class="rr-thread is-active">
+              <div class="rr-thread-title">New conversation</div>
+              <div class="rr-thread-meta">just now</div>
+            </div>
+          </div>
+          <div class="rr-main">
+            <div class="rr-context-strip">
+              <div class="rr-context-label">Context</div>
+              <div class="rr-chips" id="rr-chips">
+                <button class="rr-chip add" id="rr-add-context">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  Add context
+                </button>
+              </div>
+            </div>
+            <div class="rr-thread-view" id="rr-thread-view">
+              <div class="rr-msg">
+                <span class="who">Recall</span>
+                <div class="bubble">Ask me anything about your meetings, decisions, and action items. Add meetings or tags as context to focus the conversation.</div>
+              </div>
+            </div>
+            <div class="rr-input-row">
+              <div class="rr-input">
+                <textarea id="rr-input-textarea" rows="1" placeholder="Ask about your meetings…"></textarea>
+                <button class="send" id="rr-send">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="header" data-tauri-drag-region>
         <div class="brand" data-tauri-drag-region>
           <span
@@ -7070,6 +7118,7 @@
     <link rel="stylesheet" href="styles/playground-detail.css" />
     <link rel="stylesheet" href="styles/playground-settings.css" />
     <link rel="stylesheet" href="styles/playground-palette.css" />
+    <link rel="stylesheet" href="styles/playground-recall-room.css" />
     <link rel="stylesheet" href="styles/playground-recall.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
@@ -10317,6 +10366,57 @@
             toggle();
           }
         });
+      })();
+
+      // ── Recall Workspace Room (W shortcut) ────────────────────────
+      (function wireRecallRoom() {
+        const body = document.body;
+        const backBtn = document.getElementById("rr-back");
+        if (!backBtn) return;
+
+        function openRecallRoom() {
+          body.classList.add("is-recall-room");
+        }
+        function closeRecallRoom() {
+          body.classList.remove("is-recall-room");
+        }
+        function toggleRecallRoom() {
+          if (body.classList.contains("is-recall-room")) {
+            closeRecallRoom();
+          } else {
+            openRecallRoom();
+          }
+        }
+
+        backBtn.addEventListener("click", closeRecallRoom);
+
+        // W shortcut (bare key, not from inputs).
+        document.addEventListener("keydown", (e) => {
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          const t = e.target;
+          const tag = (t && t.tagName) || "";
+          if (tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
+          if (e.key === "w" || e.key === "W") {
+            e.preventDefault();
+            toggleRecallRoom();
+          }
+        });
+
+        // Escape closes recall room.
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && body.classList.contains("is-recall-room")) {
+            closeRecallRoom();
+          }
+        });
+
+        // Auto-resize textarea.
+        const textarea = document.getElementById("rr-input-textarea");
+        if (textarea) {
+          textarea.addEventListener("input", () => {
+            textarea.style.height = "auto";
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + "px";
+          });
+        }
       })();
 
       // Ask pill: clicking anywhere opens Recall; Enter submits to assistant.
