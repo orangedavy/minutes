@@ -30,18 +30,24 @@ body.is-playground-shell .rr-tb {
   -webkit-app-region: drag;
 }
 body.is-playground-shell .rr-tb .traffic {
-  margin-right: 6px;
+  display: flex;
+  gap: 8px;
+  width: 68px;
+  margin-right: 0;
   -webkit-app-region: no-drag;
 }
 body.is-playground-shell .rr-back {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
   display: grid;
   place-items: center;
   font-size: 18px;
   line-height: 1;
+  cursor: pointer;
   -webkit-app-region: no-drag;
 }
 body.is-playground-shell .rr-back:hover {
