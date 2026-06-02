@@ -87,7 +87,7 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-
   letter-spacing: -0.018em;
   line-height: 1;
   color: var(--text);
-  margin: 22px 0 26px 0;
+  margin: 18px 0 22px 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
@@ -148,33 +148,30 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-section > .ab
   padding: 0;
 }
 
-/* Each .about-controls is a flush row. Together they look like one card
-   because first-of-type / last-of-type round the outer corners and
-   sibling combinators draw an internal hairline. */
+/* Each .about-controls is a card row. By default every row has full
+   border + full 12px radius. Sibling combinators and :has() then REMOVE
+   radii from interior edges so contiguous runs fuse into one card.
+   This avoids :first-of-type/:last-of-type which match on element TAG
+   (div) not class — those selectors silently broke because the section
+   title (.about-item-title) is also a <div>. */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls {
   background: var(--bg-elevated, var(--neutral-tint));
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  border-top: 0;
-  border-bottom: 0;
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   margin: 0;
   padding: 14px 16px;
   gap: 14px;
 }
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:first-of-type {
-  border-top: 1px solid var(--border);
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+/* Row followed by another .about-controls → fuse bottom edge. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:has(+ .about-controls) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 0;
 }
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:last-of-type {
-  border-bottom: 1px solid var(--border);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-/* Internal hairline between consecutive rows. */
+/* Row preceded by another .about-controls → fuse top edge (hairline). */
 body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls + .about-controls {
-  border-top: 1px solid var(--border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 /* Hide rows production marks .is-hidden (e.g. parakeet block when engine
    is whisper) so we don't render orphan dividers. */
