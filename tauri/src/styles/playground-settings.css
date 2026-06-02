@@ -68,20 +68,25 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top {
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .settings-title {
-  font-family: var(--font-serif);
-  font-size: 17px;
-  color: var(--text);
-  margin: 0;
-  padding: 0;
-  order: 2;
-}
-body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  order: 1;
+  display: none;
 }
 
-/* Big H1 removed — title now lives inline in the toolbar (matching Recall pattern). */
+/* Big H1 lives in the scroll body, above the first section.
+   Use `.about-top + .settings-section` because `:first-of-type` matches
+   on element type (div) — and `.about-top` is the first div sibling. */
 body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section {
   position: relative;
+}
+body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section::before {
+  content: "Settings";
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1;
+  color: var(--text);
+  margin: 18px 0 22px 0;
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
