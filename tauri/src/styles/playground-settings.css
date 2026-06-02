@@ -90,9 +90,9 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  /* Match playground .st-back: 28×28 with 7px radius. align-items:center
-     on the parent bar centers the button naturally at y=18 to meet the
-     macOS traffic-light centers. */
+  /* Match playground .st-back exactly: 28×28, 7px radius, bg-elev fill,
+     thin border, centered ‹ character. No dramatic hover — just a quiet
+     ghost button that matches the icon-btn / sidebar button language. */
   width: 28px;
   height: 28px;
   min-width: 0;
@@ -106,19 +106,22 @@ body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
   display: grid;
   place-items: center;
   position: relative;
-  transition: background 120ms, border-color 120ms;
+  cursor: pointer;
+  transition: background 100ms ease;
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close:hover {
-  background: var(--bg-elev-2, var(--neutral-tint));
-  border-color: var(--text-tertiary);
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
+}
+body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close:active {
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
+  transform: scale(0.94);
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close::before {
   content: "\2039"; /* ‹ */
   color: var(--text);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 400;
   line-height: 1;
-  margin-top: -2px;
 }
 
 /* ────────────────────────────────────────────────────────────────────
