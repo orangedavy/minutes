@@ -4867,6 +4867,20 @@
       </div>
       <!-- end playground shell -->
 
+      <!-- ── Join Popup (calendar-driven meeting prompt) ─────────── -->
+      <div class="join-popup" id="join-popup" hidden>
+        <div class="jp-kicker">
+          <span class="jp-pulse"></span>
+          <span class="jp-kicker-text">Call starting now</span>
+        </div>
+        <div class="jp-title" id="jp-title">Meeting</div>
+        <div class="jp-meta" id="jp-meta"></div>
+        <div class="jp-actions">
+          <button class="jp-primary" id="jp-join">Join &amp; Record</button>
+          <button class="jp-secondary" id="jp-dismiss">Later</button>
+        </div>
+      </div>
+
       <!-- ── Recall Workspace Room (W shortcut) ──────────────────── -->
       <div class="recall-room" id="recall-room">
         <div class="rr-tb" data-tauri-drag-region>
@@ -11095,6 +11109,83 @@
             }
           });
         }
+      })();
+
+      // ── Join Popup (calendar-driven meeting prompt) ─────────────────────
+      (function wireJoinPopup() {
+        const popup = document.getElementById("join-popup");
+        const titleEl = document.getElementById("jp-title");
+        const metaEl = document.getElementById("jp-meta");
+        const joinBtn = document.getElementById("jp-join");
+        const dismissBtn = document.getElementById("jp-dismiss");
+        if (!popup || !joinBtn || !dismissBtn) return;
+
+        let currentPrompt = null;
+        let autoDismissTimer = null;
+
+        function showPopup(data) {
+          currentPrompt = data;
+          titleEl.textContent = data.title || "Meeting";
+          // Build meta line
+          const parts = [];
+          if (data.minutesUntil !== undefined) {
+            if (data.minutesUntil <= 0) parts.push("Starting now");
+            else if (data.minutesUntil === 1) parts.push("In 1 minute");
+            else parts.push("In " + data.minutesUntil + " minutes");
+          }
+          if (data.url) {
+            try {
+              const host = new URL(data.url).hostname.replace("www.", "");
+              parts.push(host.split(".")[0].charAt(0).toUpperCase() + host.split(".")[0].slice(1));
+            } catch (_) {}
+          }
+          metaEl.textContent = parts.join(" · ");
+          popup.hidden = false;
+
+          // Auto-dismiss after 30s
+          clearTimeout(autoDismissTimer);
+          autoDismissTimer = setTimeout(() => hidePopup(), 30000);
+        }
+
+        function hidePopup() {
+          popup.hidden = true;
+          currentPrompt = null;
+          clearTimeout(autoDismissTimer);
+        }
+
+        joinBtn.addEventListener("click", () => {
+          // Start recording via the existing hidden control
+          const startBtn = document.getElementById("btn-start");
+          if (startBtn) startBtn.click();
+          // If there's a URL, open it
+          if (currentPrompt && currentPrompt.url) {
+            window.__TAURI__.shell.open(currentPrompt.url);
+          }
+          hidePopup();
+        });
+
+        dismissBtn.addEventListener("click", hidePopup);
+
+        // Listen for meeting:prompt events from backend
+        (async () => {
+          const { getCurrentWindow } = window.__TAURI__.window;
+          const currentWindow = getCurrentWindow();
+          await currentWindow.listen("meeting:prompt", (event) => {
+            if (event.payload) showPopup(event.payload);
+          });
+        })();
+
+        // Debug shortcut: Cmd+J shows popup with mock data
+        document.addEventListener("keydown", (e) => {
+          if (e.metaKey && e.key === "j") {
+            e.preventDefault();
+            showPopup({
+              title: "Elysian Team Leads",
+              minutesUntil: 1,
+              url: "https://zoom.us/j/123456789",
+            });
+          }
+        });
       })();
 
       // Mirror recording state from the hidden #recording-bar into the

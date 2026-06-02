@@ -5,7 +5,7 @@ use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
 #[cfg(target_os = "macos")]
 use std::ffi::{c_char, c_void};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use tauri::{
     menu::{Menu, MenuItem, SubmenuBuilder},
@@ -882,8 +882,6 @@ const CALENDAR_REFRESH_SECS: u64 = 60;
 const CALENDAR_LOOKAHEAD_MINUTES: u32 = 240; // 4 hours
 const MEETING_NOTIFY_EARLY_MINUTES: i64 = 1; // Show prompt this many minutes before
 const MEETING_NOTIFY_LATE_GRACE_MINUTES: i64 = 1; // Keep prompt this many minutes after start
-const MEETING_PROMPT_WIDTH: f64 = 440.0;
-const MEETING_PROMPT_HEIGHT: f64 = 100.0;
 
 struct CalendarMenuState {
     items: Vec<MenuItem<tauri::Wry>>,
@@ -921,125 +919,19 @@ fn show_meeting_prompt(app: &tauri::AppHandle, event: &minutes_core::calendar::C
         }
     }
 
-    // Close any existing prompt window
-    if let Some(win) = app.get_webview_window("meeting-prompt") {
-        win.close().ok();
-    }
-
-    // Stage the payload keyed by a monotonic token. The overlay reads its
-    // token from the URL query string and calls `cmd_get_meeting_prompt` to
-    // drain exactly its own entry. Keying avoids a race where back-to-back
-    // `show_meeting_prompt` calls (two meetings firing in the same
-    // `refresh_calendar_items` tick) would let the first overlay's still-in-
-    // flight JS consume the second's payload.
-    //
-    // Why a query string, not a fragment: the previous fragment-based
-    // approach tripped over Tauri's URL normalizer double-encoding percent
-    // sequences (space → `%20` → `%2520`), so titles with spaces rendered as
-    // `X1%20payout`. A bare u64 token has no characters that need encoding.
-    static TOKEN_COUNTER: AtomicU64 = AtomicU64::new(0);
-    let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed);
-
-    let Some(state) = app.try_state::<commands::AppState>() else {
-        eprintln!("[calendar] AppState missing; skipping meeting prompt");
-        return;
+    // Emit the meeting prompt directly to the main window as an event.
+    // The playground shell JS handles display as an in-window popup.
+    let payload = commands::MeetingPromptData {
+        title: event.title.clone(),
+        minutes_until: event.minutes_until,
+        url: event.url.clone().filter(|u| !u.is_empty()),
     };
-    match state.pending_meeting_prompts.lock() {
-        Ok(mut map) => {
-            // Cap the map to bound memory if some overlay's JS never
-            // consumes (e.g. window build failed below, or webview crashed
-            // before invoke). Evict lowest token IDs first — they're oldest.
-            const MAX_PENDING: usize = 16;
-            while map.len() >= MAX_PENDING {
-                if let Some(&oldest) = map.keys().min() {
-                    map.remove(&oldest);
-                } else {
-                    break;
-                }
-            }
-            map.insert(
-                token,
-                commands::MeetingPromptData {
-                    title: event.title.clone(),
-                    minutes_until: event.minutes_until,
-                    url: event.url.clone().filter(|u| !u.is_empty()),
-                },
-            );
-        }
-        Err(e) => {
-            eprintln!(
-                "[calendar] pending_meeting_prompts mutex poisoned, skipping stage: {}",
-                e
-            );
-            return;
-        }
+
+    if let Err(e) = app.emit_to("main", "meeting:prompt", &payload) {
+        eprintln!("[calendar] failed to emit meeting prompt event: {}", e);
+    } else {
+        eprintln!("[calendar] meeting prompt shown for: {}", event.title);
     }
-
-    // Position: top-right of active/primary display using actual monitor geometry.
-    let (pos_x, pos_y) = get_top_right_position(app, MEETING_PROMPT_WIDTH, MEETING_PROMPT_HEIGHT);
-
-    let url = format!("meeting-prompt.html?t={}", token);
-    match WebviewWindowBuilder::new(app, "meeting-prompt", WebviewUrl::App(url.into()))
-        .title("Upcoming Meeting")
-        .inner_size(MEETING_PROMPT_WIDTH, MEETING_PROMPT_HEIGHT)
-        .position(pos_x, pos_y)
-        .resizable(false)
-        .decorations(false)
-        .transparent(true)
-        .shadow(false)
-        .content_protected(Config::load().privacy.hide_from_screen_share)
-        .always_on_top(true)
-        .focused(true)
-        .skip_taskbar(true)
-        .build()
-    {
-        Ok(_win) => {
-            eprintln!("[calendar] meeting prompt shown for: {}", event.title);
-        }
-        Err(e) => {
-            eprintln!("[calendar] failed to show meeting prompt: {}", e);
-            // Window never opened, so no JS will consume the entry. Drop it
-            // now rather than waiting for the MAX_PENDING eviction.
-            if let Ok(mut map) = state.pending_meeting_prompts.lock() {
-                map.remove(&token);
-            }
-        }
-    }
-}
-
-/// Calculate top-right placement from monitor geometry instead of heuristics.
-fn get_top_right_position(
-    app: &tauri::AppHandle,
-    width: f64,
-    height: f64,
-) -> (f64, f64) {
-    const MARGIN_X: f64 = 16.0;
-    const MARGIN_Y: f64 = 14.0;
-    const TOP_INSET: f64 = 38.0;
-
-    let monitor = app.primary_monitor().ok().flatten().or_else(|| {
-        app.available_monitors()
-            .ok()
-            .and_then(|mut monitors| monitors.drain(..).next())
-    });
-
-    if let Some(monitor) = monitor {
-        let scale = monitor.scale_factor();
-        let pos = monitor.position().to_logical::<f64>(scale);
-        let size = monitor.size().to_logical::<f64>(scale);
-
-        let max_x = pos.x + size.width - width - MARGIN_X;
-        let min_x = pos.x + MARGIN_X;
-        let x = max_x.max(min_x);
-
-        let min_y = pos.y + TOP_INSET;
-        let max_y = pos.y + size.height - height - MARGIN_Y;
-        let y = min_y.min(max_y.max(min_y));
-
-        return (x, y);
-    }
-
-    (1440.0 - width - MARGIN_X, TOP_INSET)
 }
 
 fn refresh_calendar_items(

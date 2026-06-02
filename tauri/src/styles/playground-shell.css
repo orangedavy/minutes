@@ -506,3 +506,100 @@ body.is-playground-shell .sb-foot-btn:hover {
   color: var(--text);
 }
 body.is-playground-shell .sb-foot-btn svg { width: 14px; height: 14px; }
+
+/* ─── Join Popup (calendar-driven meeting prompt) ─────────────── */
+body.is-playground-shell .join-popup {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: 340px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: jp-slide-in 0.25s ease-out;
+}
+@keyframes jp-slide-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+body.is-playground-shell .join-popup[hidden] {
+  display: none;
+}
+body.is-playground-shell .jp-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+body.is-playground-shell .jp-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: jp-pulse 1.2s ease-in-out infinite;
+}
+@keyframes jp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+body.is-playground-shell .jp-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+body.is-playground-shell .jp-meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+body.is-playground-shell .jp-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+body.is-playground-shell .jp-primary {
+  flex: 1;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+body.is-playground-shell .jp-primary:hover {
+  filter: brightness(1.1);
+}
+body.is-playground-shell .jp-secondary {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+body.is-playground-shell .jp-secondary:hover {
+  background: var(--bg-elev-2, rgba(255,255,255,0.05));
+  color: var(--text);
+}
