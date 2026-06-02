@@ -4880,16 +4880,26 @@
           </button>
         </div>
         <div class="rr-body">
-          <!-- Phase 2: Structured chat bubbles -->
-          <div class="rr-chat" id="rr-chat"></div>
-          <!-- Phase 1 fallback: raw terminal (hidden by default in playground) -->
-          <div class="rr-terminal" id="rr-terminal" style="display:none"></div>
-        </div>
-        <div class="rr-input-bar" id="rr-input-bar">
-          <input type="text" class="rr-input" id="rr-input" placeholder="Ask anything..." autocomplete="off" />
-          <button class="rr-send" id="rr-send" title="Send">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
-          </button>
+          <!-- Thread rail (left) -->
+          <div class="rr-rail" id="rr-rail">
+            <div class="rr-rail-section">Threads</div>
+          </div>
+          <!-- Main chat area (right) -->
+          <div class="rr-main">
+            <div class="rr-context-strip" id="rr-context-strip">
+              <div class="rr-context-label" id="rr-context-label">Context</div>
+              <div class="rr-chips" id="rr-chips"></div>
+            </div>
+            <div class="rr-thread-view" id="rr-thread-view"></div>
+            <div class="rr-input-row">
+              <div class="rr-input" id="rr-input-wrap">
+                <textarea id="rr-input" placeholder="Ask anything across this context…" rows="1"></textarea>
+                <button class="send" id="rr-send" title="Send">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l14-7-3 7 3 7z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -10373,15 +10383,306 @@
         const body = document.body;
         const backBtn = document.getElementById("rr-back");
         const newBtn = document.getElementById("rr-new-thread");
-        const chatContainer = document.getElementById("rr-chat");
-        const inputBar = document.getElementById("rr-input-bar");
-        const input = document.getElementById("rr-input");
+        const threadView = document.getElementById("rr-thread-view");
+        const rail = document.getElementById("rr-rail");
+        const chipsContainer = document.getElementById("rr-chips");
+        const textarea = document.getElementById("rr-input");
+        const inputWrap = document.getElementById("rr-input-wrap");
         const sendBtn = document.getElementById("rr-send");
-        if (!backBtn || !chatContainer || !input) return;
+        if (!backBtn || !threadView || !textarea) return;
 
         let sending = false;
         let listenerRegistered = false;
-        let currentAssistantBubble = null;
+        let currentMsgEl = null; // the .rr-msg element currently streaming
+        let stopBtn = null;
+
+        // ─── Thread persistence state ──────────────────────────────
+        let currentThread = null; // current Thread object {id, title, created, updated, session_id, messages}
+        let threads = []; // ThreadSummary[] loaded from backend
+
+        function generateId() {
+          return "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        }
+
+        function nowISO() {
+          return new Date().toISOString();
+        }
+
+        // ─── Create stop button (hidden by default) ────────────────
+        if (inputWrap) {
+          stopBtn = document.createElement("button");
+          stopBtn.className = "stop";
+          stopBtn.title = "Stop generation";
+          stopBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" rx="1.5" fill="currentColor"/></svg>';
+          stopBtn.style.display = "none";
+          inputWrap.appendChild(stopBtn);
+          stopBtn.addEventListener("click", async () => {
+            try { await invoke("cmd_recall_stop"); } catch (_) {}
+          });
+        }
+
+        // ─── Empty state ───────────────────────────────────────────
+        function showEmptyState() {
+          if (threadView.querySelector(".rr-empty-state")) return;
+          const el = document.createElement("div");
+          el.className = "rr-empty-state";
+          el.innerHTML =
+            '<div class="rr-empty-brand">Recall</div>' +
+            '<div class="rr-empty-sub">Ask anything about your meetings, decisions, action items, or people.</div>';
+          threadView.appendChild(el);
+        }
+        function hideEmptyState() {
+          const el = threadView.querySelector(".rr-empty-state");
+          if (el) el.remove();
+        }
+
+        // ─── Thread rail ───────────────────────────────────────────
+        function renderRail() {
+          rail.innerHTML = "";
+          if (threads.length === 0) return;
+          const section = document.createElement("div");
+          section.className = "rr-rail-section";
+          section.textContent = "Threads";
+          rail.appendChild(section);
+          threads.forEach(t => {
+            const el = document.createElement("div");
+            el.className = "rr-thread" + (currentThread && currentThread.id === t.id ? " is-active" : "");
+            el.dataset.id = t.id;
+            el.innerHTML =
+              '<div class="rr-thread-title">' + escapeHtml(t.title.slice(0, 32)) + '</div>' +
+              '<div class="rr-thread-meta">' + formatThreadDate(t.updated) + '</div>' +
+              '<button class="rr-thread-delete" title="Delete thread">×</button>';
+            el.addEventListener("click", (e) => {
+              if (e.target.closest(".rr-thread-delete")) return;
+              switchToThread(t.id);
+            });
+            el.querySelector(".rr-thread-delete").addEventListener("click", (e) => {
+              e.stopPropagation();
+              deleteThread(t.id);
+            });
+            rail.appendChild(el);
+          });
+        }
+
+        function formatThreadDate(iso) {
+          if (!iso) return "";
+          const d = new Date(iso);
+          const now = new Date();
+          const diff = now - d;
+          if (diff < 60000) return "just now";
+          if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
+          if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
+          return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        }
+
+        async function loadThreads() {
+          try {
+            threads = await invoke("cmd_recall_list_threads");
+          } catch (_) {
+            threads = [];
+          }
+          renderRail();
+        }
+
+        async function switchToThread(id) {
+          try {
+            const thread = await invoke("cmd_recall_load_thread", { id });
+            currentThread = thread;
+            // Set session_id in backend state for --resume
+            await invoke("cmd_recall_chat_reset");
+            if (thread.session_id) {
+              // We'll rely on sending the first message to re-establish
+              // For now, just display the messages
+            }
+            renderThreadMessages(thread);
+            renderRail();
+          } catch (e) {
+            console.error("Failed to load thread:", e);
+          }
+        }
+
+        function renderThreadMessages(thread) {
+          threadView.innerHTML = "";
+          if (!thread.messages || thread.messages.length === 0) {
+            showEmptyState();
+            return;
+          }
+          hideEmptyState();
+          thread.messages.forEach(m => {
+            addMessage(m.role === "user" ? "you" : "recall", m.content, true);
+          });
+        }
+
+        async function deleteThread(id) {
+          try {
+            await invoke("cmd_recall_delete_thread", { id });
+          } catch (_) {}
+          threads = threads.filter(t => t.id !== id);
+          if (currentThread && currentThread.id === id) {
+            currentThread = null;
+            threadView.innerHTML = "";
+            showEmptyState();
+            await invoke("cmd_recall_chat_reset").catch(() => {});
+          }
+          renderRail();
+        }
+
+        async function saveCurrentThread() {
+          if (!currentThread) return;
+          currentThread.updated = nowISO();
+          try {
+            await invoke("cmd_recall_save_thread", { thread: currentThread });
+            // Update summary in local list
+            const idx = threads.findIndex(t => t.id === currentThread.id);
+            const summary = {
+              id: currentThread.id,
+              title: currentThread.title,
+              created: currentThread.created,
+              updated: currentThread.updated,
+              message_count: currentThread.messages.length,
+            };
+            if (idx >= 0) {
+              threads[idx] = summary;
+            } else {
+              threads.unshift(summary);
+            }
+            // Re-sort
+            threads.sort((a, b) => b.updated.localeCompare(a.updated));
+            renderRail();
+          } catch (e) {
+            console.error("Failed to save thread:", e);
+          }
+        }
+
+        function startNewThread(firstMessage) {
+          const id = generateId();
+          const now = nowISO();
+          currentThread = {
+            id,
+            title: firstMessage.slice(0, 40),
+            created: now,
+            updated: now,
+            session_id: null,
+            messages: [],
+          };
+        }
+
+        function escapeHtml(s) {
+          const d = document.createElement("div");
+          d.textContent = s;
+          return d.innerHTML;
+        }
+
+        // ─── Context chips ─────────────────────────────────────────
+        // ─── Context chips + popover ──────────────────────────────
+        const contextStrip = document.getElementById("rr-context-strip");
+        let contextPopover = null;
+        let addedContextFiles = []; // paths of added meetings
+
+        function renderAddChip() {
+          if (!chipsContainer) return;
+          if (chipsContainer.querySelector(".rr-chip.add")) return;
+          const chip = document.createElement("span");
+          chip.className = "rr-chip add";
+          chip.textContent = "+ Add context";
+          chip.addEventListener("click", toggleContextPopover);
+          chipsContainer.appendChild(chip);
+        }
+
+        function addContextChip(title, path) {
+          if (!chipsContainer) return;
+          if (addedContextFiles.includes(path)) return;
+          addedContextFiles.push(path);
+          // Insert before the add button
+          const addBtn = chipsContainer.querySelector(".rr-chip.add");
+          const chip = document.createElement("span");
+          chip.className = "rr-chip is-meeting";
+          chip.innerHTML = escapeHtml(title.slice(0, 24)) +
+            ' <span class="rr-chip-x" title="Remove">&times;</span>';
+          chip.querySelector(".rr-chip-x").addEventListener("click", (e) => {
+            e.stopPropagation();
+            addedContextFiles = addedContextFiles.filter(p => p !== path);
+            chip.remove();
+          });
+          if (addBtn) {
+            chipsContainer.insertBefore(chip, addBtn);
+          } else {
+            chipsContainer.appendChild(chip);
+          }
+        }
+
+        async function toggleContextPopover() {
+          if (contextPopover) {
+            contextPopover.remove();
+            contextPopover = null;
+            return;
+          }
+          // Build popover
+          contextPopover = document.createElement("div");
+          contextPopover.className = "rr-context-popover";
+          contextPopover.innerHTML =
+            '<input class="rr-ctx-search" placeholder="Search meetings..." autofocus />' +
+            '<div class="rr-ctx-section">Recent meetings</div>' +
+            '<div class="rr-ctx-list"><div class="rr-ctx-empty">Loading...</div></div>';
+          contextStrip.appendChild(contextPopover);
+
+          const searchInput = contextPopover.querySelector(".rr-ctx-search");
+          const listEl = contextPopover.querySelector(".rr-ctx-list");
+
+          // Load meetings
+          let meetings = [];
+          try {
+            meetings = await invoke("cmd_list_meetings", { limit: 15 });
+          } catch (_) {}
+
+          function renderList(filter) {
+            const filtered = filter
+              ? meetings.filter(m => (m.title || m.path || "").toLowerCase().includes(filter.toLowerCase()))
+              : meetings;
+            if (filtered.length === 0) {
+              listEl.innerHTML = '<div class="rr-ctx-empty">No meetings found</div>';
+              return;
+            }
+            listEl.innerHTML = "";
+            filtered.forEach(m => {
+              const title = m.title || m.path.split("/").pop().replace(".md", "");
+              const date = m.date || "";
+              const item = document.createElement("div");
+              item.className = "rr-ctx-item";
+              item.innerHTML =
+                '<svg class="rr-ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' +
+                '<span class="rr-ctx-title">' + escapeHtml(title) + '</span>' +
+                '<span class="rr-ctx-date">' + escapeHtml(date) + '</span>';
+              item.addEventListener("click", () => {
+                addContextChip(title, m.path);
+                contextPopover.remove();
+                contextPopover = null;
+              });
+              listEl.appendChild(item);
+            });
+          }
+
+          renderList("");
+
+          searchInput.addEventListener("input", () => {
+            renderList(searchInput.value.trim());
+          });
+
+          // Close on click outside
+          setTimeout(() => {
+            document.addEventListener("click", function closePopover(e) {
+              if (contextPopover && !contextPopover.contains(e.target) && !e.target.classList.contains("add")) {
+                contextPopover.remove();
+                contextPopover = null;
+                document.removeEventListener("click", closePopover);
+              }
+            });
+          }, 50);
+
+          setTimeout(() => searchInput.focus(), 50);
+        }
+
+        renderAddChip();
 
         // ─── Event listener for streaming deltas ───────────────────
         async function ensureListener() {
@@ -10395,59 +10696,154 @@
             if (!data) return;
 
             if (data.type === "delta") {
-              if (!currentAssistantBubble) {
-                currentAssistantBubble = addBubble("assistant", "");
+              if (!currentMsgEl) {
+                currentMsgEl = addMessage("recall", "");
               }
-              appendToBubble(currentAssistantBubble, data.text);
+              // Remove thinking state on first delta
+              const bubble = currentMsgEl.querySelector(".bubble");
+              if (bubble && bubble.classList.contains("is-thinking")) {
+                bubble.classList.remove("is-thinking");
+                bubble.classList.add("is-streaming");
+              }
+              appendToMessage(currentMsgEl, data.text);
             } else if (data.type === "done") {
-              if (currentAssistantBubble) {
-                finalizeBubble(currentAssistantBubble, data.text);
+              if (currentMsgEl) {
+                finalizeMessage(currentMsgEl, data.text);
               }
-              currentAssistantBubble = null;
+              // Persist assistant message
+              if (currentThread && data.text) {
+                currentThread.messages.push({ role: "assistant", content: data.text, ts: nowISO() });
+                if (data.session_id) currentThread.session_id = data.session_id;
+                saveCurrentThread();
+              }
+              currentMsgEl = null;
+              sending = false;
+              updateInputState();
+            } else if (data.type === "stopped") {
+              if (currentMsgEl) {
+                const text = data.text || currentMsgEl.querySelector(".bubble")?.textContent || "";
+                finalizeMessage(currentMsgEl, data.text || null);
+                // Add stopped indicator
+                const bubble = currentMsgEl.querySelector(".bubble");
+                if (bubble) {
+                  const tag = document.createElement("span");
+                  tag.style.cssText = "display:block;font-size:10px;color:var(--text-tertiary);margin-top:6px;font-family:var(--font-mono)";
+                  tag.textContent = "(stopped)";
+                  bubble.appendChild(tag);
+                }
+                // Persist partial response
+                if (currentThread && text) {
+                  currentThread.messages.push({ role: "assistant", content: text + "\n(stopped)", ts: nowISO() });
+                  saveCurrentThread();
+                }
+              }
+              currentMsgEl = null;
               sending = false;
               updateInputState();
             } else if (data.type === "error") {
-              if (currentAssistantBubble) {
-                currentAssistantBubble.classList.add("rr-error");
-                currentAssistantBubble.querySelector(".rr-bubble-text").textContent = data.message;
+              if (currentMsgEl) {
+                const bubble = currentMsgEl.querySelector(".bubble");
+                if (bubble) {
+                  bubble.classList.remove("is-streaming", "is-thinking");
+                  bubble.classList.add("is-error");
+                  bubble.textContent = data.message;
+                }
               } else {
-                const bubble = addBubble("assistant", data.message);
-                bubble.classList.add("rr-error");
+                const msg = addMessage("recall", data.message);
+                const b = msg.querySelector(".bubble");
+                b.classList.remove("is-streaming", "is-thinking");
+                b.classList.add("is-error");
               }
-              currentAssistantBubble = null;
+              currentMsgEl = null;
               sending = false;
               updateInputState();
             }
           });
         }
 
-        // ─── Chat bubble helpers ───────────────────────────────────
-        function addBubble(role, text) {
+        // ─── Message helpers (playground .rr-msg > .who + .bubble) ─
+        function addMessage(role, text, isReplay) {
+          hideEmptyState();
+          const msg = document.createElement("div");
+          msg.className = "rr-msg" + (role === "you" ? " me" : "");
+
+          const who = document.createElement("div");
+          who.className = "who";
+          who.textContent = role;
+          msg.appendChild(who);
+
+          // Wrap bubble in a container for copy button positioning
+          const bubbleWrap = document.createElement("div");
+          bubbleWrap.className = "bubble-wrap";
+
           const bubble = document.createElement("div");
-          bubble.className = "rr-bubble rr-" + role;
-          const textEl = document.createElement("div");
-          textEl.className = "rr-bubble-text";
-          textEl.textContent = text;
-          bubble.appendChild(textEl);
-          chatContainer.appendChild(bubble);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-          return bubble;
+          bubble.className = "bubble";
+          if (role !== "you" && !isReplay) {
+            bubble.classList.add("is-thinking"); // thinking until first delta
+          }
+          if (role !== "you" && isReplay && typeof marked !== "undefined" && text) {
+            try {
+              bubble.innerHTML = marked.parse(text);
+              bubble.classList.add("has-markdown");
+            } catch (_) {
+              bubble.textContent = text;
+            }
+          } else {
+            bubble.textContent = text;
+          }
+          bubbleWrap.appendChild(bubble);
+
+          // Copy button for assistant messages
+          if (role !== "you") {
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "copy-btn";
+            copyBtn.title = "Copy";
+            copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+            copyBtn.addEventListener("click", () => {
+              const text = bubble.textContent || "";
+              navigator.clipboard.writeText(text).then(() => {
+                copyBtn.classList.add("is-copied");
+                copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+                setTimeout(() => {
+                  copyBtn.classList.remove("is-copied");
+                  copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+                }, 1500);
+              });
+            });
+            bubbleWrap.appendChild(copyBtn);
+          }
+
+          msg.appendChild(bubbleWrap);
+          threadView.appendChild(msg);
+          threadView.scrollTop = threadView.scrollHeight;
+          return msg;
         }
 
-        function appendToBubble(bubble, text) {
-          const textEl = bubble.querySelector(".rr-bubble-text");
-          if (textEl) {
-            textEl.textContent += text;
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        function appendToMessage(msgEl, text) {
+          const bubble = msgEl.querySelector(".bubble");
+          if (bubble) {
+            bubble.textContent += text;
+            threadView.scrollTop = threadView.scrollHeight;
           }
         }
 
-        function finalizeBubble(bubble, fullText) {
-          const textEl = bubble.querySelector(".rr-bubble-text");
-          if (textEl && fullText) {
-            textEl.textContent = fullText;
+        function finalizeMessage(msgEl, fullText) {
+          const bubble = msgEl.querySelector(".bubble");
+          if (bubble) {
+            if (fullText) bubble.textContent = fullText;
+            bubble.classList.remove("is-streaming", "is-thinking");
+            // Render markdown for assistant messages
+            if (!msgEl.classList.contains("me") && typeof marked !== "undefined") {
+              const raw = bubble.textContent || "";
+              try {
+                bubble.innerHTML = marked.parse(raw);
+                bubble.classList.add("has-markdown");
+              } catch (_) {
+                // fallback: leave as plain text
+              }
+            }
           }
-          chatContainer.scrollTop = chatContainer.scrollHeight;
+          threadView.scrollTop = threadView.scrollHeight;
         }
 
         // ─── Send message ──────────────────────────────────────────
@@ -10456,18 +10852,29 @@
           sending = true;
           updateInputState();
 
-          addBubble("user", text);
-          currentAssistantBubble = null;
+          // First message → create a new thread
+          if (!currentThread) {
+            startNewThread(text);
+          }
+
+          // Persist user message
+          currentThread.messages.push({ role: "user", content: text, ts: nowISO() });
+          saveCurrentThread();
+
+          addMessage("you", text);
+          currentMsgEl = null;
 
           await ensureListener();
 
           try {
             await invoke("cmd_recall_chat", { message: text });
           } catch (e) {
-            const msg = typeof e === "string" ? e : String(e);
-            if (!currentAssistantBubble) {
-              const bubble = addBubble("assistant", msg);
-              bubble.classList.add("rr-error");
+            const errMsg = typeof e === "string" ? e : String(e);
+            if (!currentMsgEl) {
+              const msg = addMessage("recall", errMsg);
+              const b = msg.querySelector(".bubble");
+              b.classList.remove("is-streaming", "is-thinking");
+              b.classList.add("is-error");
             }
             sending = false;
             updateInputState();
@@ -10475,42 +10882,147 @@
         }
 
         function updateInputState() {
-          input.disabled = sending;
-          sendBtn.disabled = sending;
-          if (!sending) input.focus();
+          textarea.disabled = sending;
+          if (sendBtn) sendBtn.style.display = sending ? "none" : "";
+          if (stopBtn) stopBtn.style.display = sending ? "" : "none";
+          if (!sending) textarea.focus();
         }
 
+        // ─── Textarea auto-grow ────────────────────────────────────
+        textarea.addEventListener("input", () => {
+          textarea.style.height = "auto";
+          textarea.style.height = Math.min(textarea.scrollHeight, 80) + "px";
+          handleSlashAutocomplete();
+        });
+
+        // ─── Slash command autocomplete ────────────────────────────
+        const SLASH_COMMANDS = [
+          { cmd: "/model", desc: "Show or switch model" },
+          { cmd: "/clear", desc: "Clear conversation history" },
+          { cmd: "/compact", desc: "Compact conversation" },
+          { cmd: "/cost", desc: "Show token usage" },
+          { cmd: "/help", desc: "Show help" },
+        ];
+        let slashMenu = null;
+        let slashIdx = 0;
+        let slashFiltered = [];
+
+        function handleSlashAutocomplete() {
+          const val = textarea.value;
+          if (val.startsWith("/") && !val.includes(" ") && val.length <= 12) {
+            const q = val.toLowerCase();
+            slashFiltered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q));
+            if (slashFiltered.length > 0) {
+              showSlashMenu(slashFiltered);
+              return;
+            }
+          }
+          hideSlashMenu();
+        }
+
+        function showSlashMenu(items) {
+          if (!slashMenu) {
+            slashMenu = document.createElement("div");
+            slashMenu.className = "rr-slash-menu";
+            inputWrap.parentElement.style.position = "relative";
+            inputWrap.parentElement.appendChild(slashMenu);
+          }
+          slashIdx = 0;
+          slashMenu.innerHTML = items.map((c, i) =>
+            '<div class="rr-slash-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + i + '">' +
+            '<span class="rr-slash-cmd">' + escapeHtml(c.cmd) + '</span>' +
+            '<span class="rr-slash-desc">' + escapeHtml(c.desc) + '</span>' +
+            '</div>'
+          ).join("");
+          slashMenu.style.display = "flex";
+          slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => {
+            el.addEventListener("click", () => selectSlashItem(i));
+          });
+        }
+
+        function hideSlashMenu() {
+          if (slashMenu) slashMenu.style.display = "none";
+          slashFiltered = [];
+        }
+
+        function selectSlashItem(idx) {
+          if (slashFiltered[idx]) {
+            textarea.value = slashFiltered[idx].cmd + " ";
+            textarea.focus();
+          }
+          hideSlashMenu();
+        }
+
+        textarea.addEventListener("keydown", (e) => {
+          if (slashMenu && slashMenu.style.display !== "none" && slashFiltered.length > 0) {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              slashIdx = (slashIdx + 1) % slashFiltered.length;
+              slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => el.classList.toggle("is-active", i === slashIdx));
+              return;
+            }
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              slashIdx = (slashIdx - 1 + slashFiltered.length) % slashFiltered.length;
+              slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => el.classList.toggle("is-active", i === slashIdx));
+              return;
+            }
+            if (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey)) {
+              e.preventDefault();
+              selectSlashItem(slashIdx);
+              return;
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              hideSlashMenu();
+              return;
+            }
+          }
+        });
+
         // ─── Input wiring ──────────────────────────────────────────
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !e.shiftKey && input.value.trim()) {
+        textarea.addEventListener("keydown", (e) => {
+          if (slashMenu && slashMenu.style.display !== "none") return; // handled above
+          if (e.key === "Enter" && !e.shiftKey && textarea.value.trim()) {
             e.preventDefault();
-            const msg = input.value.trim();
-            input.value = "";
+            const msg = textarea.value.trim();
+            textarea.value = "";
+            textarea.style.height = "auto";
             sendMessage(msg);
           }
         });
-        sendBtn.addEventListener("click", () => {
-          if (input.value.trim()) {
-            const msg = input.value.trim();
-            input.value = "";
-            sendMessage(msg);
-          }
-        });
+        if (sendBtn) {
+          sendBtn.addEventListener("click", () => {
+            if (textarea.value.trim()) {
+              const msg = textarea.value.trim();
+              textarea.value = "";
+              textarea.style.height = "auto";
+              sendMessage(msg);
+            }
+          });
+        }
 
         // New thread button
         if (newBtn) {
           newBtn.addEventListener("click", () => {
-            chatContainer.innerHTML = "";
-            currentAssistantBubble = null;
+            currentThread = null;
+            threadView.innerHTML = "";
+            showEmptyState();
+            currentMsgEl = null;
             invoke("cmd_recall_chat_reset").catch(() => {});
-            input.focus();
+            renderRail();
+            textarea.focus();
           });
         }
+
+        // ─── Initial load ──────────────────────────────────────────
+        showEmptyState();
+        loadThreads();
 
         // ─── Open / close ──────────────────────────────────────────
         function openRecallRoom() {
           body.classList.add("is-recall-room");
-          setTimeout(() => input.focus(), 150);
+          setTimeout(() => textarea.focus(), 150);
         }
         function closeRecallRoom() {
           body.classList.remove("is-recall-room");
@@ -10537,14 +11049,36 @@
           }
         });
 
-        // Escape closes recall room (unless typing in the input).
+        // Escape closes recall room (unless typing in the textarea).
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape" && body.classList.contains("is-recall-room")) {
-            if (document.activeElement === input && input.value) {
-              input.value = "";
+            if (document.activeElement === textarea && textarea.value) {
+              textarea.value = "";
+              textarea.style.height = "auto";
             } else {
               closeRecallRoom();
             }
+          }
+        });
+
+        // ─── Keyboard shortcuts (Recall-specific) ──────────────────
+        document.addEventListener("keydown", (e) => {
+          if (!body.classList.contains("is-recall-room")) return;
+
+          // Cmd+N — New thread
+          if (e.metaKey && e.key === "n") {
+            e.preventDefault();
+            if (newBtn) newBtn.click();
+          }
+          // Cmd+Backspace — Delete current thread
+          if (e.metaKey && e.key === "Backspace" && currentThread) {
+            e.preventDefault();
+            deleteThread(currentThread.id);
+          }
+          // Cmd+Shift+S — Stop generation
+          if (e.metaKey && e.shiftKey && e.key === "s" && sending) {
+            e.preventDefault();
+            invoke("cmd_recall_stop").catch(() => {});
           }
         });
 

@@ -7709,7 +7709,43 @@ pub async fn cmd_recall_chat(
 pub fn cmd_recall_chat_reset(state: tauri::State<AppState>) -> Result<(), String> {
     let mut cs = state.recall_chat_state.lock().map_err(|_| "Lock failed")?;
     cs.session_id = None;
+    cs.child_pid = None;
     Ok(())
+}
+
+#[tauri::command]
+pub fn cmd_recall_stop(state: tauri::State<AppState>) -> Result<(), String> {
+    crate::chat::stop_generation(&state.recall_chat_state)
+}
+
+/// List all persisted threads (summaries only, sorted by updated desc).
+#[tauri::command]
+pub fn cmd_recall_list_threads() -> Result<Vec<crate::chat::ThreadSummary>, String> {
+    crate::chat::list_threads()
+}
+
+/// Load a full thread (with messages) by ID.
+#[tauri::command]
+pub fn cmd_recall_load_thread(id: String) -> Result<crate::chat::Thread, String> {
+    crate::chat::load_thread(&id)
+}
+
+/// Save (create or update) a thread.
+#[tauri::command]
+pub fn cmd_recall_save_thread(thread: crate::chat::Thread) -> Result<(), String> {
+    crate::chat::save_thread(&thread)
+}
+
+/// Delete a thread by ID.
+#[tauri::command]
+pub fn cmd_recall_delete_thread(id: String) -> Result<(), String> {
+    crate::chat::delete_thread(&id)
+}
+
+/// Rename a thread.
+#[tauri::command]
+pub fn cmd_recall_rename_thread(id: String, title: String) -> Result<(), String> {
+    crate::chat::rename_thread(&id, &title)
 }
 
 /// Well-known agent CLIs to check for in cmd_list_agents.

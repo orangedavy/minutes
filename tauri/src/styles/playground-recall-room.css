@@ -20,17 +20,21 @@ body.is-playground-shell.is-recall-room .recall-room {
 
 /* ─── Toolbar ─────────────────────────────────────────────────── */
 body.is-playground-shell .rr-tb {
-  height: 56px;
+  height: 44px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 16px 0 82px; /* 82px clears macOS traffic-light cluster */
-  gap: 10px;
+  padding: 0 14px;
+  gap: 8px;
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
 }
 body.is-playground-shell .rr-tb .traffic {
-  display: none;
+  display: flex;
+  gap: 8px;
+  width: 68px;
+  margin-right: 6px;
+  -webkit-app-region: no-drag;
 }
 body.is-playground-shell .rr-back {
   width: 28px;
@@ -279,6 +283,67 @@ body.is-playground-shell .rr-msg .bubble.is-error {
   background: var(--red, #FF453A);
   color: white;
 }
+
+/* ─── Markdown in bubbles ─────────────────────────────────────── */
+body.is-playground-shell .rr-msg .bubble.has-markdown p {
+  margin: 0 0 8px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown p:last-child {
+  margin-bottom: 0;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown ul,
+body.is-playground-shell .rr-msg .bubble.has-markdown ol {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown li {
+  margin-bottom: 2px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown pre {
+  background: rgba(0,0,0,0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  overflow-x: auto;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown pre code {
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown strong {
+  font-weight: 600;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown a {
+  color: var(--accent);
+  text-decoration: none;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown a:hover {
+  text-decoration: underline;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown blockquote {
+  border-left: 3px solid var(--border);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--text-secondary);
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown h1,
+body.is-playground-shell .rr-msg .bubble.has-markdown h2,
+body.is-playground-shell .rr-msg .bubble.has-markdown h3 {
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown h1 { font-size: 15px; }
+body.is-playground-shell .rr-msg .bubble.has-markdown h2 { font-size: 14px; }
+body.is-playground-shell .rr-msg .bubble.has-markdown h3 { font-size: 13px; }
 
 /* ─── Citations ───────────────────────────────────────────────── */
 body.is-playground-shell .rr-cites {
@@ -572,4 +637,44 @@ body.is-playground-shell .rr-context-popover .rr-ctx-empty {
   color: var(--text-tertiary);
   text-align: center;
   padding: 16px 8px;
+}
+
+/* ─── Slash Command Autocomplete ──────────────────────────────── */
+body.is-playground-shell .rr-slash-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 20px;
+  right: 20px;
+  display: none;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  padding: 4px;
+  z-index: 100;
+}
+body.is-playground-shell .rr-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+body.is-playground-shell .rr-slash-item:hover,
+body.is-playground-shell .rr-slash-item.is-active {
+  background: rgba(255,255,255,0.05);
+}
+body.is-playground-shell .rr-slash-cmd {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+body.is-playground-shell .rr-slash-desc {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--text-tertiary);
 }
