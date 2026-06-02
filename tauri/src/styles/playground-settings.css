@@ -68,29 +68,26 @@ body.is-playground-shell .about-overlay#settings-overlay .about-top {
 }
 
 body.is-playground-shell .about-overlay#settings-overlay .settings-title {
-  display: none;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  order: 2;
+}
+body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
+  order: 1;
 }
 
-/* Big H1 lives in the scroll body, above the first section.
-   Use `.about-top + .settings-section` because `:first-of-type` matches
-   on element type (div) — and `.about-top` is the first div sibling. */
+/* Big H1 removed — title now lives inline in the toolbar (matching Recall pattern). */
 body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section {
   position: relative;
 }
-body.is-playground-shell .about-overlay#settings-overlay .about-top + .settings-section::before {
-  content: "Settings";
-  display: block;
-  font-family: var(--font-serif);
-  font-size: 38px;
-  font-weight: 400;
-  letter-spacing: -0.018em;
-  line-height: 1;
-  color: var(--text);
-  margin: 18px 0 22px 0;
-}
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  /* Transparent ghost back button — matches Recall .rr-back standard. */
+  /* Match playground .st-back exactly: 28×28, 7px radius, bg-elev fill,
+     thin border, centered ‹ character. No dramatic hover — just a quiet
+     ghost button that matches the icon-btn / sidebar button language. */
   width: 28px;
   height: 28px;
   min-width: 0;
@@ -98,19 +95,20 @@ body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
   margin: 0;
   font-size: 0;
   color: transparent;
-  background: transparent;
-  border: none;
+  background: var(--bg-elevated, var(--neutral-tint));
+  border: 1px solid var(--border);
   border-radius: 7px;
   display: grid;
   place-items: center;
   position: relative;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 100ms ease;
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close:hover {
-  background: var(--bg-elev);
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close:active {
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
   transform: scale(0.94);
 }
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close::before {

@@ -36,9 +36,9 @@ body.is-playground-shell .rr-back {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated, var(--neutral-tint));
+  color: var(--text);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -46,13 +46,13 @@ body.is-playground-shell .rr-back {
   line-height: 1;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease;
 }
 body.is-playground-shell .rr-back:hover {
-  background: var(--bg-elev);
-  color: var(--text);
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
 }
 body.is-playground-shell .rr-back:active {
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
   transform: scale(0.94);
 }
 body.is-playground-shell .rr-title-tb {
@@ -96,7 +96,7 @@ body.is-playground-shell .rr-body {
 /* ─── Thread Rail ─────────────────────────────────────────────── */
 body.is-playground-shell .rr-rail {
   border-right: 1px solid var(--border);
-  padding: 12px 10px 12px 10px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -113,7 +113,7 @@ body.is-playground-shell .rr-rail-section {
 }
 body.is-playground-shell .rr-thread {
   padding: 10px 12px;
-  border-radius: 0;
+  border-radius: 6px 0 0 6px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -126,7 +126,8 @@ body.is-playground-shell .rr-thread:hover {
 }
 body.is-playground-shell .rr-thread.is-active {
   background: var(--bg-elev);
-  box-shadow: inset 3px 0 0 var(--accent);
+  border-left: 3px solid var(--accent);
+  padding-left: 9px;
 }
 body.is-playground-shell .rr-thread-title {
   font-family: var(--font-sans);
@@ -315,7 +316,7 @@ body.is-playground-shell .rr-input {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--bg-elev);
   border: 1px solid var(--border);
   transition: border-color 0.15s ease;
