@@ -36,9 +36,9 @@ body.is-playground-shell .rr-back {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated, var(--neutral-tint));
-  color: var(--text);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -46,13 +46,13 @@ body.is-playground-shell .rr-back {
   line-height: 1;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 body.is-playground-shell .rr-back:hover {
-  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
+  background: var(--bg-elev);
+  color: var(--text);
 }
 body.is-playground-shell .rr-back:active {
-  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
   transform: scale(0.94);
 }
 body.is-playground-shell .rr-title-tb {
@@ -315,7 +315,7 @@ body.is-playground-shell .rr-input {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg-elev);
   border: 1px solid var(--border);
   transition: border-color 0.15s ease;
