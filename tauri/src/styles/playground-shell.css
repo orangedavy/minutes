@@ -310,7 +310,8 @@ body.is-playground-shell .app-left > .footer {
    surfaced via the ⌘K palette / pg-coming-up card in future slices. */
 body.is-playground-shell .app-left > .call-detected,
 body.is-playground-shell .app-left > .call-ended,
-body.is-playground-shell .app-left > .update-banner {
+body.is-playground-shell .app-left > .update-banner,
+body.is-playground-shell .app-left > .output-notice {
   display: none !important;
 }
 

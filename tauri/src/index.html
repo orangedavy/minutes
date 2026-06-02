@@ -4880,38 +4880,7 @@
           </button>
         </div>
         <div class="rr-body">
-          <div class="rr-rail" id="rr-rail">
-            <div class="rr-rail-section">Threads</div>
-            <div class="rr-thread is-active">
-              <div class="rr-thread-title">New conversation</div>
-              <div class="rr-thread-meta">just now</div>
-            </div>
-          </div>
-          <div class="rr-main">
-            <div class="rr-context-strip">
-              <div class="rr-context-label">Context</div>
-              <div class="rr-chips" id="rr-chips">
-                <button class="rr-chip add" id="rr-add-context">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                  Add context
-                </button>
-              </div>
-            </div>
-            <div class="rr-thread-view" id="rr-thread-view">
-              <div class="rr-msg">
-                <span class="who">Recall</span>
-                <div class="bubble">Ask me anything about your meetings, decisions, and action items. Add meetings or tags as context to focus the conversation.</div>
-              </div>
-            </div>
-            <div class="rr-input-row">
-              <div class="rr-input">
-                <textarea id="rr-input-textarea" rows="1" placeholder="Ask about your meetings…"></textarea>
-                <button class="send" id="rr-send">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
+          <div class="rr-terminal" id="rr-terminal"></div>
         </div>
       </div>
 
@@ -10394,123 +10363,66 @@
       (function wireRecallRoom() {
         const body = document.body;
         const backBtn = document.getElementById("rr-back");
-        const threadView = document.getElementById("rr-thread-view");
-        const textarea = document.getElementById("rr-input-textarea");
-        const sendBtn = document.getElementById("rr-send");
-        if (!backBtn || !threadView || !textarea) return;
+        const termContainer = document.getElementById("rr-terminal");
+        if (!backBtn || !termContainer) return;
 
         const SESSION_ID = "assistant";
         let ptyAlive = false;
         let ptySpawning = false;
         let ptyListenerRegistered = false;
-        let responseBuffer = "";
-        let currentBubble = null;
-        let idleTimer = null;
-        let waitingForResponse = false;
+        let term = null;
+        let fitAddon = null;
+        let resizeObserver = null;
+        let termInitialized = false;
 
-        // ─── ANSI stripping ────────────────────────────────────────
-        function stripAnsi(str) {
-          return str.replace(/\x1b\[[0-9;]*[A-Za-z]/g, "")
-                    .replace(/\x1b\][^\x07]*\x07/g, "")
-                    .replace(/\x1b[()][AB012]/g, "")
-                    .replace(/\x1b\[[\?]?[0-9;]*[hl]/g, "")
-                    .replace(/\r/g, "");
-        }
+        // ─── xterm.js setup ────────────────────────────────────────
+        function initTerminal() {
+          if (termInitialized) return;
+          termInitialized = true;
 
-        // ─── Prompt detection ──────────────────────────────────────
-        // Claude CLI uses ❯ (U+276F) as prompt. Also detect > and $ as fallbacks.
-        function hasPrompt(text) {
-          const lines = text.split("\n").filter(l => l.trim());
-          const last = lines[lines.length - 1] || "";
-          return /[❯>$]\s*$/.test(last.trim());
-        }
+          term = new Terminal({
+            theme: window.MINUTES_XTERM_THEME,
+            fontFamily: "'Geist Mono', 'SF Mono', Menlo, monospace",
+            fontSize: 13,
+            lineHeight: 1.3,
+            cursorBlink: true,
+            cursorStyle: "bar",
+            scrollback: 10000,
+            allowProposedApi: true,
+          });
 
-        // ─── Markdown-lite rendering ───────────────────────────────
-        function renderMarkdown(text) {
-          return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-            .replace(/`([^`]+)`/g, "<code>$1</code>")
-            .replace(/\n/g, "<br>");
-        }
+          fitAddon = new FitAddon.FitAddon();
+          term.loadAddon(fitAddon);
+          term.open(termContainer);
 
-        // ─── Chat rendering ────────────────────────────────────────
-        function addMessage(who, text) {
-          const msg = document.createElement("div");
-          msg.className = "rr-msg" + (who === "You" ? " me" : "");
-          msg.innerHTML = `<span class="who">${who}</span><div class="bubble">${renderMarkdown(text.trim())}</div>`;
-          threadView.appendChild(msg);
-          threadView.scrollTop = threadView.scrollHeight;
-          return msg;
-        }
+          // Theme sync
+          window.MINUTES_XTERM_THEME_QUERY.addEventListener("change", (event) => {
+            if (term) term.options.theme = window.getMinutesTheme(event.matches);
+          });
 
-        function startStreamingBubble() {
-          const msg = document.createElement("div");
-          msg.className = "rr-msg";
-          msg.innerHTML = `<span class="who">Recall</span><div class="bubble"><span class="rr-typing">●●●</span></div>`;
-          threadView.appendChild(msg);
-          threadView.scrollTop = threadView.scrollHeight;
-          currentBubble = msg.querySelector(".bubble");
-          return msg;
-        }
+          // Auto-fit on resize
+          let fitTimeout;
+          resizeObserver = new ResizeObserver(() => {
+            clearTimeout(fitTimeout);
+            fitTimeout = setTimeout(() => {
+              if (!fitAddon) return;
+              fitAddon.fit();
+              if (ptyAlive && term) {
+                invoke("cmd_pty_resize", {
+                  sessionId: SESSION_ID,
+                  cols: term.cols,
+                  rows: term.rows,
+                }).catch(() => {});
+              }
+            }, 100);
+          });
+          resizeObserver.observe(termContainer);
 
-        function updateStreamingBubble(text) {
-          if (!currentBubble) return;
-          const cleaned = text.trim();
-          if (!cleaned) return;
-          currentBubble.innerHTML = renderMarkdown(cleaned);
-          threadView.scrollTop = threadView.scrollHeight;
-        }
-
-        function finalizeResponse() {
-          if (!waitingForResponse) return;
-          waitingForResponse = false;
-          // Clean up the response buffer: remove prompt lines and trailing whitespace
-          let text = responseBuffer
-            .split("\n")
-            .filter(l => !/^[❯>$]\s*$/.test(l.trim()))
-            .join("\n")
-            .trim();
-          if (text && currentBubble) {
-            currentBubble.innerHTML = renderMarkdown(text);
-          } else if (!text && currentBubble) {
-            // Empty response — remove the bubble
-            currentBubble.closest(".rr-msg")?.remove();
-          }
-          currentBubble = null;
-          responseBuffer = "";
-          threadView.scrollTop = threadView.scrollHeight;
-        }
-
-        // ─── PTY data handling ─────────────────────────────────────
-        function handlePtyData(rawBase64) {
-          const raw = atob(rawBase64);
-          const text = stripAnsi(raw);
-
-          if (!waitingForResponse) {
-            // Ignore initial output before first user message (agent startup banner)
-            return;
-          }
-
-          responseBuffer += text;
-
-          // Update streaming bubble every chunk
-          const display = responseBuffer
-            .split("\n")
-            .filter(l => !/^[❯>$]\s*$/.test(l.trim()))
-            .join("\n")
-            .trim();
-          updateStreamingBubble(display);
-
-          // Reset idle timer — finalize when no data for 800ms or prompt detected
-          clearTimeout(idleTimer);
-          if (hasPrompt(responseBuffer)) {
-            finalizeResponse();
-          } else {
-            idleTimer = setTimeout(finalizeResponse, 800);
-          }
+          // Send keystrokes to PTY
+          term.onData((data) => {
+            if (!ptyAlive) return;
+            invoke("cmd_pty_input", { sessionId: SESSION_ID, data }).catch(console.error);
+          });
         }
 
         // ─── PTY connection ────────────────────────────────────────
@@ -10518,17 +10430,23 @@
           if (ptyAlive || ptySpawning) return;
           ptySpawning = true;
 
+          initTerminal();
+
           if (!ptyListenerRegistered) {
             ptyListenerRegistered = true;
             const { getCurrentWindow } = window.__TAURI__.window;
             const currentWindow = getCurrentWindow();
 
             await currentWindow.listen("pty:data:" + SESSION_ID, (event) => {
-              handlePtyData(event.payload);
+              if (!term) return;
+              const raw = atob(event.payload);
+              const bytes = new Uint8Array(raw.length);
+              for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+              term.write(bytes);
             });
             await currentWindow.listen("pty:exit:" + SESSION_ID, () => {
               ptyAlive = false;
-              addMessage("Recall", "Session ended. Press W to start a new one.");
+              if (term) term.write("\r\n\x1b[33mSession ended. Press W to start a new one.\x1b[0m\r\n");
             });
           }
 
@@ -10540,56 +10458,23 @@
             if (msg.includes("already running") || msg.includes("Already")) {
               ptyAlive = true;
             } else {
-              addMessage("Recall", "Could not start agent: " + msg);
+              if (term) term.write("\x1b[31mCould not start agent: " + msg + "\x1b[0m\r\n");
             }
           }
           ptySpawning = false;
+
+          // Fit after spawn
+          requestAnimationFrame(() => { if (fitAddon) fitAddon.fit(); });
         }
-
-        // ─── Send message ──────────────────────────────────────────
-        async function sendMessage() {
-          const text = textarea.value.trim();
-          if (!text) return;
-
-          textarea.value = "";
-          textarea.style.height = "auto";
-
-          addMessage("You", text);
-          startStreamingBubble();
-          waitingForResponse = true;
-          responseBuffer = "";
-
-          await ensurePty();
-
-          // Send text + Enter to PTY
-          await invoke("cmd_pty_input", {
-            sessionId: SESSION_ID,
-            data: text + "\n",
-          }).catch(console.error);
-        }
-
-        // ─── Event bindings ────────────────────────────────────────
-        sendBtn?.addEventListener("click", sendMessage);
-        textarea.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          }
-        });
-        textarea.addEventListener("input", () => {
-          textarea.style.height = "auto";
-          textarea.style.height = Math.min(textarea.scrollHeight, 80) + "px";
-        });
-
-        backBtn.addEventListener("click", () => {
-          body.classList.remove("is-recall-room");
-        });
 
         // ─── Open / close ──────────────────────────────────────────
         function openRecallRoom() {
           body.classList.add("is-recall-room");
           ensurePty();
-          setTimeout(() => textarea.focus(), 100);
+          setTimeout(() => {
+            if (fitAddon) fitAddon.fit();
+            if (term) term.focus();
+          }, 150);
         }
         function closeRecallRoom() {
           body.classList.remove("is-recall-room");
@@ -10601,6 +10486,8 @@
             openRecallRoom();
           }
         }
+
+        backBtn.addEventListener("click", closeRecallRoom);
 
         // W shortcut (bare key, not from inputs).
         document.addEventListener("keydown", (e) => {
@@ -10614,31 +10501,31 @@
           }
         });
 
-        // Escape closes recall room (unless typing).
+        // Escape closes recall room.
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape" && body.classList.contains("is-recall-room")) {
-            if (document.activeElement === textarea) {
-              textarea.blur();
-            } else {
-              closeRecallRoom();
-            }
+            closeRecallRoom();
           }
         });
 
         // Also allow opening from the ask pill's Enter key
-        const pgAskInputForRecall = document.getElementById("pg-ask-input");
-        if (pgAskInputForRecall) {
-          pgAskInputForRecall.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && pgAskInputForRecall.value.trim()) {
+        const pgAskInput = document.getElementById("pg-ask-input");
+        if (pgAskInput) {
+          pgAskInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && pgAskInput.value.trim()) {
               e.preventDefault();
-              const question = pgAskInputForRecall.value.trim();
-              pgAskInputForRecall.value = "";
+              const question = pgAskInput.value.trim();
+              pgAskInput.value = "";
               openRecallRoom();
-              // Pre-fill and send after PTY is ready
+              // Send the question to the PTY after it's ready
               setTimeout(() => {
-                textarea.value = question;
-                sendMessage();
-              }, 200);
+                if (ptyAlive && term) {
+                  invoke("cmd_pty_input", {
+                    sessionId: SESSION_ID,
+                    data: question + "\n",
+                  }).catch(console.error);
+                }
+              }, 500);
             }
           });
         }
