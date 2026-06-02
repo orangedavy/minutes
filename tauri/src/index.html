@@ -4647,6 +4647,7 @@
           <div class="palette-foot">
             <span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span>
             <span><span class="kbd">↵</span> open</span>
+            <span><span class="kbd">⌘</span> <span class="kbd">↵</span> open in Recall</span>
             <span style="margin-left: auto;"><span class="kbd">esc</span> close</span>
           </div>
         </div>
@@ -10194,6 +10195,23 @@
                   '<div class="palette-section">No results</div>';
                 return;
               }
+              function fmtDate(raw) {
+                if (!raw) return "";
+                const d = new Date(raw);
+                if (isNaN(d)) return raw;
+                const now = new Date();
+                const diff = Math.floor((now - d) / 86400000);
+                if (diff < 1) return "today";
+                if (diff === 1) return "yesterday";
+                if (diff < 7) return diff + "d";
+                return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              }
+              function shortDate(raw) {
+                if (!raw) return "";
+                const d = new Date(raw);
+                if (isNaN(d)) return raw;
+                return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              }
               let html = '<div class="palette-section">Meetings</div>';
               meetings.slice(0, 8).forEach((m, i) => {
                 const title = (m.title || "Untitled").replace(
@@ -10203,13 +10221,14 @@
                   ),
                   "<mark>$1</mark>"
                 );
-                const sub = [m.date, m.snippet]
+                const sub = [shortDate(m.date), m.snippet]
                   .filter(Boolean)
                   .join(" · ");
+                const trail = fmtDate(m.date) || "↵";
                 html += `<div class="palette-item${i === 0 ? " is-active" : ""}" data-index="${i}" data-path="${m.path || ""}">
                   <span class="pi-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
                   <div class="pi-text"><div class="pi-title">${title}</div><div class="pi-sub">${sub}</div></div>
-                  <span class="pi-trail">↵</span>
+                  <span class="pi-trail">${trail}</span>
                 </div>`;
               });
               results.innerHTML = html;
