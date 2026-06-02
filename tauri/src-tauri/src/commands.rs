@@ -6166,9 +6166,23 @@ pub fn cmd_list_meetings(limit: Option<usize>) -> serde_json::Value {
                 .iter()
                 .map(|r| {
                     let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
-                    // Read frontmatter to check for lifecycle badges
+                    // Read frontmatter to check for lifecycle badges + attendees/tags
                     let badges = compute_lifecycle_badges(&r.path, &prep_slugs);
                     val["badges"] = serde_json::json!(badges);
+                    // Enrich with attendees and tags from frontmatter
+                    if let Ok(content) = std::fs::read_to_string(&r.path) {
+                        let (fm_str, _) = minutes_core::markdown::split_frontmatter(&content);
+                        if let Ok(fm) = serde_yaml::from_str::<minutes_core::markdown::Frontmatter>(
+                            &format!("---\n{}\n---", fm_str),
+                        ) {
+                            if !fm.attendees.is_empty() {
+                                val["attendees"] = serde_json::json!(fm.attendees);
+                            }
+                            if !fm.tags.is_empty() {
+                                val["tags"] = serde_json::json!(fm.tags);
+                            }
+                        }
+                    }
                     val
                 })
                 .collect();

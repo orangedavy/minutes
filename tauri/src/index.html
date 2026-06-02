@@ -10053,7 +10053,17 @@
             title.className = "pg-row-title";
             title.textContent = m.title || "Untitled";
             text.appendChild(title);
-            if (m.content_type && m.content_type !== "meeting") {
+
+            // Show attendees if available, otherwise content_type
+            const attendees = m.attendees || [];
+            if (attendees.length > 0) {
+              const sub = document.createElement("div");
+              sub.className = "pg-row-attendees";
+              sub.textContent = attendees.length <= 3
+                ? attendees.join(", ")
+                : attendees.slice(0, 2).join(", ") + " & " + (attendees.length - 2) + " others";
+              text.appendChild(sub);
+            } else if (m.content_type && m.content_type !== "meeting") {
               const sub = document.createElement("div");
               sub.className = "pg-row-attendees";
               sub.textContent = m.content_type;
@@ -10062,6 +10072,18 @@
 
             const meta = document.createElement("div");
             meta.className = "pg-row-meta";
+
+            // Tag pill (first tag only)
+            const tags = m.tags || [];
+            if (tags.length > 0) {
+              const tag = document.createElement("button");
+              tag.className = "pg-row-tag";
+              tag.title = "Change tag";
+              tag.innerHTML = '<span class="dot"></span>' + tags[0];
+              tag.addEventListener("click", (e) => e.stopPropagation());
+              meta.appendChild(tag);
+            }
+
             const time = document.createElement("span");
             time.className = "pg-row-time";
             time.innerHTML = pgFormatRowTime(m.date);
@@ -10675,6 +10697,34 @@
           renderMeetings([]);
         }
       }
+
+      // ── Calendar: Coming Up card for playground shell ──────────────
+      async function loadCalendarPlayground() {
+        const container = document.getElementById("pg-coming-up");
+        if (!container) return;
+        try {
+          const events = await invoke("cmd_upcoming_meetings");
+          if (!events || events.length === 0) {
+            container.hidden = true;
+            return;
+          }
+          const now = new Date();
+          const dayNum = now.getDate();
+          const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+          let html = `<div class="cu-row"><div class="cu-date"><span class="cu-date-num">${dayNum}</span><div class="cu-date-meta"><span class="month">${monthNames[now.getMonth()]}</span><span>${dayNames[now.getDay()]}</span></div></div><div class="cu-events">`;
+          events.slice(0, 4).forEach(ev => {
+            const timeStr = ev.minutes_until <= 0 ? "Now" : ev.minutes_until < 60 ? `In ${ev.minutes_until}m` : `In ${Math.floor(ev.minutes_until / 60)}h`;
+            html += `<div class="cu-event"><div class="cu-event-bar"></div><div class="cu-event-info"><div class="cu-event-title">${ev.title}</div><div class="cu-event-time">${timeStr}</div></div></div>`;
+          });
+          html += `</div></div>`;
+          container.innerHTML = html;
+          container.hidden = false;
+        } catch (e) {
+          container.hidden = true;
+        }
+      }
+      loadCalendarPlayground();
 
       async function refreshOpenMeetingDetail() {
         if (
