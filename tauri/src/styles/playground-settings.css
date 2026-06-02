@@ -40,23 +40,22 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-card {
   background: var(--bg);
   /* Top padding reserves room for the position:fixed .about-top bar
      below so first-section content doesn't slide under it. */
-  padding: 44px 38px 60px 38px;
+  padding: 56px 38px 60px 38px;
   overflow-y: auto;
 }
 
 /* Top bar — back chevron on the LEFT (after traffic lights). Pinned
    with position:fixed so card padding / parent transforms / cascade
    from .about-card can't push it below the macOS traffic lights.
-   Traffic lights live at LogicalPosition(16, 16) per main.rs (see
-   `.traffic_light_position`), so their geometric center is y=22 (with
-   12px diameter). Bar height 44px + align-items:center → back button
-   center at y=22. Matches exactly. */
+   Traffic lights live at LogicalPosition(16, 22) per main.rs, so their
+   geometric center is y=28 (22 + 12/2). Bar height 56px +
+   align-items:center → back button center at y=28. Matches exactly. */
 body.is-playground-shell .about-overlay#settings-overlay .about-top {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 44px;
+  height: 56px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   z-index: 5;
@@ -162,14 +161,17 @@ body.is-playground-shell .about-overlay#settings-overlay .settings-section > .ab
   padding: 14px 16px;
   gap: 14px;
 }
-/* Row followed by another .about-controls → fuse bottom edge. */
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:has(+ .about-controls) {
+/* Row followed by another VISIBLE .about-controls → fuse bottom edge.
+   Must exclude .is-hidden siblings — otherwise the last visible row
+   loses its bottom radius when followed by a hidden row (e.g.
+   auto-summarization engine options, screenshot interval). */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:not(.is-hidden):has(+ .about-controls:not(.is-hidden)) {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom: 0;
 }
-/* Row preceded by another .about-controls → fuse top edge (hairline). */
-body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls + .about-controls {
+/* Row preceded by another VISIBLE .about-controls → fuse top edge. */
+body.is-playground-shell .about-overlay#settings-overlay .settings-section > .about-controls:not(.is-hidden) + .about-controls:not(.is-hidden) {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }

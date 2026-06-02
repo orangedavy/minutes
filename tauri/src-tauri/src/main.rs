@@ -261,7 +261,7 @@ fn show_main_window(app: &tauri::AppHandle) {
             // visual chrome instead of stacking below a separate gray title bar.
             .title_bar_style(tauri::TitleBarStyle::Overlay)
             .hidden_title(true)
-            .traffic_light_position(tauri::LogicalPosition::new(16.0, 16.0));
+            .traffic_light_position(tauri::LogicalPosition::new(16.0, 22.0));
     }
 
     if let Ok(win) = builder.build() {
