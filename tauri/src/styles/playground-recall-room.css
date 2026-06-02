@@ -20,21 +20,17 @@ body.is-playground-shell.is-recall-room .recall-room {
 
 /* ─── Toolbar ─────────────────────────────────────────────────── */
 body.is-playground-shell .rr-tb {
-  height: 44px;
+  height: 56px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 14px;
-  gap: 8px;
+  padding: 0 16px 0 82px; /* 82px clears macOS traffic-light cluster */
+  gap: 10px;
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
 }
 body.is-playground-shell .rr-tb .traffic {
-  display: flex;
-  gap: 8px;
-  width: 68px;
-  margin-right: 6px;
-  -webkit-app-region: no-drag;
+  display: none;
 }
 body.is-playground-shell .rr-back {
   width: 28px;
@@ -100,7 +96,7 @@ body.is-playground-shell .rr-body {
 /* ─── Thread Rail ─────────────────────────────────────────────── */
 body.is-playground-shell .rr-rail {
   border-right: 1px solid var(--border);
-  padding: 12px 10px;
+  padding: 12px 10px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -117,7 +113,7 @@ body.is-playground-shell .rr-rail-section {
 }
 body.is-playground-shell .rr-thread {
   padding: 10px 12px;
-  border-radius: 6px 0 0 6px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -130,8 +126,7 @@ body.is-playground-shell .rr-thread:hover {
 }
 body.is-playground-shell .rr-thread.is-active {
   background: var(--bg-elev);
-  border-left: 3px solid var(--accent);
-  padding-left: 9px;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 body.is-playground-shell .rr-thread-title {
   font-family: var(--font-sans);
