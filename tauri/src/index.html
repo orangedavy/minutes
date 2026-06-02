@@ -10186,8 +10186,8 @@
           activeIndex = 0;
           if (!query) return;
 
-          // Use cmd_search_meetings if available.
-          invoke("cmd_search_meetings", { query, limit: 8 })
+          // Use cmd_search (Rust backend, walks ~/meetings/).
+          invoke("cmd_search", { query })
             .then((meetings) => {
               if (!meetings || !meetings.length) {
                 results.innerHTML =
@@ -10195,15 +10195,15 @@
                 return;
               }
               let html = '<div class="palette-section">Meetings</div>';
-              meetings.forEach((m, i) => {
-                const title = (m.title || m.filename || "Untitled").replace(
+              meetings.slice(0, 8).forEach((m, i) => {
+                const title = (m.title || "Untitled").replace(
                   new RegExp(
                     `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
                     "gi"
                   ),
                   "<mark>$1</mark>"
                 );
-                const sub = [m.date, m.attendees]
+                const sub = [m.date, m.snippet]
                   .filter(Boolean)
                   .join(" · ");
                 html += `<div class="palette-item${i === 0 ? " is-active" : ""}" data-index="${i}" data-path="${m.path || ""}">
