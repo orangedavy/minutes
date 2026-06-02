@@ -4634,6 +4634,24 @@
            (Home, Action items, tag rows) just close the drawer for now.
            ──────────────────────────────────────────────────────────── -->
       <div class="sidebar-scrim" id="pg-sidebar-scrim" hidden></div>
+
+      <!-- ── Command Palette ⌘K ──────────────────────────────────── -->
+      <div class="palette-scrim" id="pg-palette-scrim">
+        <div class="palette">
+          <div class="palette-input">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="pg-palette-input" placeholder="Search meetings, transcripts, notes…" autocomplete="off" spellcheck="false" />
+            <span class="kbd">esc</span>
+          </div>
+          <div class="palette-results" id="pg-palette-results"></div>
+          <div class="palette-foot">
+            <span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span>
+            <span><span class="kbd">↵</span> open</span>
+            <span style="margin-left: auto;"><span class="kbd">esc</span> close</span>
+          </div>
+        </div>
+      </div>
+
       <aside class="sidebar" id="pg-sidebar" aria-hidden="true">
         <div class="sb-brand">Minutes</div>
         <div class="sidebar-search">
@@ -7050,6 +7068,7 @@
     <link rel="stylesheet" href="styles/playground-home.css" />
     <link rel="stylesheet" href="styles/playground-detail.css" />
     <link rel="stylesheet" href="styles/playground-settings.css" />
+    <link rel="stylesheet" href="styles/playground-palette.css" />
     <link rel="stylesheet" href="styles/playground-recall.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
@@ -10120,6 +10139,165 @@
               el.textContent = String(items.length);
           })
           .catch(() => {});
+      })();
+
+      // ── Command Palette (⌘K / K) ─────────────────────────────────
+      (function wirePalette() {
+        const scrim = document.getElementById("pg-palette-scrim");
+        const input = document.getElementById("pg-palette-input");
+        const results = document.getElementById("pg-palette-results");
+        if (!scrim || !input) return;
+
+        const open = () => {
+          scrim.classList.add("is-visible");
+          setTimeout(() => input.focus(), 30);
+        };
+        const close = () => {
+          scrim.classList.remove("is-visible");
+          input.value = "";
+          results.innerHTML = "";
+        };
+        const toggle = () => {
+          if (scrim.classList.contains("is-visible")) close();
+          else open();
+        };
+
+        // Scrim click closes.
+        scrim.addEventListener("click", (e) => {
+          if (e.target === scrim) close();
+        });
+
+        // Sidebar search bar also opens the palette.
+        const sbSearch = document.getElementById("pg-sidebar-search");
+        if (sbSearch) {
+          sbSearch.addEventListener("focus", () => {
+            sbSearch.blur();
+            open();
+          });
+        }
+
+        // ── Search logic ──────────────────────────────────────────
+        let activeIndex = 0;
+        let items = [];
+
+        function renderResults(query) {
+          results.innerHTML = "";
+          items = [];
+          activeIndex = 0;
+          if (!query) return;
+
+          // Use cmd_search_meetings if available.
+          invoke("cmd_search_meetings", { query, limit: 8 })
+            .then((meetings) => {
+              if (!meetings || !meetings.length) {
+                results.innerHTML =
+                  '<div class="palette-section">No results</div>';
+                return;
+              }
+              let html = '<div class="palette-section">Meetings</div>';
+              meetings.forEach((m, i) => {
+                const title = (m.title || m.filename || "Untitled").replace(
+                  new RegExp(
+                    `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+                    "gi"
+                  ),
+                  "<mark>$1</mark>"
+                );
+                const sub = [m.date, m.attendees]
+                  .filter(Boolean)
+                  .join(" · ");
+                html += `<div class="palette-item${i === 0 ? " is-active" : ""}" data-index="${i}" data-path="${m.path || ""}">
+                  <span class="pi-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                  <div class="pi-text"><div class="pi-title">${title}</div><div class="pi-sub">${sub}</div></div>
+                  <span class="pi-trail">↵</span>
+                </div>`;
+              });
+              results.innerHTML = html;
+              items = results.querySelectorAll(".palette-item");
+            })
+            .catch(() => {
+              results.innerHTML =
+                '<div class="palette-section">Search unavailable</div>';
+            });
+        }
+
+        let debounce = null;
+        input.addEventListener("input", () => {
+          clearTimeout(debounce);
+          debounce = setTimeout(() => renderResults(input.value.trim()), 150);
+        });
+
+        function setActive(idx) {
+          if (!items.length) return;
+          items[activeIndex]?.classList.remove("is-active");
+          activeIndex = ((idx % items.length) + items.length) % items.length;
+          items[activeIndex]?.classList.add("is-active");
+          items[activeIndex]?.scrollIntoView({ block: "nearest" });
+        }
+
+        function selectItem(el) {
+          const path = el?.dataset?.path;
+          if (path) {
+            // Open meeting detail via the existing production mechanism.
+            close();
+            if (typeof openMeetingDetail === "function") {
+              openMeetingDetail(path);
+            }
+          }
+        }
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            close();
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive(activeIndex + 1);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive(activeIndex - 1);
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            selectItem(items[activeIndex]);
+          }
+        });
+
+        results.addEventListener("click", (e) => {
+          const item = e.target.closest(".palette-item");
+          if (item) selectItem(item);
+        });
+
+        // Global keyboard shortcuts.
+        document.addEventListener("keydown", (e) => {
+          // ⌘K always opens, even from inputs.
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            open();
+            return;
+          }
+          // Escape from anywhere closes if open.
+          if (
+            e.key === "Escape" &&
+            scrim.classList.contains("is-visible")
+          ) {
+            close();
+            return;
+          }
+          // Bare K opens when not in an input.
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          const t = e.target;
+          const tag = (t && t.tagName) || "";
+          if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            (t && t.isContentEditable)
+          )
+            return;
+          if (e.key === "k" || e.key === "K") {
+            e.preventDefault();
+            toggle();
+          }
+        });
       })();
 
       // Ask pill: clicking anywhere opens Recall; Enter submits to assistant.
