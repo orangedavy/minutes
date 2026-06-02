@@ -4880,7 +4880,16 @@
           </button>
         </div>
         <div class="rr-body">
-          <div class="rr-terminal" id="rr-terminal"></div>
+          <!-- Phase 2: Structured chat bubbles -->
+          <div class="rr-chat" id="rr-chat"></div>
+          <!-- Phase 1 fallback: raw terminal (hidden by default in playground) -->
+          <div class="rr-terminal" id="rr-terminal" style="display:none"></div>
+        </div>
+        <div class="rr-input-bar" id="rr-input-bar">
+          <input type="text" class="rr-input" id="rr-input" placeholder="Ask anything..." autocomplete="off" />
+          <button class="rr-send" id="rr-send" title="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+          </button>
         </div>
       </div>
 
@@ -10359,122 +10368,149 @@
         });
       })();
 
-      // ── Recall Workspace Room (W shortcut) ────────────────────────
+      // ── Recall Workspace Room (W shortcut) — Phase 2: Structured Chat ──
       (function wireRecallRoom() {
         const body = document.body;
         const backBtn = document.getElementById("rr-back");
-        const termContainer = document.getElementById("rr-terminal");
-        if (!backBtn || !termContainer) return;
+        const newBtn = document.getElementById("rr-new-thread");
+        const chatContainer = document.getElementById("rr-chat");
+        const inputBar = document.getElementById("rr-input-bar");
+        const input = document.getElementById("rr-input");
+        const sendBtn = document.getElementById("rr-send");
+        if (!backBtn || !chatContainer || !input) return;
 
-        const SESSION_ID = "assistant";
-        let ptyAlive = false;
-        let ptySpawning = false;
-        let ptyListenerRegistered = false;
-        let term = null;
-        let fitAddon = null;
-        let resizeObserver = null;
-        let termInitialized = false;
+        let sending = false;
+        let listenerRegistered = false;
+        let currentAssistantBubble = null;
 
-        // ─── xterm.js setup ────────────────────────────────────────
-        function initTerminal() {
-          if (termInitialized) return;
-          termInitialized = true;
+        // ─── Event listener for streaming deltas ───────────────────
+        async function ensureListener() {
+          if (listenerRegistered) return;
+          listenerRegistered = true;
+          const { getCurrentWindow } = window.__TAURI__.window;
+          const currentWindow = getCurrentWindow();
 
-          term = new Terminal({
-            theme: window.MINUTES_XTERM_THEME,
-            fontFamily: "'Geist Mono', 'SF Mono', Menlo, monospace",
-            fontSize: 13,
-            lineHeight: 1.3,
-            cursorBlink: true,
-            cursorStyle: "bar",
-            scrollback: 10000,
-            allowProposedApi: true,
-          });
+          await currentWindow.listen("recall:chat", (event) => {
+            const data = event.payload;
+            if (!data) return;
 
-          fitAddon = new FitAddon.FitAddon();
-          term.loadAddon(fitAddon);
-          term.open(termContainer);
-
-          // Theme sync
-          window.MINUTES_XTERM_THEME_QUERY.addEventListener("change", (event) => {
-            if (term) term.options.theme = window.getMinutesTheme(event.matches);
-          });
-
-          // Auto-fit on resize
-          let fitTimeout;
-          resizeObserver = new ResizeObserver(() => {
-            clearTimeout(fitTimeout);
-            fitTimeout = setTimeout(() => {
-              if (!fitAddon) return;
-              fitAddon.fit();
-              if (ptyAlive && term) {
-                invoke("cmd_pty_resize", {
-                  sessionId: SESSION_ID,
-                  cols: term.cols,
-                  rows: term.rows,
-                }).catch(() => {});
+            if (data.type === "delta") {
+              if (!currentAssistantBubble) {
+                currentAssistantBubble = addBubble("assistant", "");
               }
-            }, 100);
-          });
-          resizeObserver.observe(termContainer);
-
-          // Send keystrokes to PTY
-          term.onData((data) => {
-            if (!ptyAlive) return;
-            invoke("cmd_pty_input", { sessionId: SESSION_ID, data }).catch(console.error);
+              appendToBubble(currentAssistantBubble, data.text);
+            } else if (data.type === "done") {
+              if (currentAssistantBubble) {
+                finalizeBubble(currentAssistantBubble, data.text);
+              }
+              currentAssistantBubble = null;
+              sending = false;
+              updateInputState();
+            } else if (data.type === "error") {
+              if (currentAssistantBubble) {
+                currentAssistantBubble.classList.add("rr-error");
+                currentAssistantBubble.querySelector(".rr-bubble-text").textContent = data.message;
+              } else {
+                const bubble = addBubble("assistant", data.message);
+                bubble.classList.add("rr-error");
+              }
+              currentAssistantBubble = null;
+              sending = false;
+              updateInputState();
+            }
           });
         }
 
-        // ─── PTY connection ────────────────────────────────────────
-        async function ensurePty() {
-          if (ptyAlive || ptySpawning) return;
-          ptySpawning = true;
+        // ─── Chat bubble helpers ───────────────────────────────────
+        function addBubble(role, text) {
+          const bubble = document.createElement("div");
+          bubble.className = "rr-bubble rr-" + role;
+          const textEl = document.createElement("div");
+          textEl.className = "rr-bubble-text";
+          textEl.textContent = text;
+          bubble.appendChild(textEl);
+          chatContainer.appendChild(bubble);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+          return bubble;
+        }
 
-          initTerminal();
-
-          if (!ptyListenerRegistered) {
-            ptyListenerRegistered = true;
-            const { getCurrentWindow } = window.__TAURI__.window;
-            const currentWindow = getCurrentWindow();
-
-            await currentWindow.listen("pty:data:" + SESSION_ID, (event) => {
-              if (!term) return;
-              const raw = atob(event.payload);
-              const bytes = new Uint8Array(raw.length);
-              for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-              term.write(bytes);
-            });
-            await currentWindow.listen("pty:exit:" + SESSION_ID, () => {
-              ptyAlive = false;
-              if (term) term.write("\r\n\x1b[33mSession ended. Press W to start a new one.\x1b[0m\r\n");
-            });
+        function appendToBubble(bubble, text) {
+          const textEl = bubble.querySelector(".rr-bubble-text");
+          if (textEl) {
+            textEl.textContent += text;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
           }
+        }
+
+        function finalizeBubble(bubble, fullText) {
+          const textEl = bubble.querySelector(".rr-bubble-text");
+          if (textEl && fullText) {
+            textEl.textContent = fullText;
+          }
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // ─── Send message ──────────────────────────────────────────
+        async function sendMessage(text) {
+          if (!text || sending) return;
+          sending = true;
+          updateInputState();
+
+          addBubble("user", text);
+          currentAssistantBubble = null;
+
+          await ensureListener();
 
           try {
-            await invoke("cmd_spawn_terminal", { mode: "assistant" });
-            ptyAlive = true;
+            await invoke("cmd_recall_chat", { message: text });
           } catch (e) {
             const msg = typeof e === "string" ? e : String(e);
-            if (msg.includes("already running") || msg.includes("Already")) {
-              ptyAlive = true;
-            } else {
-              if (term) term.write("\x1b[31mCould not start agent: " + msg + "\x1b[0m\r\n");
+            if (!currentAssistantBubble) {
+              const bubble = addBubble("assistant", msg);
+              bubble.classList.add("rr-error");
             }
+            sending = false;
+            updateInputState();
           }
-          ptySpawning = false;
+        }
 
-          // Fit after spawn
-          requestAnimationFrame(() => { if (fitAddon) fitAddon.fit(); });
+        function updateInputState() {
+          input.disabled = sending;
+          sendBtn.disabled = sending;
+          if (!sending) input.focus();
+        }
+
+        // ─── Input wiring ──────────────────────────────────────────
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey && input.value.trim()) {
+            e.preventDefault();
+            const msg = input.value.trim();
+            input.value = "";
+            sendMessage(msg);
+          }
+        });
+        sendBtn.addEventListener("click", () => {
+          if (input.value.trim()) {
+            const msg = input.value.trim();
+            input.value = "";
+            sendMessage(msg);
+          }
+        });
+
+        // New thread button
+        if (newBtn) {
+          newBtn.addEventListener("click", () => {
+            chatContainer.innerHTML = "";
+            currentAssistantBubble = null;
+            invoke("cmd_recall_chat_reset").catch(() => {});
+            input.focus();
+          });
         }
 
         // ─── Open / close ──────────────────────────────────────────
         function openRecallRoom() {
           body.classList.add("is-recall-room");
-          ensurePty();
-          setTimeout(() => {
-            if (fitAddon) fitAddon.fit();
-            if (term) term.focus();
-          }, 150);
+          setTimeout(() => input.focus(), 150);
         }
         function closeRecallRoom() {
           body.classList.remove("is-recall-room");
@@ -10501,14 +10537,18 @@
           }
         });
 
-        // Escape closes recall room.
+        // Escape closes recall room (unless typing in the input).
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape" && body.classList.contains("is-recall-room")) {
-            closeRecallRoom();
+            if (document.activeElement === input && input.value) {
+              input.value = "";
+            } else {
+              closeRecallRoom();
+            }
           }
         });
 
-        // Also allow opening from the ask pill's Enter key
+        // Ask pill integration — opens Recall and sends the question
         const pgAskInput = document.getElementById("pg-ask-input");
         if (pgAskInput) {
           pgAskInput.addEventListener("keydown", (e) => {
@@ -10517,15 +10557,7 @@
               const question = pgAskInput.value.trim();
               pgAskInput.value = "";
               openRecallRoom();
-              // Send the question to the PTY after it's ready
-              setTimeout(() => {
-                if (ptyAlive && term) {
-                  invoke("cmd_pty_input", {
-                    sessionId: SESSION_ID,
-                    data: question + "\n",
-                  }).catch(console.error);
-                }
-              }, 500);
+              setTimeout(() => sendMessage(question), 200);
             }
           });
         }

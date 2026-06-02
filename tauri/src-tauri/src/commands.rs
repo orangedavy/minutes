@@ -85,6 +85,8 @@ pub struct AppState {
     /// from the cancel bit so the detector can tell an explicit user cancel
     /// from an internal reset or teardown path.
     pub call_end_countdown_terminal_state: Arc<AtomicU8>,
+    /// Structured Recall chat state (Phase 2 — session ID for --resume continuity).
+    pub recall_chat_state: Arc<Mutex<crate::chat::RecallChatState>>,
 }
 
 #[derive(Debug, Clone)]
@@ -7661,6 +7663,52 @@ pub fn cmd_pty_resize(
 pub fn cmd_pty_kill(state: tauri::State<AppState>, session_id: String) -> Result<(), String> {
     let mut manager = state.pty_manager.lock().map_err(|_| "Lock failed")?;
     manager.kill_session(&session_id);
+    Ok(())
+}
+
+// ── Structured Recall Chat (Phase 2) ───────────────────────────────────────
+
+/// Send a message to Claude via structured stream-json and get streaming
+/// text deltas back via `recall:chat` events. Returns the full response text.
+#[tauri::command]
+pub async fn cmd_recall_chat(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    message: String,
+) -> Result<String, String> {
+    let config = Config::load();
+    let workspace = crate::context::create_workspace(&config)?;
+
+    // Store workspace in chat state
+    if let Ok(mut cs) = state.recall_chat_state.lock() {
+        cs.workspace = Some(workspace.clone());
+    }
+
+    let agent_name = &config.assistant.agent;
+    let agent_bin = find_agent_binary(agent_name).ok_or_else(|| {
+        format!(
+            "'{}' not found on PATH. Install with `npm i -g @anthropic-ai/claude-code`.",
+            agent_name
+        )
+    })?;
+
+    let chat_state = state.recall_chat_state.clone();
+
+    // Run blocking I/O off the main thread
+    let app_clone = app.clone();
+    let msg = message.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::chat::send_message(&msg, &agent_bin, &workspace, &chat_state, &app_clone)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+/// Reset the Recall chat session (start fresh conversation).
+#[tauri::command]
+pub fn cmd_recall_chat_reset(state: tauri::State<AppState>) -> Result<(), String> {
+    let mut cs = state.recall_chat_state.lock().map_err(|_| "Lock failed")?;
+    cs.session_id = None;
     Ok(())
 }
 

@@ -21,6 +21,7 @@ mod call_capture;
 mod call_detect;
 #[cfg(target_os = "macos")]
 mod cli_setup;
+mod chat;
 mod commands;
 mod context;
 mod palette_dispatch;
@@ -1558,6 +1559,7 @@ fn main() {
             call_end_countdown_cancel: call_end_countdown_cancel.clone(),
             call_end_countdown_active: call_end_countdown_active.clone(),
             call_end_countdown_terminal_state: call_end_countdown_terminal_state.clone(),
+            recall_chat_state: Arc::new(Mutex::new(chat::RecallChatState::default())),
         })
         .manage(Arc::new(Mutex::new(
             shortcut_manager::ShortcutManager::new(),
@@ -2418,6 +2420,8 @@ fn main() {
             commands::cmd_pty_kill,
             commands::cmd_list_agents,
             commands::cmd_terminal_info,
+            commands::cmd_recall_chat,
+            commands::cmd_recall_chat_reset,
             commands::cmd_get_settings,
             commands::cmd_warm_parakeet,
             commands::cmd_openai_compatible_secret_status,
