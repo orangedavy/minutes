@@ -299,3 +299,17 @@ body.is-playground-shell .rr-input .send {
   place-items: center;
   flex-shrink: 0;
 }
+
+/* Typing indicator */
+body.is-playground-shell .rr-typing {
+  display: inline-block;
+  letter-spacing: 2px;
+  animation: rrBlink 1.2s infinite;
+  color: var(--text-tertiary);
+  font-size: 16px;
+}
+@keyframes rrBlink {
+  0%, 60% { opacity: 1; }
+  80% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
