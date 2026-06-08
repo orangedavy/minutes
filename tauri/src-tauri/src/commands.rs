@@ -7539,7 +7539,13 @@ fn vocabulary_person_key(value: &str) -> String {
 #[tauri::command]
 pub async fn cmd_upcoming_meetings() -> serde_json::Value {
     tauri::async_runtime::spawn_blocking(|| {
-        let events = minutes_core::calendar::upcoming_events(120); // 2 hour lookahead
+        // Lookahead covers the rest of today so the playground "Coming Up" card
+        // can show the full day's schedule. Cap at remaining minutes until midnight.
+        let now = chrono::Local::now();
+        let end_of_day = now.date_naive().and_hms_opt(23, 59, 59).unwrap();
+        let remaining = (end_of_day - now.naive_local()).num_minutes().max(0) as u32;
+        let lookahead = remaining.min(1440); // never exceed 24h
+        let events = minutes_core::calendar::upcoming_events(lookahead);
         serde_json::to_value(&events).unwrap_or(serde_json::json!([]))
     })
     .await

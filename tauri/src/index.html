@@ -12866,24 +12866,48 @@
             "Dec",
           ];
           const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+          function formatEventTime(ev) {
+            // Parse "yyyy-MM-dd HH:mm" start and show as "9:15 am"
+            if (ev.start) {
+              const parts = ev.start.split(" ");
+              if (parts.length === 2) {
+                const [h, m] = parts[1].split(":").map(Number);
+                const ampm = h >= 12 ? "pm" : "am";
+                const h12 = h % 12 || 12;
+                return m === 0 ? `${h12} ${ampm}` : `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+              }
+            }
+            // Fallback to relative
+            if (ev.minutes_until <= 0) return "Now";
+            if (ev.minutes_until < 60) return `In ${ev.minutes_until}m`;
+            return `In ${Math.floor(ev.minutes_until / 60)}h`;
+          }
+
           let html = `<div class="cu-row"><div class="cu-date"><span class="cu-date-num">${dayNum}</span><div class="cu-date-meta"><span class="month">${monthNames[now.getMonth()]}</span><span>${dayNames[now.getDay()]}</span></div></div><div class="cu-events">`;
-          events.slice(0, 4).forEach((ev) => {
-            const timeStr =
-              ev.minutes_until <= 0
-                ? "Now"
-                : ev.minutes_until < 60
-                  ? `In ${ev.minutes_until}m`
-                  : `In ${Math.floor(ev.minutes_until / 60)}h`;
-            html += `<div class="cu-event"><div class="cu-event-bar"></div><div class="cu-event-info"><div class="cu-event-title">${ev.title}</div><div class="cu-event-time">${timeStr}</div></div></div>`;
+          events.forEach((ev) => {
+            const isDone = ev.minutes_until < -30; // ended more than 30min ago
+            const doneClass = isDone ? " cu-event-done" : "";
+            const timeStr = isDone ? "Done" : formatEventTime(ev);
+            const urlAttr = ev.url ? ` data-url="${ev.url.replace(/"/g, '&quot;')}"` : "";
+            html += `<div class="cu-event${doneClass}"${urlAttr}><div class="cu-event-bar"></div><div class="cu-event-info"><div class="cu-event-title">${ev.title}</div><div class="cu-event-time">${timeStr}</div></div></div>`;
           });
           html += `</div></div>`;
           container.innerHTML = html;
           container.hidden = false;
+          // Wire click: open meeting URL if available
+          container.querySelectorAll(".cu-event[data-url]:not(.cu-event-done)").forEach(el => {
+            el.style.cursor = "pointer";
+            el.addEventListener("click", () => {
+              if (el.dataset.url) window.__TAURI__.shell.open(el.dataset.url);
+            });
+          });
         } catch (e) {
           container.hidden = true;
         }
       }
       loadCalendarPlayground();
+      setInterval(loadCalendarPlayground, 60000); // refresh every 60s to update time labels
 
       async function refreshOpenMeetingDetail() {
         if (
@@ -13237,8 +13261,10 @@
         if (isRecording) return;
         try {
           const events = await invoke("cmd_upcoming_meetings");
-          if (events && events.length > 0) {
-            const next = events[0];
+          // Only show the upcoming bar / join popup for events starting within 2 min
+          const imminent = (events || []).filter(ev => ev.minutes_until <= 2 && ev.minutes_until >= -5);
+          if (imminent.length > 0) {
+            const next = imminent[0];
             document.getElementById("upcoming-title").textContent = next.title;
             const mins = next.minutes_until;
             document.getElementById("upcoming-time").textContent =
@@ -13246,9 +13272,7 @@
                 ? "Starting now"
                 : mins === 1
                   ? "In 1 minute"
-                  : mins < 60
-                    ? `In ${mins} minutes`
-                    : `In ${Math.floor(mins / 60)}h ${mins % 60}m`;
+                  : `In ${mins} minutes`;
             upcoming.classList.add("active");
 
             document.getElementById("btn-record-upcoming").onclick =

@@ -69,8 +69,15 @@ body.is-playground-shell .cu-event {
   display: flex;
   gap: 10px;
   align-items: flex-start;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 100ms;
+}
+body.is-playground-shell .cu-event[data-url] {
   cursor: pointer;
-  padding: 2px 0;
+}
+body.is-playground-shell .cu-event[data-url]:hover {
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.04));
 }
 body.is-playground-shell .cu-event-bar {
   width: 2px;
@@ -101,6 +108,15 @@ body.is-playground-shell .cu-event-time {
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
   text-transform: uppercase;
+}
+body.is-playground-shell .cu-event-done {
+  opacity: 0.4;
+}
+body.is-playground-shell .cu-event-done .cu-event-bar {
+  background: var(--text-tertiary);
+}
+body.is-playground-shell .cu-event-done .cu-event-title {
+  text-decoration: line-through;
 }
 
 /* DAY GROUPS + ROWS */
