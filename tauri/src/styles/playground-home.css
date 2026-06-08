@@ -270,6 +270,68 @@ body.is-playground-shell .pg-row-tag .dot {
   background: currentColor;
   opacity: 0.9;
 }
+body.is-playground-shell .pg-row-tag-x {
+  margin-left: 2px;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  color: var(--text-tertiary);
+  transition:
+    opacity 120ms,
+    color 120ms;
+  cursor: pointer;
+}
+body.is-playground-shell .pg-row-tag:hover .pg-row-tag-x {
+  opacity: 1;
+}
+body.is-playground-shell .pg-row-tag-x:hover {
+  color: var(--text-primary);
+}
+
+/* TAG FILTER BANNER — shown above meeting list when filtering by tag */
+body.is-playground-shell .pg-tag-filter-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin: 0 0 8px 0;
+  background: var(--accent-soft);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+body.is-playground-shell .pg-tag-filter-banner .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+body.is-playground-shell .pg-tag-filter-name {
+  font-weight: 500;
+}
+body.is-playground-shell .pg-tag-filter-count {
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+body.is-playground-shell .pg-tag-filter-clear {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+body.is-playground-shell .pg-tag-filter-clear:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
 
 /* HERO NOW — live recording card with waveform, replaces production
    .recording-bar when a session is active */
@@ -279,11 +341,7 @@ body.is-playground-shell .pg-hero-now {
   padding: 22px 22px 20px 22px;
   border-radius: var(--radius-card);
   background:
-    radial-gradient(
-      120% 80% at 0% 0%,
-      var(--accent-soft) 0%,
-      transparent 55%
-    ),
+    radial-gradient(120% 80% at 0% 0%, var(--accent-soft) 0%, transparent 55%),
     var(--bg-elev);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -348,29 +406,23 @@ body.is-playground-shell .pg-hero-now-meta {
   margin-bottom: 18px;
 }
 body.is-playground-shell .pg-hero-now-wave {
-  height: 36px;
+  height: 56px;
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: center;
+  gap: 1.5px;
   margin-bottom: 16px;
+  width: 100%;
 }
 body.is-playground-shell .pg-hero-now-wave span {
-  width: 3px;
+  flex: 1;
+  min-width: 0;
+  height: 3px;
   border-radius: 1px;
   background: var(--accent);
-  opacity: 0.5;
-  animation: pgHnWave 1.4s ease-in-out infinite;
-}
-@keyframes pgHnWave {
-  0%,
-  100% {
-    transform: scaleY(0.35);
-    opacity: 0.35;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 0.85;
-  }
+  opacity: 0.25;
+  transition:
+    height 0.1s ease-out,
+    opacity 0.1s ease-out;
 }
 body.is-playground-shell .pg-hero-now-actions {
   display: flex;
@@ -414,4 +466,152 @@ body.is-playground-shell .pg-hero-now-actions .hn-ghost:hover {
   body.is-playground-shell .pg-hero-now-wave span {
     animation: none !important;
   }
+}
+
+/* HERO PROCESSING — replaces processing-bar with playground-parity card */
+body.is-playground-shell .pg-hero-processing {
+  display: none;
+  position: relative;
+  margin: 6px 0 22px 0;
+  padding: 22px 22px 20px 22px;
+  border-radius: var(--radius-card);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+body.is-playground-shell .pg-hero-processing.active {
+  display: block;
+}
+body.is-playground-shell .hp-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+body.is-playground-shell .hp-spinner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-mid);
+  border-top-color: var(--accent);
+  animation: hpSpin 0.8s linear infinite;
+}
+@keyframes hpSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+body.is-playground-shell .pg-hero-processing h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+body.is-playground-shell .hp-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+body.is-playground-shell .hp-stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+body.is-playground-shell .hp-stage:last-child {
+  border-bottom: 1px solid var(--border);
+}
+body.is-playground-shell .hp-stage-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .hp-stage.is-done .hp-stage-icon {
+  color: var(--accent);
+}
+body.is-playground-shell .hp-stage.is-active .hp-stage-icon {
+  color: var(--accent);
+}
+body.is-playground-shell .hp-stage-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex: 1;
+}
+body.is-playground-shell .hp-stage.is-done .hp-stage-label {
+  color: var(--text-secondary);
+}
+body.is-playground-shell .hp-stage.is-active .hp-stage-label {
+  color: var(--text);
+  font-weight: 500;
+}
+body.is-playground-shell .hp-stage-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+body.is-playground-shell .hp-progress {
+  margin-top: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--border);
+  overflow: hidden;
+}
+body.is-playground-shell .hp-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 1px;
+  width: 0%;
+  transition: width 0.5s ease-out;
+  animation: hpShimmer 2s ease-in-out infinite;
+}
+@keyframes hpShimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+body.is-playground-shell .hp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+body.is-playground-shell .hp-elapsed {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+body.is-playground-shell .hp-cancel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+body.is-playground-shell .hp-cancel:hover {
+  color: var(--text-secondary);
+  background: var(--bg-elev-2);
 }

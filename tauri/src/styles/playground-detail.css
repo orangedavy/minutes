@@ -1,13 +1,18 @@
 /* Playground detail-overlay restyle — applies playground aesthetic to
-   the existing #detail-overlay DOM. We don't rewrite the markup because
-   renderDetailSections() pushes deeply-structured content into
-   #detail-scroll (action items, decisions, transcript, artifacts,
-   speaker maps, etc.). Restyling preserves all that logic intact.
-   See tauri/src/playground.html lines 358-435 for source styling. */
+   the existing #detail-overlay DOM. Full-pane layout: the detail replaces
+   the meetings list entirely (no modal, no scrim). A toolbar at top has
+   back + Notes/Transcript toggle. Content area has talk-strip, moments
+   strip, and switchable notes/transcript panes.
+   See tauri/src/playground.html for reference styling. */
 
 body.is-playground-shell .detail-overlay.active {
-  /* Take the full window — playground uses an in-place .detail view */
+  /* Full-pane: fill the window, no scrim/blur */
   background: var(--bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
 }
 body.is-playground-shell .detail-overlay .detail-card {
   background: var(--bg);
@@ -23,278 +28,531 @@ body.is-playground-shell .detail-overlay .detail-card {
   margin: 0;
 }
 
-/* Close button → playground icon-btn in top-right */
-body.is-playground-shell .detail-overlay .detail-close-x {
-  position: absolute;
-  top: 8px;
-  right: 12px;
+/* ── Toolbar ─────────────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .detail-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 82px; /* 82px clears macOS traffic lights */
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+body.is-playground-shell .detail-overlay .detail-toolbar > * {
+  -webkit-app-region: no-drag;
+}
+body.is-playground-shell .detail-overlay .detail-back {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: transparent;
-  border: 0;
-  color: var(--text-secondary);
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  border: 1px solid var(--border);
+  color: var(--text);
   font-size: 18px;
   line-height: 1;
   display: grid;
   place-items: center;
   cursor: pointer;
-  z-index: 10;
 }
-body.is-playground-shell .detail-overlay .detail-close-x:hover {
-  background: var(--bg-elev);
+body.is-playground-shell .detail-overlay .detail-back:hover {
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+  color: var(--text);
+}
+body.is-playground-shell .detail-overlay .detail-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+body.is-playground-shell .detail-overlay .detail-icon-btn:hover {
+  background: var(--bg-elevated, var(--bg-elev, #141412));
   color: var(--text);
 }
 
-/* Header band: serif title + meta + chip-style actions */
-body.is-playground-shell .detail-overlay .detail-header {
+/* ── Ellipsis dropdown menu ──────────────────────────────────── */
+body.is-playground-shell .detail-overlay .detail-more-menu {
+  position: absolute;
+  top: 44px;
+  right: 18px;
+  min-width: 180px;
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  z-index: 100;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+body.is-playground-shell .detail-overlay .detail-more-menu.is-open {
+  display: block;
+}
+body.is-playground-shell .detail-overlay .detail-more-menu button {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 48px 6px;
-  border-bottom: none;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
   background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
 }
-body.is-playground-shell .detail-overlay .detail-header-copy {
+body.is-playground-shell .detail-overlay .detail-more-menu button:hover {
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+}
+body.is-playground-shell .detail-overlay .detail-more-menu button.is-danger {
+  color: var(--red, #ff453a);
+}
+body.is-playground-shell .detail-overlay .detail-more-menu button.is-danger:hover {
+  background: rgba(255, 69, 58, 0.1);
+}
+body.is-playground-shell .detail-overlay .detail-tb-spacer {
+  flex: 1;
+}
+body.is-playground-shell .detail-overlay .detail-mode {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
 }
-body.is-playground-shell .detail-overlay .detail-title {
-  font-family: var(--font-serif);
+body.is-playground-shell .detail-overlay .mode-btn {
+  height: 22px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+body.is-playground-shell .detail-overlay .mode-btn.is-active {
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+  color: var(--text);
+}
+body.is-playground-shell .detail-overlay .mode-btn:hover:not(.is-active) {
+  color: var(--text);
+}
+
+/* Hide old close button and header — toolbar replaces them */
+body.is-playground-shell .detail-overlay .detail-close-x {
+  display: none;
+}
+body.is-playground-shell .detail-overlay .detail-header {
+  display: none;
+}
+body.is-playground-shell .detail-overlay .detail-feedback {
+  margin: 0 48px 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: var(--font-sans);
+}
+
+/* ── Scroll body ─────────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 48px 130px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-hover, #1c1c1a) transparent;
+}
+body.is-playground-shell .detail-overlay .detail-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+body.is-playground-shell .detail-overlay .detail-scroll::-webkit-scrollbar-thumb {
+  background: var(--bg-hover, #1c1c1a);
+  border-radius: 4px;
+}
+
+/* ── Title + chips ───────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .detail-pane-title {
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.015em;
   color: var(--text);
   text-wrap: balance;
-  margin: 0;
+  margin: 6px 0 16px 0;
 }
-body.is-playground-shell .detail-overlay .detail-meta {
+body.is-playground-shell .detail-overlay .detail-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+body.is-playground-shell .detail-overlay .detail-chip {
+  height: 26px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Talk-time strip ─────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .talk-strip {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  border: 1px solid var(--border);
+}
+body.is-playground-shell .detail-overlay .talk-seg {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+body.is-playground-shell .detail-overlay .talk-seg::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--seg-color, var(--accent));
+  opacity: 0.85;
+}
+body.is-playground-shell .detail-overlay .talk-seg .ts-name {
+  color: var(--text);
+  font-weight: 600;
+}
+body.is-playground-shell .detail-overlay .talk-seg .ts-pct {
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+body.is-playground-shell .detail-overlay .talk-strip-foot {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 22px 0;
+}
+
+/* ── Moments strip ───────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .moments {
+  margin: 0 0 22px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elevated, var(--bg-elev, #141412));
+  overflow: hidden;
+}
+body.is-playground-shell .detail-overlay .moments-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+body.is-playground-shell .detail-overlay .moments-head:hover {
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+}
+body.is-playground-shell .detail-overlay .moments-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+body.is-playground-shell .detail-overlay .moments-pill strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+body.is-playground-shell .detail-overlay .moments-pill.is-action strong {
+  color: var(--text);
+}
+body.is-playground-shell .detail-overlay .moments-pill.is-decision strong {
+  color: var(--text);
+}
+body.is-playground-shell .detail-overlay .moments-spacer {
+  flex: 1;
+}
+body.is-playground-shell .detail-overlay .moments-toggle-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body.is-playground-shell .detail-overlay .moments-toggle-label svg {
+  width: 10px;
+  height: 10px;
+  transition: transform 180ms;
+}
+body.is-playground-shell .detail-overlay .moments.is-open .moments-toggle-label svg {
+  transform: rotate(180deg);
+}
+body.is-playground-shell .detail-overlay .moments-body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+body.is-playground-shell .detail-overlay .moments.is-open .moments-body {
+  display: block;
+}
+body.is-playground-shell .detail-overlay .moments-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+body.is-playground-shell .detail-overlay .moments-tab {
+  padding: 10px 0;
+  margin-right: 18px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-/* Action button row: convert to chips */
-body.is-playground-shell .detail-overlay .detail-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 6px;
-}
-body.is-playground-shell .detail-overlay .detail-actions .btn {
-  height: 28px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: var(--font-ui);
-  border-radius: 8px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  color: var(--text);
-  min-height: 0;
-  letter-spacing: -0.003em;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: none;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
   cursor: pointer;
-  transition:
-    background 120ms ease,
-    border-color 120ms ease;
 }
-body.is-playground-shell .detail-overlay .detail-actions .btn:hover {
-  background: var(--bg-elev-2);
+body.is-playground-shell .detail-overlay .moments-tab.is-active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
 }
-body.is-playground-shell .detail-overlay .detail-actions .btn-primary {
-  background: var(--text);
-  color: var(--bg);
+body.is-playground-shell .detail-overlay .moments-tab .mt-count {
+  margin-left: 5px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+body.is-playground-shell .detail-overlay .moments-tab.is-active .mt-count {
+  color: var(--accent);
+}
+body.is-playground-shell .detail-overlay .moment {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+body.is-playground-shell .detail-overlay .moment:last-child {
+  border-bottom: 0;
+}
+body.is-playground-shell .detail-overlay .moment.is-unreviewed {
+  background: color-mix(in oklab, var(--accent-soft) 70%, var(--bg-elevated, var(--bg-elev, #141412)));
+}
+body.is-playground-shell .detail-overlay .moment-mark {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-tertiary);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: transparent;
+  padding: 0;
+}
+body.is-playground-shell .detail-overlay .moment-mark:hover {
   border-color: var(--text);
 }
-body.is-playground-shell .detail-overlay .detail-actions .btn-primary:hover {
-  background: var(--text);
-  opacity: 0.92;
+body.is-playground-shell .detail-overlay .moment-mark.is-done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
 }
-body.is-playground-shell .detail-overlay .detail-actions .btn-danger {
-  color: var(--red);
+body.is-playground-shell .detail-overlay .moment-mark svg {
+  width: 10px;
+  height: 10px;
+}
+body.is-playground-shell .detail-overlay .moment.is-decision .moment-mark {
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+body.is-playground-shell .detail-overlay .moment-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+body.is-playground-shell .detail-overlay .moment.is-done .moment-text {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+body.is-playground-shell .detail-overlay .moment-meta {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+body.is-playground-shell .detail-overlay .moment-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+body.is-playground-shell .detail-overlay .moment:hover .moment-actions,
+body.is-playground-shell .detail-overlay .moment.is-unreviewed .moment-actions {
+  opacity: 1;
+}
+body.is-playground-shell .detail-overlay .moment-action-btn {
+  height: 22px;
+  padding: 0 8px;
   background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-secondary);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
 }
-body.is-playground-shell .detail-overlay .detail-actions .btn-danger:hover {
-  background: var(--red-bg);
-  border-color: var(--red);
+body.is-playground-shell .detail-overlay .moment-action-btn:hover {
+  background: var(--bg-hover, var(--bg-elev-2, #1c1c1a));
+  color: var(--text);
 }
-
-/* Scroll body: generous gutters, no card frame */
-body.is-playground-shell .detail-overlay .detail-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 18px 48px 130px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--bg-elev-2) transparent;
+body.is-playground-shell .detail-overlay .moment-action-btn.is-accent {
+  color: var(--accent);
+  border-color: transparent;
+  background: var(--accent-soft);
 }
-body.is-playground-shell .detail-overlay .detail-scroll::-webkit-scrollbar {
-  width: 8px;
+body.is-playground-shell .detail-overlay .moment-action-btn.is-accent:hover {
+  background: var(--accent);
+  color: var(--bg);
 }
-body.is-playground-shell
-  .detail-overlay
-  .detail-scroll::-webkit-scrollbar-thumb {
-  background: var(--bg-elev-2);
-  border-radius: 4px;
+body.is-playground-shell .detail-overlay .moment-action-btn.is-danger {
+  color: var(--red, #ff453a);
 }
-
-/* Section cards used by renderDetailSections — quiet them down,
-   let typography do the lifting */
-body.is-playground-shell .detail-overlay .detail-section,
-body.is-playground-shell .detail-overlay .detail-card-section,
-body.is-playground-shell .detail-overlay .detail-artifacts {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 8px 0;
-  margin-bottom: 18px;
+body.is-playground-shell .detail-overlay .moment-action-btn.is-danger:hover {
+  background: rgba(255, 69, 58, 0.1);
+  border-color: var(--red, #ff453a);
 }
 
-/* Section headings — only the top-level section title (the YAML heading)
-   gets the playground-style `#` prefix. Inside the body, rendered markdown
-   gets a real visual hierarchy: h1 > h2 > h3, no `#` decoration. */
-body.is-playground-shell .detail-overlay .detail-section-title {
-  font-family: var(--font-ui);
-  font-size: 17px;
+/* ── Notes pane ──────────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .notes-pane {
+  display: block;
+}
+body.is-playground-shell .detail-overlay .notes-pane h2 {
+  font-family: var(--font-sans);
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
-  letter-spacing: -0.01em;
-  margin: 22px 0 8px;
+  margin: 24px 0 8px 0;
   display: flex;
   align-items: baseline;
   gap: 8px;
+  letter-spacing: -0.01em;
 }
-body.is-playground-shell .detail-overlay .detail-section-title::before {
+body.is-playground-shell .detail-overlay .notes-pane h2::before {
   content: "#";
-  color: var(--text-quaternary);
+  color: var(--text-quaternary, #3d3b38);
   font-weight: 400;
 }
-
-/* Markdown headings INSIDE a section body — no `#` decoration, proper hierarchy */
-body.is-playground-shell .detail-overlay .detail-section-body h1 {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  color: var(--text);
-  margin: 18px 0 8px;
-  line-height: 1.2;
-}
-body.is-playground-shell .detail-overlay .detail-section-body h2 {
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  margin: 16px 0 6px;
-  letter-spacing: -0.005em;
-}
-body.is-playground-shell .detail-overlay .detail-section-body h3 {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  margin: 14px 0 4px;
-}
-body.is-playground-shell .detail-overlay .detail-section-body h4,
-body.is-playground-shell .detail-overlay .detail-section-body h5,
-body.is-playground-shell .detail-overlay .detail-section-body h6 {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 12px 0 4px;
-}
-body.is-playground-shell .detail-overlay .detail-section-body strong {
-  color: var(--text);
-  font-weight: 600;
-}
-body.is-playground-shell .detail-overlay .detail-section-body em {
-  color: var(--text);
-  font-style: italic;
-}
-body.is-playground-shell .detail-overlay .detail-section-body a {
-  color: var(--accent);
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-}
-body.is-playground-shell .detail-overlay .detail-section-body a:hover {
-  border-bottom-color: var(--accent);
-}
-body.is-playground-shell .detail-overlay .detail-section-body code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: var(--bg-elev-2);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--text);
-}
-body.is-playground-shell .detail-overlay .detail-section-body pre {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: var(--bg-elev-2);
-  padding: 10px 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-body.is-playground-shell .detail-overlay .detail-section-body blockquote {
-  border-left: 2px solid var(--border-mid);
-  padding-left: 12px;
-  color: var(--text-secondary);
-  font-style: italic;
-  margin: 8px 0;
-}
-
-/* Lists in playground style — custom bullets, comfortable line-height */
-body.is-playground-shell .detail-overlay .detail-section ul {
+body.is-playground-shell .detail-overlay .notes-pane ul {
   list-style: none;
   padding-left: 6px;
   margin: 0;
 }
-body.is-playground-shell .detail-overlay .detail-section ul ul {
+body.is-playground-shell .detail-overlay .notes-pane ul ul {
   padding-left: 20px;
 }
-body.is-playground-shell .detail-overlay .detail-section li {
+body.is-playground-shell .detail-overlay .notes-pane li {
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--text-secondary);
   position: relative;
   padding: 2px 0 2px 16px;
 }
-body.is-playground-shell .detail-overlay .detail-section li::before {
-  content: "•";
+body.is-playground-shell .detail-overlay .notes-pane li::before {
+  content: "\2022";
   position: absolute;
   left: 3px;
-  color: var(--text-quaternary);
+  color: var(--text-quaternary, #3d3b38);
 }
-body.is-playground-shell .detail-overlay .detail-section ul ul li::before {
-  content: "◦";
+body.is-playground-shell .detail-overlay .notes-pane ul ul li::before {
+  content: "\25E6";
 }
-
-/* Paragraphs */
-body.is-playground-shell .detail-overlay .detail-section p,
-body.is-playground-shell .detail-overlay .detail-paragraph {
+body.is-playground-shell .detail-overlay .notes-pane p {
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--text-secondary);
   margin: 0 0 10px;
 }
 
-/* Transcript lines — playground mono grid */
-body.is-playground-shell .detail-overlay .transcript-line,
+/* ── Transcript pane ─────────────────────────────────────────── */
+body.is-playground-shell .detail-overlay .transcript-pane {
+  display: none;
+}
+body.is-playground-shell .detail-overlay.show-transcript .notes-pane,
+body.is-playground-shell .detail-overlay.show-transcript .moments,
+body.is-playground-shell .detail-overlay.show-transcript .talk-strip,
+body.is-playground-shell .detail-overlay.show-transcript .talk-strip-foot {
+  display: none;
+}
+body.is-playground-shell .detail-overlay.show-transcript .transcript-pane {
+  display: block;
+}
 body.is-playground-shell .detail-overlay .tx-line {
   display: grid;
-  grid-template-columns: 70px 1fr;
+  grid-template-columns: 54px 80px 1fr;
   gap: 10px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
@@ -302,24 +560,24 @@ body.is-playground-shell .detail-overlay .tx-line {
   font-size: 12px;
   line-height: 1.55;
 }
-body.is-playground-shell .detail-overlay .transcript-time {
-  color: var(--text-quaternary);
+body.is-playground-shell .detail-overlay .tx-ts {
+  color: var(--text-quaternary, #3d3b38);
   font-size: 10.5px;
   padding-top: 2px;
 }
-body.is-playground-shell .detail-overlay .transcript-speaker {
+body.is-playground-shell .detail-overlay .tx-spk {
   color: var(--accent);
   font-weight: 600;
   font-size: 11px;
   padding-top: 2px;
 }
-body.is-playground-shell .detail-overlay .transcript-text {
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
+body.is-playground-shell .detail-overlay .tx-text {
+  color: var(--text-secondary);
 }
 
-/* Empty state recentered */
+/* Action row removed — actions live in the ⋯ menu and bottom ask bar */
+
+/* ── Empty state ─────────────────────────────────────────────── */
 body.is-playground-shell .detail-overlay .detail-empty {
   text-align: left;
   color: var(--text-tertiary);
@@ -330,23 +588,26 @@ body.is-playground-shell .detail-overlay .detail-empty {
   padding: 28px 0;
 }
 
-/* Feedback toast strip */
-body.is-playground-shell .detail-overlay .detail-feedback {
-  margin: 0 48px 8px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 12.5px;
-  font-family: var(--font-ui);
-}
+/* Speaker colors for talk-strip segments */
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(1) { --seg-color: var(--accent); }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(2) { --seg-color: #b58156; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(3) { --seg-color: #8a75b8; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(4) { --seg-color: #6f8a75; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(5) { --seg-color: #c49560; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(6) { --seg-color: #b5704c; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(7) { --seg-color: #9a7fcc; }
+body.is-playground-shell .detail-overlay .talk-seg:nth-child(8) { --seg-color: #5a8a6a; }
 
-/* Reduced motion preserves entrance fade but disables transforms */
+/* ── Reduced motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   body.is-playground-shell .detail-overlay,
   body.is-playground-shell .detail-overlay .detail-card {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ── Bottom bar stays above the detail overlay ───────────────── */
+body.is-playground-shell .pg-bottom-bar {
+  z-index: 130; /* above detail overlay (--z-panel: 120) */
 }

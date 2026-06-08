@@ -203,11 +203,11 @@ body.is-playground-shell .rr-chip.is-meeting {
 }
 body.is-playground-shell .rr-chip.is-tag {
   color: var(--accent);
-  border-color: rgba(48,209,88,0.25);
+  border-color: rgba(48, 209, 88, 0.25);
   background: var(--accent-soft);
 }
 [data-theme="light"] body.is-playground-shell .rr-chip.is-tag {
-  border-color: rgba(201,107,78,0.3);
+  border-color: rgba(201, 107, 78, 0.3);
 }
 body.is-playground-shell .rr-chip.add {
   border-style: dashed;
@@ -273,14 +273,14 @@ body.is-playground-shell .rr-msg .bubble {
   overflow-wrap: break-word;
 }
 body.is-playground-shell .rr-msg.me .bubble {
-  background: var(--bg-elev-2, rgba(255,255,255,0.08));
+  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
   border-bottom-right-radius: 4px;
 }
 body.is-playground-shell .rr-msg:not(.me) .bubble {
   border-bottom-left-radius: 4px;
 }
 body.is-playground-shell .rr-msg .bubble.is-error {
-  background: var(--red, #FF453A);
+  background: var(--red, #ff453a);
   color: white;
 }
 
@@ -302,12 +302,12 @@ body.is-playground-shell .rr-msg .bubble.has-markdown li {
 body.is-playground-shell .rr-msg .bubble.has-markdown code {
   font-family: var(--font-mono);
   font-size: 11.5px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: 4px;
 }
 body.is-playground-shell .rr-msg .bubble.has-markdown pre {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   padding: 10px 12px;
   margin: 8px 0;
@@ -341,9 +341,15 @@ body.is-playground-shell .rr-msg .bubble.has-markdown h3 {
   font-weight: 600;
   margin: 12px 0 6px;
 }
-body.is-playground-shell .rr-msg .bubble.has-markdown h1 { font-size: 15px; }
-body.is-playground-shell .rr-msg .bubble.has-markdown h2 { font-size: 14px; }
-body.is-playground-shell .rr-msg .bubble.has-markdown h3 { font-size: 13px; }
+body.is-playground-shell .rr-msg .bubble.has-markdown h1 {
+  font-size: 15px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown h2 {
+  font-size: 14px;
+}
+body.is-playground-shell .rr-msg .bubble.has-markdown h3 {
+  font-size: 13px;
+}
 
 /* ─── Citations ───────────────────────────────────────────────── */
 body.is-playground-shell .rr-cites {
@@ -362,7 +368,9 @@ body.is-playground-shell .rr-cite {
   border: 1px solid var(--border);
   cursor: pointer;
   text-decoration: none;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 body.is-playground-shell .rr-cite:hover {
   color: var(--accent);
@@ -462,7 +470,9 @@ body.is-playground-shell .rr-msg .bubble.is-streaming::after {
   margin-left: 1px;
 }
 @keyframes blink-cursor {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ─── Thinking dots ───────────────────────────────────────────── */
@@ -475,8 +485,13 @@ body.is-playground-shell .rr-msg .bubble.is-thinking::after {
   letter-spacing: 1px;
 }
 @keyframes pulse-dots {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ─── Stop button (replaces send while streaming) ─────────────── */
@@ -484,7 +499,7 @@ body.is-playground-shell .rr-input .stop {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: var(--red, #FF453A);
+  background: var(--red, #ff453a);
   color: white;
   display: grid;
   place-items: center;
@@ -516,7 +531,10 @@ body.is-playground-shell .rr-msg .copy-btn {
   place-items: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 body.is-playground-shell .rr-msg .bubble-wrap:hover .copy-btn {
   opacity: 1;
@@ -546,14 +564,16 @@ body.is-playground-shell .rr-thread .rr-thread-delete {
   place-items: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
 }
 body.is-playground-shell .rr-thread:hover .rr-thread-delete {
   opacity: 1;
 }
 body.is-playground-shell .rr-thread .rr-thread-delete:hover {
-  color: var(--red, #FF453A);
-  background: rgba(255,69,58,0.1);
+  color: var(--red, #ff453a);
+  background: rgba(255, 69, 58, 0.1);
 }
 
 /* ─── Context Popover ─────────────────────────────────────────── */
@@ -566,7 +586,7 @@ body.is-playground-shell .rr-context-popover {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   padding: 8px;
   max-height: 260px;
   overflow-y: auto;
@@ -603,7 +623,7 @@ body.is-playground-shell .rr-context-popover .rr-ctx-item {
   transition: background 0.15s ease;
 }
 body.is-playground-shell .rr-context-popover .rr-ctx-item:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 body.is-playground-shell .rr-context-popover .rr-ctx-item .rr-ctx-icon {
   width: 14px;
@@ -650,7 +670,7 @@ body.is-playground-shell .rr-slash-menu {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   padding: 4px;
   z-index: 100;
 }
@@ -665,7 +685,7 @@ body.is-playground-shell .rr-slash-item {
 }
 body.is-playground-shell .rr-slash-item:hover,
 body.is-playground-shell .rr-slash-item.is-active {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 body.is-playground-shell .rr-slash-cmd {
   font-family: var(--font-mono);
