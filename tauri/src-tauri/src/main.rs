@@ -2260,6 +2260,8 @@ fn main() {
             commands::cmd_processing_jobs,
             commands::cmd_list_meetings,
             commands::cmd_search,
+            commands::cmd_list_tags,
+            commands::cmd_set_meeting_tags,
             commands::cmd_add_note,
             commands::cmd_start_recording,
             commands::cmd_stop_recording,
@@ -2319,6 +2321,7 @@ fn main() {
             commands::cmd_recall_load_thread,
             commands::cmd_recall_save_thread,
             commands::cmd_recall_delete_thread,
+            commands::cmd_recall_resume_thread,
             commands::cmd_recall_rename_thread,
             commands::cmd_get_settings,
             commands::cmd_warm_parakeet,
@@ -2372,6 +2375,13 @@ fn main() {
             commands::cmd_set_palette_shortcut,
             palette_dispatch::palette_list,
             palette_dispatch::palette_execute,
+            commands::cmd_recipe_list,
+            commands::cmd_recipe_get,
+            commands::cmd_recipe_save,
+            commands::cmd_recipe_delete,
+            commands::cmd_recipe_select_for_event,
+            commands::cmd_profile_load,
+            commands::cmd_profile_save,
         ])
         .build(tauri::generate_context!())
         .expect("error while building minutes app")

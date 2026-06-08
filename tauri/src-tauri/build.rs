@@ -23,6 +23,11 @@ fn main() {
     compile_calendar_helper();
     stage_minutes_cli_sidecar();
     stage_assistant_skill_bundle();
+
+    // Ensure Cargo re-runs this build script (and re-embeds frontend assets)
+    // whenever the main HTML changes.
+    println!("cargo:rerun-if-changed=../src/index.html");
+
     tauri_build::build()
 }
 

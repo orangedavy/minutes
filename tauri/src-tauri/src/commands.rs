@@ -6171,17 +6171,23 @@ pub fn cmd_list_meetings(limit: Option<usize>) -> serde_json::Value {
                     // Read frontmatter to check for lifecycle badges + attendees/tags
                     let badges = compute_lifecycle_badges(&r.path, &prep_slugs);
                     val["badges"] = serde_json::json!(badges);
-                    // Enrich with attendees and tags from frontmatter
+                    // Enrich with attendees and tags from frontmatter.
+                    // Uses a minimal struct to tolerate unknown/malformed fields.
+                    #[derive(serde::Deserialize)]
+                    struct MeetingMeta {
+                        #[serde(default)]
+                        attendees: Vec<String>,
+                        #[serde(default)]
+                        tags: Vec<String>,
+                    }
                     if let Ok(content) = std::fs::read_to_string(&r.path) {
                         let (fm_str, _) = minutes_core::markdown::split_frontmatter(&content);
-                        if let Ok(fm) = serde_yaml::from_str::<minutes_core::markdown::Frontmatter>(
-                            &format!("---\n{}\n---", fm_str),
-                        ) {
-                            if !fm.attendees.is_empty() {
-                                val["attendees"] = serde_json::json!(fm.attendees);
+                        if let Ok(meta) = serde_yaml::from_str::<MeetingMeta>(fm_str) {
+                            if !meta.attendees.is_empty() {
+                                val["attendees"] = serde_json::json!(meta.attendees);
                             }
-                            if !fm.tags.is_empty() {
-                                val["tags"] = serde_json::json!(fm.tags);
+                            if !meta.tags.is_empty() {
+                                val["tags"] = serde_json::json!(meta.tags);
                             }
                         }
                     }
@@ -6206,11 +6212,25 @@ fn compute_lifecycle_badges(
         Err(_) => return badges,
     };
     let (fm_str, body) = minutes_core::markdown::split_frontmatter(&content);
-    let fm: Result<minutes_core::markdown::Frontmatter, _> =
-        serde_yaml::from_str(&format!("---\n{}\n---", fm_str));
 
-    if let Ok(fm) = fm {
-        if meeting_has_prep(&fm.attendees, prep_slugs) {
+    // Minimal structs to tolerate unknown/malformed fields.
+    #[derive(serde::Deserialize)]
+    struct BadgeIntent {
+        #[serde(default)]
+        status: String,
+    }
+    #[derive(serde::Deserialize)]
+    struct BadgeMeta {
+        #[serde(default)]
+        attendees: Vec<String>,
+        #[serde(default)]
+        decisions: Vec<serde_json::Value>,
+        #[serde(default)]
+        intents: Vec<BadgeIntent>,
+    }
+
+    if let Ok(meta) = serde_yaml::from_str::<BadgeMeta>(fm_str) {
+        if meeting_has_prep(&meta.attendees, prep_slugs) {
             badges.push("prepped".into());
         }
         // "recorded" badge: all meetings/memos with transcripts are recorded
@@ -6218,7 +6238,7 @@ fn compute_lifecycle_badges(
             badges.push("recorded".into());
         }
         // "debriefed" badge: has decisions or resolved intents (added by debrief)
-        if !fm.decisions.is_empty() || fm.intents.iter().any(|i| i.status != "open") {
+        if !meta.decisions.is_empty() || meta.intents.iter().any(|i| i.status != "open") {
             badges.push("debriefed".into());
         }
     }
@@ -6238,6 +6258,113 @@ pub fn cmd_search(query: String) -> Result<Vec<minutes_core::search::SearchResul
     let config = Config::load();
     let filters = minutes_core::search::SearchFilters::default();
     minutes_core::search::search(&query, &config, &filters).map_err(|e| e.to_string())
+}
+
+/// List all unique tags across meetings with their occurrence counts.
+#[tauri::command]
+pub fn cmd_list_tags() -> Vec<serde_json::Value> {
+    /// Minimal struct to extract only tags from frontmatter without requiring
+    /// every field to deserialize successfully.
+    #[derive(serde::Deserialize)]
+    struct TagsOnly {
+        #[serde(default)]
+        tags: Vec<String>,
+    }
+
+    let config = Config::load();
+    let meetings_dir = config.output_dir.clone();
+    let mut tag_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+
+    if let Ok(entries) = std::fs::read_dir(&meetings_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("md") {
+                continue;
+            }
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                let (fm_str, _) = minutes_core::markdown::split_frontmatter(&content);
+                if let Ok(parsed) = serde_yaml::from_str::<TagsOnly>(fm_str) {
+                    for tag in &parsed.tags {
+                        *tag_counts.entry(tag.clone()).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    let mut tags: Vec<_> = tag_counts
+        .into_iter()
+        .map(|(name, count)| serde_json::json!({ "name": name, "count": count }))
+        .collect();
+    tags.sort_by(|a, b| {
+        b["count"].as_u64().unwrap_or(0).cmp(&a["count"].as_u64().unwrap_or(0))
+    });
+    tags
+}
+
+/// Set the tags for a meeting file (replaces existing tags in frontmatter).
+///
+/// Uses targeted YAML surgery instead of full Frontmatter round-trip to
+/// preserve unknown fields, field ordering, and comments.
+#[tauri::command]
+pub fn cmd_set_meeting_tags(path: String, tags: Vec<String>) -> Result<(), String> {
+    let content = std::fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read {}: {}", path, e))?;
+
+    let (fm_str, body) = minutes_core::markdown::split_frontmatter(&content);
+
+    // Build the replacement tags block
+    let tags_yaml = if tags.is_empty() {
+        String::new()
+    } else {
+        let items: Vec<String> = tags.iter().map(|t| format!("- {}", t)).collect();
+        format!("tags:\n{}\n", items.join("\n"))
+    };
+
+    // Remove existing tags block ("tags:" line + subsequent "- ..." lines)
+    let mut new_fm_lines: Vec<&str> = Vec::new();
+    let mut skipping_tag_items = false;
+    let mut inserted = false;
+    for line in fm_str.lines() {
+        if line.starts_with("tags:") {
+            // Check if it's "tags: []" or "tags:" followed by list items
+            let after = line.strip_prefix("tags:").unwrap_or("").trim();
+            if after == "[]" || after.is_empty() {
+                skipping_tag_items = after.is_empty(); // skip subsequent "- " lines
+            } else {
+                // Inline non-empty value like "tags: [a, b]" — replace whole line
+                skipping_tag_items = false;
+            }
+            // Insert new tags at this position
+            if !inserted && !tags_yaml.is_empty() {
+                // Will be appended after we finish collecting lines
+                inserted = true;
+            }
+            continue;
+        }
+        if skipping_tag_items {
+            if line.starts_with("- ") || line.starts_with("  -") {
+                continue;
+            }
+            skipping_tag_items = false;
+        }
+        new_fm_lines.push(line);
+    }
+
+    let mut new_fm = new_fm_lines.join("\n");
+    if !new_fm.ends_with('\n') {
+        new_fm.push('\n');
+    }
+    // Append tags block at end of frontmatter (before closing ---)
+    if !tags_yaml.is_empty() {
+        new_fm.push_str(&tags_yaml);
+    }
+
+    let new_content = format!("---\n{}---\n\n{}", new_fm, body.trim_start());
+    std::fs::write(&path, new_content)
+        .map_err(|e| format!("Failed to write {}: {}", path, e))?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -7740,6 +7867,18 @@ pub fn cmd_recall_save_thread(thread: crate::chat::Thread) -> Result<(), String>
 #[tauri::command]
 pub fn cmd_recall_delete_thread(id: String) -> Result<(), String> {
     crate::chat::delete_thread(&id)
+}
+
+/// Resume a thread by ID — loads it and sets session_id for continuity.
+#[tauri::command]
+pub fn cmd_recall_resume_thread(
+    state: tauri::State<'_, AppState>,
+    thread_id: String,
+) -> Result<crate::chat::Thread, String> {
+    let thread = crate::chat::load_thread(&thread_id)?;
+    let mut cs = state.recall_chat_state.lock().map_err(|_| "Lock failed")?;
+    cs.session_id = thread.session_id.clone();
+    Ok(thread)
 }
 
 /// Rename a thread.
@@ -13608,6 +13747,142 @@ fn extract_current_meeting_path(line: &str) -> Option<&str> {
         return Some(line);
     }
     None
+}
+
+// ── Recipe commands ─────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn cmd_recipe_list() -> Result<Vec<serde_json::Value>, String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    let recipes = store.list();
+    let result: Vec<serde_json::Value> = recipes
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "slug": r.slug,
+                "name": r.name,
+                "description": r.description,
+                "has_triggers": r.has_triggers,
+                "is_fallback": r.is_fallback,
+                "priority": r.priority,
+                "version": r.version,
+            })
+        })
+        .collect();
+    Ok(result)
+}
+
+#[tauri::command]
+pub fn cmd_recipe_get(slug: String) -> Result<serde_json::Value, String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    let recipe = store.get(&slug).map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({
+        "slug": recipe.frontmatter.slug,
+        "name": recipe.frontmatter.name,
+        "description": recipe.frontmatter.description,
+        "version": recipe.frontmatter.version,
+        "priority": recipe.frontmatter.priority,
+        "fallback": recipe.frontmatter.fallback,
+        "triggers": {
+            "calendar_keywords": recipe.frontmatter.triggers.calendar_keywords,
+            "attendees": recipe.frontmatter.triggers.attendees,
+            "regex": recipe.frontmatter.triggers.regex,
+        },
+        "body": recipe.body,
+    }))
+}
+
+#[tauri::command]
+pub fn cmd_recipe_save(
+    slug: String,
+    name: String,
+    description: String,
+    version: String,
+    priority: i32,
+    fallback: bool,
+    calendar_keywords: Vec<String>,
+    attendees: Vec<String>,
+    body: String,
+) -> Result<(), String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    let recipe = minutes_core::recipe::Recipe {
+        frontmatter: minutes_core::recipe::RecipeFrontmatter {
+            name,
+            slug: slug.clone(),
+            version,
+            description,
+            triggers: minutes_core::recipe::RecipeTriggers {
+                calendar_keywords,
+                attendees,
+                regex: None,
+            },
+            priority,
+            fallback,
+            language: None,
+        },
+        body,
+        path: store.recipes_dir().join(format!("{}.md", slug)),
+    };
+    store.save(&recipe).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_recipe_delete(slug: String) -> Result<(), String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    store.delete(&slug).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_recipe_select_for_event(
+    title: String,
+    attendees: Vec<String>,
+) -> Result<Option<serde_json::Value>, String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    Ok(store.select_for_event(&title, &attendees).map(|r| {
+        serde_json::json!({
+            "slug": r.slug,
+            "name": r.name,
+            "description": r.description,
+        })
+    }))
+}
+
+#[tauri::command]
+pub fn cmd_profile_load() -> Result<serde_json::Value, String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    match store.load_profile() {
+        Ok(profile) => Ok(serde_json::json!({
+            "name": profile.name,
+            "role": profile.role,
+            "company": profile.company,
+            "team": profile.team,
+            "focus": profile.focus,
+            "context": profile.context,
+        })),
+        Err(minutes_core::error::RecipeError::ProfileNotFound) => Ok(serde_json::json!(null)),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn cmd_profile_save(
+    name: String,
+    role: String,
+    company: String,
+    team: String,
+    focus: String,
+    context: String,
+) -> Result<(), String> {
+    let store = minutes_core::recipe::RecipeStore::new();
+    let profile = minutes_core::recipe::Profile {
+        name,
+        role,
+        company,
+        team,
+        focus,
+        context,
+    };
+    store.save_profile(&profile).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]

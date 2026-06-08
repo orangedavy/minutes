@@ -949,7 +949,9 @@
         /* Blanket fallback: collapse every other transition/animation to
            near-zero so nothing leaks through (overlay scrim fades, hover
            lifts, accordion expansions, view transitions). */
-        *, *::before, *::after {
+        *,
+        *::before,
+        *::after {
           animation-duration: 0.001ms !important;
           animation-iteration-count: 1 !important;
           transition-duration: 0.001ms !important;
@@ -971,13 +973,23 @@
         animation-duration: 420ms;
         animation-timing-function: var(--ease-out-expo);
       }
-      ::view-transition-old(root) { animation-name: vtFadeOut; }
-      ::view-transition-new(root) { animation-name: vtFadeIn; }
+      ::view-transition-old(root) {
+        animation-name: vtFadeOut;
+      }
+      ::view-transition-new(root) {
+        animation-name: vtFadeIn;
+      }
       @keyframes vtFadeOut {
-        to { opacity: 0; transform: translateY(-6px) scale(0.992); }
+        to {
+          opacity: 0;
+          transform: translateY(-6px) scale(0.992);
+        }
       }
       @keyframes vtFadeIn {
-        from { opacity: 0; transform: translateY(10px) scale(0.985); }
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.985);
+        }
       }
 
       .live-bar .top-row {
@@ -1067,7 +1079,7 @@
         border-radius: 14px;
         box-shadow:
           0 0 0 1px var(--red),
-          0 0 0 5px var(--red-glow-soft, rgba(255, 69, 58, 0.10)),
+          0 0 0 5px var(--red-glow-soft, rgba(255, 69, 58, 0.1)),
           0 6px 14px var(--shadow-color, rgba(0, 0, 0, 0.32));
       }
 
@@ -1087,23 +1099,41 @@
       }
 
       @keyframes recording-enter {
-        from { opacity: 0; transform: translateY(-6px) scale(0.985); }
-        to   { opacity: 1; transform: translateY(0) scale(1); }
+        from {
+          opacity: 0;
+          transform: translateY(-6px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
 
       @keyframes recStripFarewell {
-        0%   { transform: translateY(0) scale(1); opacity: 1;
-               box-shadow: 0 0 0 1px var(--red),
-                           0 0 0 5px var(--red-glow-soft, rgba(255,69,58,0.10)),
-                           0 6px 14px var(--shadow-color, rgba(0,0,0,0.32)); }
-        60%  { transform: translateY(-4px) scale(1.005); opacity: 1;
-               box-shadow: 0 0 0 1px var(--red),
-                           0 0 0 14px rgba(255,69,58,0.04),
-                           0 14px 26px rgba(0,0,0,0.20); }
-        100% { transform: translateY(-18px) scale(0.985); opacity: 0;
-               box-shadow: 0 0 0 1px rgba(255,69,58,0),
-                           0 0 0 22px rgba(255,69,58,0),
-                           0 20px 30px rgba(0,0,0,0); }
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+          box-shadow:
+            0 0 0 1px var(--red),
+            0 0 0 5px var(--red-glow-soft, rgba(255, 69, 58, 0.1)),
+            0 6px 14px var(--shadow-color, rgba(0, 0, 0, 0.32));
+        }
+        60% {
+          transform: translateY(-4px) scale(1.005);
+          opacity: 1;
+          box-shadow:
+            0 0 0 1px var(--red),
+            0 0 0 14px rgba(255, 69, 58, 0.04),
+            0 14px 26px rgba(0, 0, 0, 0.2);
+        }
+        100% {
+          transform: translateY(-18px) scale(0.985);
+          opacity: 0;
+          box-shadow:
+            0 0 0 1px rgba(255, 69, 58, 0),
+            0 0 0 22px rgba(255, 69, 58, 0),
+            0 20px 30px rgba(0, 0, 0, 0);
+        }
       }
 
       .recording-bar .top-row {
@@ -1142,7 +1172,8 @@
       }
 
       @keyframes recording-glow {
-        0%, 100% {
+        0%,
+        100% {
           opacity: 1;
           box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.55);
         }
@@ -2373,22 +2404,25 @@
         z-index: var(--z-panel);
         opacity: 0;
         visibility: hidden;
-        transition: opacity 320ms var(--ease-out-quart),
-                    visibility 0s linear 320ms;
+        transition:
+          opacity 320ms var(--ease-out-quart),
+          visibility 0s linear 320ms;
       }
 
       .detail-overlay > .detail-card {
         transform: translateY(16px) scale(0.985);
-        transition: transform 460ms var(--ease-out-expo),
-                    opacity 320ms var(--ease-out-quart);
+        transition:
+          transform 460ms var(--ease-out-expo),
+          opacity 320ms var(--ease-out-quart);
         opacity: 0;
       }
 
       .detail-overlay.active {
         opacity: 1;
         visibility: visible;
-        transition: opacity 320ms var(--ease-out-quart),
-                    visibility 0s linear 0s;
+        transition:
+          opacity 320ms var(--ease-out-quart),
+          visibility 0s linear 0s;
       }
 
       .detail-overlay.active > .detail-card {
@@ -2853,22 +2887,25 @@
         z-index: var(--z-modal);
         opacity: 0;
         visibility: hidden;
-        transition: opacity 320ms var(--ease-out-quart),
-                    visibility 0s linear 320ms;
+        transition:
+          opacity 320ms var(--ease-out-quart),
+          visibility 0s linear 320ms;
       }
 
       .about-overlay > .about-card {
         transform: translateY(14px) scale(0.985);
-        transition: transform 460ms var(--ease-out-expo),
-                    opacity 320ms var(--ease-out-quart);
+        transition:
+          transform 460ms var(--ease-out-expo),
+          opacity 320ms var(--ease-out-quart);
         opacity: 0;
       }
 
       .about-overlay.active {
         opacity: 1;
         visibility: visible;
-        transition: opacity 320ms var(--ease-out-quart),
-                    visibility 0s linear 0s;
+        transition:
+          opacity 320ms var(--ease-out-quart),
+          visibility 0s linear 0s;
       }
 
       .about-overlay.active > .about-card {
@@ -4639,16 +4676,40 @@
       <div class="palette-scrim" id="pg-palette-scrim">
         <div class="palette">
           <div class="palette-input">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="pg-palette-input" placeholder="Search meetings, transcripts, notes…" autocomplete="off" spellcheck="false" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              id="pg-palette-input"
+              placeholder="Search meetings, transcripts, notes…"
+              autocomplete="off"
+              spellcheck="false"
+            />
             <span class="kbd">esc</span>
           </div>
           <div class="palette-results" id="pg-palette-results"></div>
           <div class="palette-foot">
-            <span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span>
+            <span
+              ><span class="kbd">↑</span>
+              <span class="kbd">↓</span> navigate</span
+            >
             <span><span class="kbd">↵</span> open</span>
-            <span><span class="kbd">⌘</span> <span class="kbd">↵</span> open in Recall</span>
-            <span style="margin-left: auto;"><span class="kbd">esc</span> close</span>
+            <span
+              ><span class="kbd">⌘</span> <span class="kbd">↵</span> open in
+              Recall</span
+            >
+            <span style="margin-left: auto"
+              ><span class="kbd">esc</span> close</span
+            >
           </div>
         </div>
       </div>
@@ -4656,36 +4717,101 @@
       <aside class="sidebar" id="pg-sidebar" aria-hidden="true">
         <div class="sb-brand">Minutes</div>
         <div class="sidebar-search">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="pg-sidebar-search" placeholder="Search meetings, transcripts…" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            id="pg-sidebar-search"
+            placeholder="Search meetings, transcripts…"
+          />
           <span class="kbd">⌘K</span>
         </div>
         <div class="sb-item is-active" data-sb-item="home">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <path
+              d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"
+            />
+          </svg>
           Home
         </div>
         <div class="sb-item" data-sb-item="recall">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-3.5-7.1L21 3v6h-6"/></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <path d="M21 12a9 9 0 1 1-3.5-7.1L21 3v6h-6" />
+          </svg>
           Recall
         </div>
         <div class="sb-item" data-sb-item="actions">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><polyline points="8 12 11 15 16 9"/></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <rect x="4" y="4" width="16" height="16" rx="3" />
+            <polyline points="8 12 11 15 16 9" />
+          </svg>
           Action items
           <span class="sb-count" id="pg-sb-actions-count"></span>
         </div>
         <div class="sb-section">Tags</div>
-        <div class="sb-item is-tag" style="color: var(--text-tertiary)" data-sb-item="new-tag">
-          <span class="sb-tag-dot" style="background: transparent; border: 1px dashed var(--text-tertiary)"></span>
+        <div
+          class="sb-item is-tag"
+          style="color: var(--text-tertiary)"
+          data-sb-item="new-tag"
+        >
+          <span
+            class="sb-tag-dot"
+            style="
+              background: transparent;
+              border: 1px dashed var(--text-tertiary);
+            "
+          ></span>
           New tag
         </div>
         <div class="sb-spacer"></div>
         <div class="sb-foot">
           <button class="sb-foot-btn" id="pg-sb-settings" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              />
+            </svg>
             Settings
           </button>
           <button class="sb-foot-btn" id="pg-sb-health" title="Health">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            >
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
             Health
           </button>
         </div>
@@ -4709,10 +4835,16 @@
             title="Sidebar (S)"
             aria-label="Toggle sidebar"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-              <line x1="4" y1="6" x2="20" y2="6"/>
-              <line x1="4" y1="12" x2="20" y2="12"/>
-              <line x1="4" y1="18" x2="20" y2="18"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            >
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="18" x2="20" y2="18" />
             </svg>
           </button>
           <button
@@ -4787,16 +4919,16 @@
             <span id="pg-hero-now-timer">0:00</span>
           </div>
           <div class="pg-hero-now-wave" id="pg-hero-now-wave">
-            <span style="height:35%"></span><span style="height:65%"></span
-            ><span style="height:45%"></span><span style="height:80%"></span
-            ><span style="height:55%"></span><span style="height:70%"></span
-            ><span style="height:40%"></span><span style="height:85%"></span
-            ><span style="height:50%"></span><span style="height:75%"></span
-            ><span style="height:45%"></span><span style="height:60%"></span
-            ><span style="height:80%"></span><span style="height:35%"></span
-            ><span style="height:70%"></span><span style="height:50%"></span
-            ><span style="height:65%"></span><span style="height:45%"></span
-            ><span style="height:80%"></span><span style="height:55%"></span>
+            <span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span> <span></span><span></span
+            ><span></span><span></span><span></span><span></span><span></span
+            ><span></span> <span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span><span></span> <span></span
+            ><span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span> <span></span><span></span><span></span
+            ><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span>
           </div>
           <div class="pg-hero-now-actions">
             <button class="hn-ghost" id="pg-hero-add-note" type="button">
@@ -4805,6 +4937,44 @@
             <button class="hn-cta" id="pg-hero-stop" type="button">
               Stop recording
             </button>
+          </div>
+        </div>
+
+        <!-- HERO PROCESSING — replaces hero-now after recording stops -->
+        <div class="pg-hero-processing" id="pg-hero-processing">
+          <div class="hp-kicker">
+            <span class="hp-spinner"></span
+            ><span id="hp-kicker-label">Processing</span>
+          </div>
+          <h2 id="hp-title">Processing recording</h2>
+          <div class="hp-stages" id="hp-stages">
+            <div class="hp-stage is-done" data-stage="capture">
+              <div class="hp-stage-icon">✓</div>
+              <div class="hp-stage-label">Audio captured</div>
+              <div class="hp-stage-time"></div>
+            </div>
+            <div class="hp-stage" data-stage="transcribe">
+              <div class="hp-stage-icon">○</div>
+              <div class="hp-stage-label">Transcribing</div>
+              <div class="hp-stage-time"></div>
+            </div>
+            <div class="hp-stage" data-stage="diarize">
+              <div class="hp-stage-icon">○</div>
+              <div class="hp-stage-label">Speaker diarization</div>
+              <div class="hp-stage-time"></div>
+            </div>
+            <div class="hp-stage" data-stage="extract">
+              <div class="hp-stage-icon">○</div>
+              <div class="hp-stage-label">Extract actions &amp; decisions</div>
+              <div class="hp-stage-time"></div>
+            </div>
+          </div>
+          <div class="hp-progress">
+            <div class="hp-progress-fill" id="hp-progress-fill"></div>
+          </div>
+          <div class="hp-footer">
+            <span class="hp-elapsed" id="hp-elapsed"></span>
+            <button class="hp-cancel" id="hp-cancel">Cancel</button>
           </div>
         </div>
 
@@ -4864,6 +5034,69 @@
           />
           <span class="ask-kbd" aria-hidden="true">⌘/</span>
         </label>
+
+        <!-- Recall Drawer (Granola-style bottom sheet) -->
+        <div class="recall-drawer" id="inline-recall" hidden>
+          <div class="rd-handle" id="rd-handle"><span></span></div>
+          <div class="rd-toolbar">
+            <div class="rd-tb-left">
+              <span class="rd-tb-label">Recall</span>
+            </div>
+            <button
+              class="rd-tb-btn"
+              id="ir-threads-btn"
+              title="Thread history"
+              aria-label="Thread history"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+            <button
+              class="rd-tb-btn"
+              id="ir-new-btn"
+              title="New conversation"
+              aria-label="New conversation"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <button
+              class="rd-tb-btn"
+              id="ir-close-btn"
+              title="Collapse"
+              aria-label="Close drawer"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
+          <div class="rd-body" id="ir-body"></div>
+          <div class="rd-input-row">
+            <input
+              class="rd-input"
+              id="rd-input"
+              type="text"
+              placeholder="Ask a follow-up…"
+              autocomplete="off"
+            />
+          </div>
+          <!-- Thread list panel (hidden by default) -->
+          <div class="rd-threads" id="ir-threads" hidden>
+            <div class="rd-threads-list" id="ir-threads-list"></div>
+          </div>
+        </div>
       </div>
       <!-- end playground shell -->
 
@@ -4889,7 +5122,16 @@
           <span class="rr-title-tb">Recall</span>
           <div class="rr-tb-spacer" data-tauri-drag-region></div>
           <button class="rr-new" id="rr-new-thread">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
             New thread
           </button>
         </div>
@@ -4907,9 +5149,22 @@
             <div class="rr-thread-view" id="rr-thread-view"></div>
             <div class="rr-input-row">
               <div class="rr-input" id="rr-input-wrap">
-                <textarea id="rr-input" placeholder="Ask anything across this context…" rows="1"></textarea>
+                <textarea
+                  id="rr-input"
+                  placeholder="Ask anything across this context…"
+                  rows="1"
+                ></textarea>
                 <button class="send" id="rr-send" title="Send">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l14-7-3 7 3 7z"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M5 12l14-7-3 7 3 7z" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -5504,27 +5759,55 @@
         aria-modal="true"
         aria-labelledby="detail-title"
       >
-        <button class="detail-close-x" id="btn-detail-close" aria-label="Close">
-          &times;
-        </button>
-        <div class="detail-header">
+        <!-- Toolbar: back + spacer + Notes/Transcript toggle + more -->
+        <div class="detail-toolbar">
+          <button class="detail-back" id="btn-detail-back" aria-label="Back">&lsaquo;</button>
+          <div class="detail-tb-spacer"></div>
+          <div class="detail-mode" id="detail-mode-toggle">
+            <button class="mode-btn is-active" id="mode-notes">Notes</button>
+            <button class="mode-btn" id="mode-transcript">Transcript</button>
+          </div>
+          <button class="detail-icon-btn" id="btn-detail-more" title="More">&ctdot;</button>
+        </div>
+        <!-- More menu (⋯) dropdown -->
+        <div class="detail-more-menu" id="detail-more-menu">
+          <button id="btn-more-open-editor">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Open in Editor
+          </button>
+          <button id="btn-more-reprocess">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Reprocess transcript
+          </button>
+          <button id="btn-more-export">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export markdown
+          </button>
+          <button id="btn-more-copy-path">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Copy file path
+          </button>
+          <button id="btn-more-create-draft">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Create Draft
+          </button>
+          <div class="dm-divider"></div>
+          <button id="btn-more-delete" class="is-danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Delete meeting
+          </button>
+        </div>
+        <!-- Hidden old header (kept for existing JS references) -->
+        <div class="detail-header" style="display:none">
           <div class="detail-header-copy">
             <div class="detail-title" id="detail-title">Meeting</div>
             <div class="detail-meta" id="detail-meta"></div>
           </div>
           <div class="detail-actions">
-            <button class="btn btn-secondary btn-sm" id="btn-create-artifact">
-              Create Draft
-            </button>
-            <button class="btn btn-primary btn-sm" id="btn-discuss-ai">
-              Discuss with Agent
-            </button>
-            <button class="btn btn-secondary btn-sm" id="btn-open-external">
-              Open in Editor
-            </button>
-            <button class="btn btn-danger btn-sm" id="btn-delete-meeting">
-              Delete
-            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-create-artifact">Create Draft</button>
+            <button class="btn btn-primary btn-sm" id="btn-discuss-ai">Discuss with Agent</button>
+            <button class="btn btn-secondary btn-sm" id="btn-open-external">Open in Editor</button>
+            <button class="btn btn-danger btn-sm" id="btn-delete-meeting">Delete</button>
           </div>
         </div>
         <div class="detail-feedback" id="detail-feedback" hidden></div>
@@ -5806,33 +6089,49 @@
                 <div class="st-row-label">Whisper model</div>
                 <div class="st-row-help" data-health-help>—</div>
               </div>
-              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+              <span class="st-health" data-health-pill
+                ><span class="st-pip"></span
+                ><span data-health-status>checking</span></span
+              >
             </div>
             <div class="st-row" data-health-row="diarization">
               <div>
                 <div class="st-row-label">Speaker diarization</div>
                 <div class="st-row-help" data-health-help>—</div>
               </div>
-              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+              <span class="st-health" data-health-pill
+                ><span class="st-pip"></span
+                ><span data-health-status>checking</span></span
+              >
             </div>
             <div class="st-row" data-health-row="microphone">
               <div>
                 <div class="st-row-label">Microphone</div>
                 <div class="st-row-help" data-health-help>—</div>
               </div>
-              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+              <span class="st-health" data-health-pill
+                ><span class="st-pip"></span
+                ><span data-health-status>checking</span></span
+              >
             </div>
             <div class="st-row" data-health-row="screen">
               <div>
                 <div class="st-row-label">Screen recording</div>
-                <div class="st-row-help" data-health-help>For system audio capture on calls</div>
+                <div class="st-row-help" data-health-help>
+                  For system audio capture on calls
+                </div>
               </div>
-              <span class="st-health" data-health-pill><span class="st-pip"></span><span data-health-status>checking</span></span>
+              <span class="st-health" data-health-pill
+                ><span class="st-pip"></span
+                ><span data-health-status>checking</span></span
+              >
             </div>
             <div class="st-row" data-health-row="voices">
               <div>
                 <div class="st-row-label">Voice profiles</div>
-                <div class="st-row-help" data-health-help>~/.minutes/voices.db · used for speaker attribution</div>
+                <div class="st-row-help" data-health-help>
+                  ~/.minutes/voices.db · used for speaker attribution
+                </div>
               </div>
               <span class="st-value" data-health-value>—</span>
             </div>
@@ -6858,7 +7157,13 @@
             </div>
           </div>
           <div class="about-controls" id="settings-skip-permissions-row">
-            <div class="about-controls-copy">Auto-approve all tool calls</div>
+            <div class="about-controls-group">
+              <div class="about-controls-copy">Auto-approve all tool calls</div>
+              <div
+                class="about-controls-meta"
+                id="settings-skip-permissions-hint"
+              ></div>
+            </div>
             <button
               class="btn btn-secondary btn-sm toggle-btn"
               id="settings-skip-permissions"
@@ -6866,10 +7171,6 @@
               Off
             </button>
           </div>
-          <div
-            class="about-controls-meta settings-compact-meta"
-            id="settings-skip-permissions-hint"
-          ></div>
           <div class="about-controls">
             <div class="about-controls-group">
               <div class="about-controls-copy">Extra launch flags</div>
@@ -6890,6 +7191,33 @@
                 class="about-controls-meta"
                 id="settings-agent-args-help"
               ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipes -->
+        <div class="settings-section">
+          <div class="about-item-title">RECIPES</div>
+          <div class="about-controls">
+            <div class="about-controls-group">
+              <div class="about-controls-copy">Recipe library</div>
+              <div class="about-controls-meta" id="settings-recipe-count">
+                Loading...
+              </div>
+            </div>
+            <button
+              class="btn btn-secondary btn-sm"
+              id="settings-open-recipes"
+            >
+              Manage
+            </button>
+          </div>
+          <div class="about-controls">
+            <div class="about-controls-group">
+              <div class="about-controls-copy">Auto-select recipe</div>
+              <div class="about-controls-meta">
+                Match calendar title and attendees to select the best recipe automatically
+              </div>
             </div>
           </div>
         </div>
@@ -6977,6 +7305,140 @@
         <div class="about-footer settings-footer about-footer-small">
           Config file:
           <span id="settings-config-path" class="settings-config-path"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECIPE LIBRARY OVERLAY -->
+    <div class="recipes-overlay" id="recipes-overlay">
+      <div class="rp-tb">
+        <button class="rp-back" id="rp-back">&lsaquo;</button>
+        <div style="flex:1"></div>
+      </div>
+      <div class="rp-scroll" id="rp-scroll">
+        <div class="rp-head">
+          <h1>Recipes</h1>
+          <p id="rp-count">Loading...</p>
+        </div>
+        <!-- Profile card (populated by JS) -->
+        <div class="rp-profile" id="rp-profile" style="display:none">
+          <div class="rp-profile-header">
+            <div>
+              <div class="rp-profile-name" id="rp-profile-name"></div>
+              <div class="rp-profile-role" id="rp-profile-role"></div>
+            </div>
+            <button class="rp-btn" id="rp-profile-edit-btn">Edit</button>
+          </div>
+          <div class="rp-profile-body" id="rp-profile-body"></div>
+        </div>
+        <!-- Profile editor (hidden) -->
+        <div class="profile-editor" id="profile-editor">
+          <div class="pe-field">
+            <div class="pe-label">Name</div>
+            <input class="pe-input" id="pe-name" />
+          </div>
+          <div class="pe-field">
+            <div class="pe-label">Role</div>
+            <input class="pe-input" id="pe-role" />
+          </div>
+          <div class="pe-field">
+            <div class="pe-label">Context for Claude</div>
+            <textarea class="pe-textarea" id="pe-context"></textarea>
+          </div>
+          <div class="pe-actions">
+            <button class="pe-save" id="pe-save">Save</button>
+            <button class="pe-cancel" id="pe-cancel">Cancel</button>
+          </div>
+        </div>
+        <!-- Recipe actions -->
+        <div class="rp-actions">
+          <button class="rp-btn is-primary" id="rp-new">+ New recipe</button>
+        </div>
+        <!-- Recipe list (populated by JS) -->
+        <div id="rp-list"></div>
+      </div>
+    </div>
+
+    <!-- RECIPE EDITOR OVERLAY -->
+    <div class="recipe-editor-overlay" id="recipe-editor-overlay">
+      <div class="rp-tb">
+        <button class="rp-back" id="re-back">&lsaquo;</button>
+        <div style="flex:1"></div>
+      </div>
+      <div class="re-scroll">
+        <div class="re-head">
+          <div class="re-emoji" id="re-emoji">📝</div>
+          <input class="re-title-input" id="re-name" placeholder="Recipe name" />
+        </div>
+        <div class="re-field">
+          <div class="re-label">Description</div>
+          <input class="re-input" id="re-description" placeholder="One-line description" />
+        </div>
+        <div class="re-field">
+          <div class="re-label">Prompt</div>
+          <textarea class="re-textarea" id="re-body" placeholder="The full LLM prompt..."></textarea>
+        </div>
+        <div class="re-field">
+          <div class="re-label">Calendar triggers (comma-separated)</div>
+          <input class="re-input" id="re-triggers" placeholder="e.g. Team Standup, Daily Sync" />
+        </div>
+        <div class="re-field" style="display:flex;gap:12px">
+          <div style="flex:1">
+            <div class="re-label">Priority</div>
+            <input class="re-input" id="re-priority" type="number" value="0" />
+          </div>
+          <div style="flex:1">
+            <div class="re-label">Version</div>
+            <input class="re-input" id="re-version" value="1.0.0" />
+          </div>
+        </div>
+        <div class="re-field">
+          <label style="display:flex;align-items:center;gap:8px;font-family:var(--font-sans);font-size:12px;color:var(--text);cursor:pointer">
+            <input type="checkbox" id="re-fallback" /> Mark as fallback recipe
+          </label>
+        </div>
+      </div>
+      <div class="re-foot">
+        <button class="re-save" id="re-save">Save recipe</button>
+        <button class="re-cancel" id="re-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <!-- VOICE ENROLLMENT OVERLAY -->
+    <div class="enroll-overlay" id="enroll-overlay">
+      <div class="enroll-ring" id="enroll-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="9" y="2" width="6" height="12" rx="3" />
+          <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3" />
+        </svg>
+      </div>
+      <div class="enroll-title">Enroll a voice</div>
+      <div class="enroll-desc">
+        Read a few sentences aloud so Minutes can recognize this speaker in future meetings.
+      </div>
+      <input class="enroll-name-input" id="enroll-name" placeholder="Speaker name" />
+      <div class="enroll-progress">
+        <div class="enroll-progress-bar" id="enroll-bar"></div>
+      </div>
+      <div class="enroll-actions">
+        <button class="enroll-start" id="enroll-start">Start recording</button>
+        <button class="enroll-skip" id="enroll-close">Cancel</button>
+      </div>
+    </div>
+
+    <!-- CONFIRMATION DIALOG -->
+    <div class="confirm-scrim" id="confirm-scrim">
+      <div class="confirm-dialog">
+        <div class="confirm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+        <div class="confirm-title" id="confirm-title">Delete this meeting?</div>
+        <div class="confirm-body" id="confirm-body">
+          This will permanently remove the meeting and its transcript. This cannot be undone.
+        </div>
+        <div class="confirm-actions">
+          <button class="confirm-cancel" id="confirm-cancel">Cancel</button>
+          <button class="confirm-danger" id="confirm-ok">Delete</button>
         </div>
       </div>
     </div>
@@ -7122,6 +7584,7 @@
     <link rel="stylesheet" href="styles/playground-palette.css" />
     <link rel="stylesheet" href="styles/playground-recall-room.css" />
     <link rel="stylesheet" href="styles/playground-recall.css" />
+    <link rel="stylesheet" href="styles/playground-recipes.css" />
 
     <link rel="stylesheet" href="vendor/xterm/xterm.css" />
     <script src="vendor/xterm/xterm.js"></script>
@@ -7141,11 +7604,19 @@
           typeof document.startViewTransition === "function" &&
           !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (!supports) {
-          try { mutate(); } catch (e) { console.error(e); }
+          try {
+            mutate();
+          } catch (e) {
+            console.error(e);
+          }
           return { finished: Promise.resolve() };
         }
         return document.startViewTransition(() => {
-          try { mutate(); } catch (e) { console.error(e); }
+          try {
+            mutate();
+          } catch (e) {
+            console.error(e);
+          }
         });
       };
       window.minutesVT = minutesVT;
@@ -7260,6 +7731,8 @@
       let currentMeetingDetail = null;
       let activeSearchQuery = "";
       let meetingsRefreshTimer = null;
+      let suppressNextRefresh = 0; // timestamp — suppress artifacts:changed refresh after tag write
+      let activeTagFilter = ""; // tag name to filter meetings by — empty string means no filter
       let currentSetup = null;
       let activationState = null;
       let proactiveContextBundle = null;
@@ -7553,6 +8026,30 @@
         for (let i = 0; i < NUM_BARS; i++) {
           bars[i].style.height = barHeights[i] + "px";
           bars[i].style.opacity = barHeights[i] > 4 ? "0.7" : "0.3";
+        }
+
+        // Mirror real audio level to playground waveform
+        const pgWave = document.getElementById("pg-hero-now-wave");
+        if (pgWave && !pgWave.hidden) {
+          const pgBars = pgWave.children;
+          const count = pgBars.length;
+          // Shift all bars left by one
+          for (let i = 0; i < count - 1; i++) {
+            pgBars[i].style.height = pgBars[i + 1].style.height;
+            pgBars[i].style.opacity = pgBars[i + 1].style.opacity;
+          }
+          // New bar from real level (center-aligned via CSS align-items:center)
+          const h = Math.max(
+            3,
+            Math.min(
+              56,
+              (level / 100) * 56 +
+                (level > 5 ? (Math.random() - 0.5) * level * 0.35 : 0),
+            ),
+          );
+          pgBars[count - 1].style.height = h + "px";
+          pgBars[count - 1].style.opacity =
+            h > 6 ? String(0.4 + (h / 56) * 0.5) : "0.25";
         }
       }
 
@@ -8146,6 +8643,58 @@
                 : status.processingStage) ||
               "Preparing transcript...";
 
+            // Drive the new hero processing card
+            const hpCard = document.getElementById("pg-hero-processing");
+            if (hpCard) {
+              hpCard.classList.add("active");
+              const heroNow = document.getElementById("pg-hero-now");
+              if (heroNow) heroNow.hidden = true;
+              const hpTitle = document.getElementById("hp-title");
+              if (hpTitle)
+                hpTitle.textContent = processingStatusTitle(status, mode);
+              // Update stage indicators
+              const jobState = job?.state || status.processingStage || "";
+              const stageOrder = [
+                "capture",
+                "transcribe",
+                "diarize",
+                "extract",
+              ];
+              const stateMap = {
+                transcribing: "transcribe",
+                diarizing: "diarize",
+                summarizing: "extract",
+                saving: "extract",
+                "transcript-only": "diarize",
+              };
+              const activeStage = stateMap[jobState] || "transcribe";
+              const activeIdx = stageOrder.indexOf(activeStage);
+              document
+                .querySelectorAll("#hp-stages .hp-stage")
+                .forEach((el) => {
+                  const stage = el.dataset.stage;
+                  const idx = stageOrder.indexOf(stage);
+                  el.classList.remove("is-done", "is-active");
+                  if (idx < activeIdx) {
+                    el.classList.add("is-done");
+                    el.querySelector(".hp-stage-icon").textContent = "✓";
+                  } else if (idx === activeIdx) {
+                    el.classList.add("is-active");
+                    el.querySelector(".hp-stage-icon").innerHTML =
+                      '<span class="hp-spinner"></span>';
+                  } else {
+                    el.querySelector(".hp-stage-icon").textContent = "○";
+                  }
+                });
+              // Progress fill
+              const progressPct = Math.min(
+                95,
+                ((activeIdx + 0.5) / stageOrder.length) * 100,
+              );
+              const fill = document.getElementById("hp-progress-fill");
+              if (fill) fill.style.width = progressPct + "%";
+            }
+
             // Start elapsed timer when processing begins
             if (!wasProcessing) {
               processingStartTime = Date.now();
@@ -8162,6 +8711,12 @@
                   m > 0
                     ? `${m}:${String(s).padStart(2, "0")} elapsed`
                     : `${s}s elapsed`;
+                const hpEl = document.getElementById("hp-elapsed");
+                if (hpEl)
+                  hpEl.textContent =
+                    m > 0
+                      ? `${m}:${String(s).padStart(2, "0")} elapsed`
+                      : `${s}s elapsed`;
               }, 1000);
             }
 
@@ -8218,6 +8773,9 @@
               processingJobsEl.replaceChildren();
               quickNote.classList.remove("active");
               setFooterCaptureMode(false);
+              // Hide hero processing card
+              const hpCard2 = document.getElementById("pg-hero-processing");
+              if (hpCard2) hpCard2.classList.remove("active");
 
               if (activeCallSession && !activeCallSession.dismissed) {
                 callBanner.classList.add("active");
@@ -9366,6 +9924,7 @@
 
       function closeDetailView() {
         detailOverlay.classList.remove("active");
+        detailOverlay.classList.remove("show-transcript");
         currentMeetingPath = null;
         currentMeetingDetail = null;
         persistRecallWorkspaceState({ currentMeetingPath: "" });
@@ -9409,454 +9968,583 @@
         detailScroll.replaceChildren();
         currentMeetingPath = detail.path;
 
-        const chips = [
+        // Reset transcript/notes mode
+        detailOverlay.classList.remove("show-transcript");
+        const modeNotes = document.getElementById("mode-notes");
+        const modeTranscript = document.getElementById("mode-transcript");
+        modeNotes.classList.add("is-active");
+        modeTranscript.classList.remove("is-active");
+
+        // ── Title ────────────────────────────────────────────────────
+        const titleEl = document.createElement("h1");
+        titleEl.className = "detail-pane-title";
+        titleEl.textContent = detail.title || "Untitled";
+        detailScroll.appendChild(titleEl);
+
+        // ── Chips (date, duration, type, attendees) ──────────────────
+        const chipsRow = document.createElement("div");
+        chipsRow.className = "detail-chips";
+        const chipTexts = [
           formatDetailDate(detail.date),
           detail.duration,
           detail.content_type,
-          detail.status && detail.status !== "complete" ? detail.status : null,
-          detail.calendar_event || null,
           detail.attendees && detail.attendees.length
             ? `${detail.attendees.length} attendee${detail.attendees.length === 1 ? "" : "s"}`
             : null,
         ].filter(Boolean);
-
-        for (const chipText of chips) {
+        for (const text of chipTexts) {
           const chip = document.createElement("span");
-          chip.className = "detail-meta-chip";
-          chip.textContent = chipText;
-          detailMeta.appendChild(chip);
+          chip.className = "detail-chip";
+          chip.textContent = text;
+          chipsRow.appendChild(chip);
+        }
+        // Recipe selector chip (appended to chips row)
+        renderRecipeSelector(chipsRow, detail.recipe || null);
+        detailScroll.appendChild(chipsRow);
+
+        // ── Parse transcript lines from sections ─────────────────────
+        const transcriptSection = (detail.sections || []).find(
+          (s) => s.heading.toLowerCase() === "transcript"
+        );
+        const transcriptLines = parseTranscriptLines(
+          transcriptSection ? transcriptSection.content : ""
+        );
+
+        // ── Talk-time strip ──────────────────────────────────────────
+        if (transcriptLines.length > 0) {
+          const speakerCounts = {};
+          for (const line of transcriptLines) {
+            const spk = line.speaker || "Unknown";
+            speakerCounts[spk] = (speakerCounts[spk] || 0) + 1;
+          }
+          // Resolve speaker names from speaker_map
+          const nameMap = {};
+          if (detail.speaker_map) {
+            for (const attr of detail.speaker_map) {
+              nameMap[attr.speaker_label] = attr.name;
+            }
+          }
+          const total = transcriptLines.length;
+          const sorted = Object.entries(speakerCounts).sort(
+            (a, b) => b[1] - a[1]
+          );
+
+          const strip = document.createElement("div");
+          strip.className = "talk-strip";
+          strip.setAttribute("aria-label", "Talk time");
+          for (const [spk, count] of sorted) {
+            const pct = Math.round((count / total) * 100);
+            if (pct < 2) continue; // Skip tiny slices
+            const seg = document.createElement("div");
+            seg.className = "talk-seg";
+            seg.style.flex = pct;
+            const displayName = nameMap[spk] || spk.replace("SPEAKER_", "S");
+            seg.innerHTML = `<span class="ts-name">${escHtml(displayName)}</span><span class="ts-pct">${pct}%</span>`;
+            strip.appendChild(seg);
+          }
+          detailScroll.appendChild(strip);
+
+          const foot = document.createElement("div");
+          foot.className = "talk-strip-foot";
+          foot.innerHTML = `<span>Talk-time</span><span>${detail.duration || ""} · ${sorted.length} voice${sorted.length === 1 ? "" : "s"}</span>`;
+          detailScroll.appendChild(foot);
         }
 
-        if (detail.context) {
-          const contextCard = document.createElement("div");
-          contextCard.className = "detail-context";
+        // ── Moments strip (decisions + action items) ─────────────────
+        const decisions = detail.decisions || [];
+        const actions = detail.action_items || [];
+        if (decisions.length > 0 || actions.length > 0) {
+          const moments = document.createElement("div");
+          moments.className = "moments is-open";
 
-          const label = document.createElement("div");
-          label.className = "detail-context-label";
-          label.textContent = "Context";
+          // Header
+          const head = document.createElement("div");
+          head.className = "moments-head";
+          if (decisions.length > 0) {
+            const pill = document.createElement("div");
+            pill.className = "moments-pill is-decision";
+            pill.innerHTML = `<strong>${decisions.length}</strong>decision${decisions.length === 1 ? "" : "s"}`;
+            head.appendChild(pill);
+          }
+          if (actions.length > 0) {
+            const pill = document.createElement("div");
+            pill.className = "moments-pill is-action";
+            pill.innerHTML = `<strong>${actions.length}</strong>action${actions.length === 1 ? "" : "s"}`;
+            head.appendChild(pill);
+          }
+          const spacer = document.createElement("div");
+          spacer.className = "moments-spacer";
+          head.appendChild(spacer);
+          const toggle = document.createElement("div");
+          toggle.className = "moments-toggle-label";
+          toggle.innerHTML = `<span>Hide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+          head.appendChild(toggle);
+          moments.appendChild(head);
 
+          // Toggle handler
+          head.addEventListener("click", () => {
+            moments.classList.toggle("is-open");
+            const label = toggle.querySelector("span");
+            label.textContent = moments.classList.contains("is-open") ? "Hide" : "Show";
+          });
+
+          // Body
           const body = document.createElement("div");
-          body.className = "detail-context-body";
-          setHighlightedText(body, detail.context, activeSearchQuery);
+          body.className = "moments-body";
 
-          contextCard.appendChild(label);
-          contextCard.appendChild(body);
-          detailScroll.appendChild(contextCard);
-        }
-
-        // Speaker attribution card
-        if (detail.speaker_map && detail.speaker_map.length > 0) {
-          const speakerCard = document.createElement("div");
-          speakerCard.className = "detail-speakers";
-
-          const label = document.createElement("div");
-          label.className = "detail-speakers-label";
-          label.textContent = "Speakers";
-          speakerCard.appendChild(label);
-
-          for (const attr of detail.speaker_map) {
-            const row = document.createElement("div");
-            row.className = "speaker-row";
-
-            const labelSpan = document.createElement("span");
-            labelSpan.className = "speaker-label";
-            labelSpan.textContent = attr.speaker_label;
-            row.appendChild(labelSpan);
-
-            const nameSpan = document.createElement("span");
-            nameSpan.className = "speaker-name";
-            nameSpan.textContent = attr.name;
-            row.appendChild(nameSpan);
-
-            const badge = document.createElement("span");
-            badge.className = `speaker-badge ${attr.confidence}`;
-            badge.textContent = attr.confidence;
-            row.appendChild(badge);
-
-            const spacer = document.createElement("span");
-            spacer.className = "speaker-row-spacer";
-            row.appendChild(spacer);
-
-            if (
-              attr.confidence === "high" &&
-              isRememberableSpeakerName(attr.name)
-            ) {
-              const rememberBtn = document.createElement("button");
-              rememberBtn.className = "speaker-remember-btn";
-              rememberBtn.textContent = "Remember";
-              rememberBtn.title =
-                "Save this person for future transcripts and search. Existing raw transcripts stay unchanged.";
-              rememberBtn.onclick = async () => {
-                rememberBtn.disabled = true;
-                const previousLabel = rememberBtn.textContent;
-                rememberBtn.textContent = "Saving...";
-                try {
-                  const result = await invoke(
-                    "cmd_remember_vocabulary_person",
-                    {
-                      name: attr.name,
-                    },
-                  );
-                  rememberBtn.textContent = "Saved";
-                  rememberBtn.classList.add("saved");
-                  showDetailFeedback(
-                    result?.note ||
-                      `${attr.name} saved to vocabulary. Existing raw transcripts stay unchanged.`,
-                    "success",
-                  );
-                } catch (e) {
-                  console.error("Remember speaker failed:", e);
-                  rememberBtn.disabled = false;
-                  rememberBtn.textContent = previousLabel;
-                  showDetailFeedback(
-                    `Could not save vocabulary: ${e}`,
-                    "error",
-                  );
-                }
-              };
-              row.appendChild(rememberBtn);
-            }
-
-            // Show confirm button for non-high confidence
-            if (attr.confidence !== "high") {
-              const btn = document.createElement("button");
-              btn.className = "speaker-confirm-btn";
-              btn.textContent = "Confirm";
-              btn.onclick = async () => {
-                const newName = prompt(
-                  `Confirm speaker name for ${attr.speaker_label}:`,
-                  attr.name,
-                );
-                if (newName) {
-                  btn.disabled = true;
-                  const previousLabel = btn.textContent;
-                  btn.textContent = "Saving...";
-                  try {
-                    const result = await invoke("cmd_confirm_speaker", {
-                      meetingPath: detail.path,
-                      speakerLabel: attr.speaker_label,
-                      name: newName,
-                    });
-                    showDetailFeedback(
-                      result || `Confirmed ${attr.speaker_label} as ${newName}`,
-                      "success",
-                    );
-                    await openMeetingDetail(detail.path);
-                  } catch (e) {
-                    console.error("Confirm speaker failed:", e);
-                    showDetailFeedback(
-                      `Could not confirm speaker: ${e}`,
-                      "error",
-                    );
-                  } finally {
-                    btn.disabled = false;
-                    btn.textContent = previousLabel;
-                  }
-                }
-              };
-              row.appendChild(btn);
-            }
-
-            speakerCard.appendChild(row);
+          // Tabs
+          const tabs = document.createElement("div");
+          tabs.className = "moments-tabs";
+          const allTab = document.createElement("button");
+          allTab.className = "moments-tab is-active";
+          allTab.innerHTML = `All <span class="mt-count">${decisions.length + actions.length}</span>`;
+          tabs.appendChild(allTab);
+          if (decisions.length > 0) {
+            const dt = document.createElement("button");
+            dt.className = "moments-tab";
+            dt.innerHTML = `Decisions <span class="mt-count">${decisions.length}</span>`;
+            dt.dataset.filter = "decision";
+            tabs.appendChild(dt);
           }
-
-          detailScroll.appendChild(speakerCard);
-        }
-
-        // Action items card
-        if (detail.action_items && detail.action_items.length > 0) {
-          const aiCard = document.createElement("div");
-          aiCard.className = "detail-context";
-
-          const aiLabel = document.createElement("div");
-          aiLabel.className = "detail-context-label";
-          aiLabel.textContent = "Action Items";
-          aiCard.appendChild(aiLabel);
-
-          const aiList = document.createElement("div");
-          aiList.className = "detail-action-list";
-          for (const item of detail.action_items) {
-            const row = document.createElement("div");
-            row.className = "detail-action-item";
-            const isDone = (item.status || "").toLowerCase() === "done";
-            const check = isDone ? "\u2611" : "\u2610";
-            const due = item.due ? ` \u00b7 ${item.due}` : "";
-            const checkSpan = document.createElement("span");
-            checkSpan.className = "detail-action-check";
-            checkSpan.textContent = check;
-            const textSpan = document.createElement("span");
-            textSpan.className = "detail-action-text";
-            setHighlightedText(
-              textSpan,
-              `${item.assignee}: ${item.task}${due}`,
-              activeSearchQuery,
-            );
-            if (isDone) textSpan.style.textDecoration = "line-through";
-            row.appendChild(checkSpan);
-            row.appendChild(textSpan);
-            aiList.appendChild(row);
+          if (actions.length > 0) {
+            const at = document.createElement("button");
+            at.className = "moments-tab";
+            at.innerHTML = `Actions <span class="mt-count">${actions.length}</span>`;
+            at.dataset.filter = "action";
+            tabs.appendChild(at);
           }
-          aiCard.appendChild(aiList);
-          detailScroll.appendChild(aiCard);
-        }
+          body.appendChild(tabs);
 
-        // Decisions card
-        if (detail.decisions && detail.decisions.length > 0) {
-          const decCard = document.createElement("div");
-          decCard.className = "detail-context";
+          // Moment items container
+          const itemsContainer = document.createElement("div");
+          itemsContainer.className = "moments-items";
 
-          const decLabel = document.createElement("div");
-          decLabel.className = "detail-context-label";
-          decLabel.textContent = "Decisions";
-          decCard.appendChild(decLabel);
-
-          const decList = document.createElement("div");
-          decList.className = "detail-action-list";
-          for (const dec of detail.decisions) {
-            const row = document.createElement("div");
-            row.className = "detail-action-item";
-            const topic = dec.topic ? `[${dec.topic}] ` : "";
-            const textSpan = document.createElement("span");
-            textSpan.className = "detail-action-text";
-            setHighlightedText(
-              textSpan,
-              `${topic}${dec.text}`,
-              activeSearchQuery,
-            );
-            row.appendChild(textSpan);
-            decList.appendChild(row);
+          // Render decisions
+          for (const dec of decisions) {
+            const el = renderMomentDecision(dec, detail);
+            itemsContainer.appendChild(el);
           }
-          decCard.appendChild(decList);
-          detailScroll.appendChild(decCard);
-        }
+          // Render actions
+          for (const action of actions) {
+            const el = renderMomentAction(action, detail);
+            itemsContainer.appendChild(el);
+          }
+          body.appendChild(itemsContainer);
+          moments.appendChild(body);
 
-        if (detail.related_people && detail.related_people.length > 0) {
-          const peopleCard = document.createElement("div");
-          peopleCard.className = "detail-context";
-          const peopleLabel = document.createElement("div");
-          peopleLabel.className = "detail-context-label";
-          peopleLabel.textContent = "Related People";
-          const peopleRow = document.createElement("div");
-          peopleRow.className = "detail-chip-row";
-          for (const person of detail.related_people) {
-            const btn = document.createElement("button");
-            btn.className = "detail-chip-btn";
-            btn.textContent = person;
-            btn.addEventListener("click", () => {
-              searchInput.value = person;
-              searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+          // Tab filtering
+          tabs.addEventListener("click", (e) => {
+            const tab = e.target.closest(".moments-tab");
+            if (!tab) return;
+            tabs.querySelectorAll(".moments-tab").forEach((t) => t.classList.remove("is-active"));
+            tab.classList.add("is-active");
+            const filter = tab.dataset.filter;
+            itemsContainer.querySelectorAll(".moment").forEach((m) => {
+              if (!filter) { m.style.display = ""; return; }
+              m.style.display = m.dataset.type === filter ? "" : "none";
             });
-            peopleRow.appendChild(btn);
-          }
-          peopleCard.appendChild(peopleLabel);
-          peopleCard.appendChild(peopleRow);
-          detailScroll.appendChild(peopleCard);
+          });
+
+          detailScroll.appendChild(moments);
         }
 
-        if (detail.related_topics && detail.related_topics.length > 0) {
-          const topicsCard = document.createElement("div");
-          topicsCard.className = "detail-context";
-          const topicsLabel = document.createElement("div");
-          topicsLabel.className = "detail-context-label";
-          topicsLabel.textContent = "Related Topics";
-          const topicsRow = document.createElement("div");
-          topicsRow.className = "detail-chip-row";
-          for (const topic of detail.related_topics) {
-            const btn = document.createElement("button");
-            btn.className = "detail-chip-btn";
-            btn.textContent = topic;
-            btn.addEventListener("click", () => {
-              searchInput.value = topic;
-              searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            });
-            topicsRow.appendChild(btn);
-          }
-          topicsCard.appendChild(topicsLabel);
-          topicsCard.appendChild(topicsRow);
-          detailScroll.appendChild(topicsCard);
-        }
+        // ── Notes pane (sections minus Transcript) ───────────────────
+        const notesPane = document.createElement("div");
+        notesPane.className = "notes-pane";
 
-        if (
-          detail.related_commitments &&
-          detail.related_commitments.length > 0
-        ) {
-          const commitmentsCard = document.createElement("div");
-          commitmentsCard.className = "detail-context";
-          const commitmentsLabel = document.createElement("div");
-          commitmentsLabel.className = "detail-context-label";
-          commitmentsLabel.textContent = "Open Commitments";
-          const commitmentsList = document.createElement("div");
-          commitmentsList.className = "detail-action-list";
-          for (const item of detail.related_commitments) {
-            const row = document.createElement("div");
-            row.className = "detail-action-item";
-            const textSpan = document.createElement("span");
-            textSpan.className = "detail-action-text";
-            const owner = item.who ? `${item.who}: ` : "";
-            const due = item.by_date ? ` · ${item.by_date}` : "";
-            setHighlightedText(
-              textSpan,
-              `${owner}${item.what}${due}`,
-              activeSearchQuery,
-            );
-            row.appendChild(textSpan);
-
-            const openBtn = document.createElement("button");
-            openBtn.className = "btn btn-secondary btn-sm";
-            openBtn.textContent = "Source";
-            openBtn.addEventListener("click", () =>
-              openMeetingDetail(item.path),
-            );
-            row.appendChild(openBtn);
-
-            commitmentsList.appendChild(row);
-          }
-          commitmentsCard.appendChild(commitmentsLabel);
-          commitmentsCard.appendChild(commitmentsList);
-          detailScroll.appendChild(commitmentsCard);
-        }
-
-        if (detail.related_meetings && detail.related_meetings.length > 0) {
-          const meetingsCard = document.createElement("div");
-          meetingsCard.className = "detail-context";
-          const meetingsLabel = document.createElement("div");
-          meetingsLabel.className = "detail-context-label";
-          meetingsLabel.textContent = "Nearby Meetings";
-          const meetingsList = document.createElement("div");
-          meetingsList.className = "detail-action-list";
-          for (const meeting of detail.related_meetings) {
-            const row = document.createElement("div");
-            row.className = "detail-action-item";
-            const textSpan = document.createElement("span");
-            textSpan.className = "detail-action-text";
-            setHighlightedText(
-              textSpan,
-              `${meeting.title} · ${formatDetailDate(meeting.date)}`,
-              activeSearchQuery,
-            );
-            row.appendChild(textSpan);
-
-            const openBtn = document.createElement("button");
-            openBtn.className = "btn btn-secondary btn-sm";
-            openBtn.textContent = "Open";
-            openBtn.addEventListener("click", () =>
-              openMeetingDetail(meeting.path),
-            );
-            row.appendChild(openBtn);
-
-            meetingsList.appendChild(row);
-          }
-          meetingsCard.appendChild(meetingsLabel);
-          meetingsCard.appendChild(meetingsList);
-          detailScroll.appendChild(meetingsCard);
-        }
-
-        if (detail.adjacent_artifacts && detail.adjacent_artifacts.length > 0) {
-          const artifactsCard = document.createElement("div");
-          artifactsCard.className = "detail-context";
-          const artifactsLabel = document.createElement("div");
-          artifactsLabel.className = "detail-context-label";
-          artifactsLabel.textContent = "Adjacent Artifacts";
-          const artifactsList = document.createElement("div");
-          artifactsList.className = "detail-action-list";
-          for (const artifact of detail.adjacent_artifacts) {
-            const row = document.createElement("div");
-            row.className = "detail-action-item";
-            const textSpan = document.createElement("span");
-            textSpan.className = "detail-action-text";
-            const review = artifact.review_available ? " · review ready" : "";
-            setHighlightedText(
-              textSpan,
-              `${artifact.filename} · ${artifact.kind}${review}`,
-              activeSearchQuery,
-            );
-            row.appendChild(textSpan);
-
-            const openBtn = document.createElement("button");
-            openBtn.className = "btn btn-secondary btn-sm";
-            openBtn.textContent = "Open";
-            openBtn.addEventListener("click", async () => {
-              try {
-                const access = await invoke("cmd_get_text_file_access", {
-                  path: artifact.path,
-                });
-                const content = await invoke("cmd_read_text_file", {
-                  path: artifact.path,
-                });
-                await showMdViewer(artifact.path, artifact.filename, content, {
-                  editable: !!access.editable,
-                  kind: access.kind || artifact.kind || "text",
-                });
-              } catch (e) {
-                console.error("Open adjacent artifact:", e);
-              }
-            });
-            row.appendChild(openBtn);
-
-            artifactsList.appendChild(row);
-          }
-          artifactsCard.appendChild(artifactsLabel);
-          artifactsCard.appendChild(artifactsList);
-          detailScroll.appendChild(artifactsCard);
-        }
-
-        if (!detail.sections || detail.sections.length === 0) {
+        const nonTranscriptSections = (detail.sections || []).filter(
+          (s) => s.heading.toLowerCase() !== "transcript"
+        );
+        if (nonTranscriptSections.length === 0 && transcriptLines.length === 0) {
           const empty = document.createElement("div");
           empty.className = "detail-empty";
-          empty.textContent =
-            "No transcript content available for this recording.";
-          detailScroll.appendChild(empty);
+          empty.textContent = "No content available for this recording.";
+          notesPane.appendChild(empty);
+        } else if (nonTranscriptSections.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "detail-empty";
+          empty.textContent = "No summary notes. Switch to Transcript view.";
+          notesPane.appendChild(empty);
         } else {
-          for (const section of detail.sections) {
-            const sectionEl = document.createElement("section");
-            sectionEl.className = "detail-section";
-
-            const heading = document.createElement("div");
-            heading.className = "detail-section-title";
+          for (const section of nonTranscriptSections) {
+            const heading = document.createElement("h2");
             heading.textContent = section.heading;
+            notesPane.appendChild(heading);
 
             const body = document.createElement("div");
             body.className = "detail-section-body";
-            // Render as markdown so nested ##/###, lists, emphasis,
-            // code, links etc. all surface with proper hierarchy.
-            // Falls back to plain text if marked isn't loaded yet.
             if (typeof renderMarkdownToElement === "function" && section.content) {
               renderMarkdownToElement(body, section.content);
             } else {
-              setHighlightedText(
-                body,
-                section.content || "No content",
-                activeSearchQuery,
-              );
+              body.innerHTML = `<p>${escHtml(section.content || "")}</p>`;
             }
-
-            sectionEl.appendChild(heading);
-            sectionEl.appendChild(body);
-            detailScroll.appendChild(sectionEl);
+            notesPane.appendChild(body);
           }
         }
 
-        // Bottom CTA — "Ask your agent about this meeting"
-        const bottomCta = document.createElement("div");
-        bottomCta.className = "detail-bottom-cta";
-        const ctaText = document.createElement("div");
-        ctaText.className = "detail-bottom-cta-text";
-        ctaText.textContent =
-          "Have questions about this " +
-          (detail.content_type || "meeting") +
-          "?";
-        const ctaBtn = document.createElement("button");
-        ctaBtn.className = "btn btn-primary btn-sm";
-        ctaBtn.textContent = "Discuss with Agent";
-        ctaBtn.addEventListener("click", () => {
-          document.getElementById("btn-discuss-ai").click();
-        });
-        bottomCta.appendChild(ctaText);
-        bottomCta.appendChild(ctaBtn);
-        detailScroll.appendChild(bottomCta);
+        // Action row at bottom of notes — removed, actions live in ⋯ menu
+        detailScroll.appendChild(notesPane);
+
+        // ── Transcript pane ──────────────────────────────────────────
+        const txPane = document.createElement("div");
+        txPane.className = "transcript-pane";
+        if (transcriptLines.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "detail-empty";
+          empty.textContent = "No transcript available.";
+          txPane.appendChild(empty);
+        } else {
+          const nameMap = {};
+          if (detail.speaker_map) {
+            for (const attr of detail.speaker_map) {
+              nameMap[attr.speaker_label] = attr.name;
+            }
+          }
+          for (const line of transcriptLines) {
+            const row = document.createElement("div");
+            row.className = "tx-line";
+            const displayName = nameMap[line.speaker] || line.speaker || "";
+            row.innerHTML = `<div class="tx-ts">${escHtml(line.time)}</div><div class="tx-spk">${escHtml(displayName)}</div><div class="tx-text">${escHtml(line.text)}</div>`;
+            txPane.appendChild(row);
+          }
+        }
+        detailScroll.appendChild(txPane);
+
+        // ── Mode toggle handler ──────────────────────────────────────
+        modeNotes.onclick = () => {
+          detailOverlay.classList.remove("show-transcript");
+          modeNotes.classList.add("is-active");
+          modeTranscript.classList.remove("is-active");
+        };
+        modeTranscript.onclick = () => {
+          detailOverlay.classList.add("show-transcript");
+          modeTranscript.classList.add("is-active");
+          modeNotes.classList.remove("is-active");
+        };
 
         detailOverlay.classList.add("active");
         persistRecallWorkspaceState({ currentMeetingPath: detail.path });
+      }
+
+      // ── Detail view helpers ──────────────────────────────────────
+      function escHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function parseTranscriptLines(content) {
+        if (!content) return [];
+        const lines = [];
+        const regex = /^\[([^\]]+)\s+(\d+:\d+(?::\d+)?)\]\s*(.*)$/;
+        for (const raw of content.split("\n")) {
+          const trimmed = raw.trim();
+          if (!trimmed) continue;
+          const match = trimmed.match(regex);
+          if (match) {
+            lines.push({
+              speaker: match[1],
+              time: match[2],
+              text: match[3].replace(/^-\s*/, ""),
+            });
+          }
+        }
+        return lines;
+      }
+
+      function renderMomentDecision(dec, detail) {
+        const el = document.createElement("div");
+        el.className = "moment is-decision";
+        el.dataset.type = "decision";
+
+        const mark = document.createElement("div");
+        mark.className = "moment-mark";
+        el.appendChild(mark);
+
+        const content = document.createElement("div");
+        const text = document.createElement("div");
+        text.className = "moment-text";
+        const topic = dec.topic ? `[${dec.topic}] ` : "";
+        text.textContent = `${topic}${dec.text}`;
+        content.appendChild(text);
+
+        const meta = document.createElement("div");
+        meta.className = "moment-meta";
+        meta.innerHTML = `<span>Decision</span>`;
+        content.appendChild(meta);
+        el.appendChild(content);
+
+        const actions = document.createElement("div");
+        actions.className = "moment-actions";
+        actions.innerHTML = `<button class="moment-action-btn is-accent">Keep</button><button class="moment-action-btn">Edit</button><button class="moment-action-btn is-danger">Discard</button>`;
+        el.appendChild(actions);
+
+        // Wire review actions
+        actions.addEventListener("click", (e) => {
+          const btn = e.target.closest(".moment-action-btn");
+          if (!btn) return;
+          if (btn.classList.contains("is-accent")) {
+            // Keep — mark as reviewed
+            el.classList.remove("is-unreviewed");
+            actions.style.opacity = "0";
+          } else if (btn.classList.contains("is-danger")) {
+            // Discard — remove from view
+            el.remove();
+          } else {
+            // Edit — prompt for new text
+            const newText = prompt("Edit decision:", text.textContent);
+            if (newText !== null) {
+              text.textContent = newText;
+              el.classList.remove("is-unreviewed");
+            }
+          }
+        });
+
+        return el;
+      }
+
+      function renderMomentAction(action, detail) {
+        const el = document.createElement("div");
+        const isDone = (action.status || "").toLowerCase() === "done";
+        el.className = `moment${isDone ? " is-done" : ""}`;
+        el.dataset.type = "action";
+
+        const mark = document.createElement("button");
+        mark.className = `moment-mark${isDone ? " is-done" : ""}`;
+        mark.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="5 12 10 17 19 7"/></svg>`;
+        mark.addEventListener("click", () => {
+          mark.classList.toggle("is-done");
+          el.classList.toggle("is-done");
+        });
+        el.appendChild(mark);
+
+        const content = document.createElement("div");
+        const text = document.createElement("div");
+        text.className = "moment-text";
+        text.textContent = `${action.assignee}: ${action.task}`;
+        content.appendChild(text);
+
+        const meta = document.createElement("div");
+        meta.className = "moment-meta";
+        const parts = [];
+        if (action.assignee) parts.push(`Owner · ${action.assignee}`);
+        if (action.due) parts.push(`Due ${action.due}`);
+        meta.innerHTML = parts.map((p) => `<span>${escHtml(p)}</span>`).join("");
+        content.appendChild(meta);
+        el.appendChild(content);
+
+        const actions = document.createElement("div");
+        actions.className = "moment-actions";
+        actions.innerHTML = `<button class="moment-action-btn is-accent">Keep</button><button class="moment-action-btn">Edit</button><button class="moment-action-btn is-danger">Discard</button>`;
+        el.appendChild(actions);
+
+        actions.addEventListener("click", (e) => {
+          const btn = e.target.closest(".moment-action-btn");
+          if (!btn) return;
+          if (btn.classList.contains("is-accent")) {
+            el.classList.remove("is-unreviewed");
+            actions.style.opacity = "0";
+          } else if (btn.classList.contains("is-danger")) {
+            el.remove();
+          } else {
+            const newText = prompt("Edit action:", text.textContent);
+            if (newText !== null) {
+              text.textContent = newText;
+              el.classList.remove("is-unreviewed");
+            }
+          }
+        });
+
+        return el;
+      }
+
+      // ── Tag Picker Popover ────────────────────────────────────────
+      let _tagPickerEl = null;
+      const TAG_COLORS = [
+        "#30D158",
+        "#FF453A",
+        "#FF9F0A",
+        "#5E5CE6",
+        "#BF5AF2",
+        "#64D2FF",
+        "#AC8E68",
+        "#FF6482",
+        "#00C7BE",
+        "#FFD60A",
+      ];
+      function tagColor(name) {
+        let h = 0;
+        for (let i = 0; i < name.length; i++)
+          h = (h * 31 + name.charCodeAt(i)) | 0;
+        return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
+      }
+
+      function closeTagPicker() {
+        if (_tagPickerEl) {
+          _tagPickerEl.remove();
+          _tagPickerEl = null;
+        }
+        document.removeEventListener("click", _tagPickerOutside);
+        document.removeEventListener("keydown", _tagPickerEsc);
+      }
+      function _tagPickerOutside(e) {
+        if (_tagPickerEl && !_tagPickerEl.contains(e.target)) closeTagPicker();
+      }
+      function _tagPickerEsc(e) {
+        if (e.key === "Escape") closeTagPicker();
+      }
+
+      async function openTagPicker(anchor, meetingPath, currentTags) {
+        closeTagPicker();
+
+        // Fetch all known tags
+        let allTags = [];
+        try {
+          allTags = await invoke("cmd_list_tags");
+        } catch (_) {}
+
+        const pop = document.createElement("div");
+        pop.className = "tag-picker";
+        _tagPickerEl = pop;
+
+        // Search input
+        const input = document.createElement("input");
+        input.className = "tp-search";
+        input.placeholder = "Search or create tag…";
+        pop.appendChild(input);
+
+        const list = document.createElement("div");
+        list.className = "tp-list";
+        pop.appendChild(list);
+
+        const selected = new Set(currentTags.map((t) => t.toLowerCase()));
+
+        function render(filter) {
+          list.innerHTML = "";
+          const f = (filter || "").toLowerCase().trim();
+          const knownNames = allTags.map((t) => t.name.toLowerCase());
+          const shown = allTags.filter(
+            (t) => !f || t.name.toLowerCase().includes(f),
+          );
+
+          shown.forEach((t) => {
+            const item = document.createElement("div");
+            item.className =
+              "tp-item" +
+              (selected.has(t.name.toLowerCase()) ? " is-active" : "");
+            item.innerHTML =
+              '<span class="tp-dot" style="background:' +
+              tagColor(t.name) +
+              '"></span>' +
+              '<span class="tp-name">' +
+              t.name +
+              "</span>" +
+              '<span class="tp-count">' +
+              t.count +
+              "</span>" +
+              (selected.has(t.name.toLowerCase())
+                ? '<span class="tp-check">✓</span>'
+                : "");
+            item.addEventListener("click", () => toggleTag(t.name));
+            list.appendChild(item);
+          });
+
+          // "Create" option if filter doesn't match any existing tag
+          if (f && !knownNames.includes(f)) {
+            const create = document.createElement("div");
+            create.className = "tp-item tp-create";
+            create.innerHTML =
+              '<span class="tp-dot" style="background:' +
+              tagColor(f) +
+              '"></span>' +
+              '<span class="tp-name">Create "' +
+              f +
+              '"</span>';
+            create.addEventListener("click", () => toggleTag(f));
+            list.appendChild(create);
+          }
+        }
+
+        async function toggleTag(name) {
+          const key = name.toLowerCase();
+          // Single tag per meeting: selecting a new one replaces the old
+          if (selected.has(key)) {
+            selected.delete(key);
+          } else {
+            selected.clear();
+            selected.add(key);
+          }
+          const newTags = [...selected];
+          suppressNextRefresh = Date.now();
+          try {
+            await invoke("cmd_set_meeting_tags", {
+              path: meetingPath,
+              tags: newTags,
+            });
+          } catch (e) {
+            console.error("Set tags failed:", e);
+          }
+          // Close picker after selection
+          closeTagPicker();
+          // Refresh sidebar tag list (counts may have changed, new tag may need adding)
+          refreshSidebarTags();
+          // Update the anchor button
+          if (newTags.length > 0) {
+            anchor.className = "pg-row-tag";
+            anchor.title = "Change tag";
+            anchor.innerHTML =
+              '<span class="dot" style="background:' +
+              tagColor(newTags[0]) +
+              '"></span>' +
+              newTags[0] +
+              '<span class="pg-row-tag-x" title="Remove tag">×</span>';
+            // Wire the x to remove tag without reopening picker
+            anchor
+              .querySelector(".pg-row-tag-x")
+              .addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                selected.clear();
+                suppressNextRefresh = Date.now();
+                invoke("cmd_set_meeting_tags", {
+                  path: meetingPath,
+                  tags: [],
+                }).catch(() => {});
+                anchor.className = "pg-row-tag is-empty";
+                anchor.title = "Add tag";
+                anchor.innerHTML = "+ tag";
+              });
+          } else {
+            anchor.className = "pg-row-tag is-empty";
+            anchor.title = "Add tag";
+            anchor.innerHTML = "+ tag";
+          }
+        }
+
+        input.addEventListener("input", () => render(input.value));
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const f = input.value.trim();
+            if (f) toggleTag(f);
+          }
+        });
+
+        render("");
+
+        // Position popover near anchor
+        const rect = anchor.getBoundingClientRect();
+        pop.style.top = rect.bottom + 4 + "px";
+        pop.style.left = Math.max(8, rect.left - 100) + "px";
+        document.body.appendChild(pop);
+
+        // Focus input after paint
+        requestAnimationFrame(() => input.focus());
+
+        // Close on outside click / Escape
+        setTimeout(() => {
+          document.addEventListener("click", _tagPickerOutside);
+          document.addEventListener("keydown", _tagPickerEsc);
+        }, 0);
       }
 
       async function openMeetingDetail(path) {
@@ -10012,17 +10700,54 @@
         if (!root) return;
         root.replaceChildren();
 
-        if (!meetings || meetings.length === 0) {
+        // Apply tag filter if active
+        let filtered = meetings || [];
+        if (activeTagFilter && filtered.length > 0) {
+          filtered = filtered.filter((m) =>
+            (m.tags || []).some((t) => t.toLowerCase() === activeTagFilter.toLowerCase())
+          );
+        }
+
+        // Show filter banner when a tag is active
+        if (activeTagFilter) {
+          const banner = document.createElement("div");
+          banner.className = "pg-tag-filter-banner";
+          banner.innerHTML =
+            '<span class="dot" style="background:' + tagColor(activeTagFilter) + '"></span>' +
+            '<span class="pg-tag-filter-name">' + activeTagFilter + '</span>' +
+            '<span class="pg-tag-filter-count">' + filtered.length + ' meeting' + (filtered.length !== 1 ? 's' : '') + '</span>' +
+            '<button class="pg-tag-filter-clear" title="Clear filter">×</button>';
+          banner.querySelector(".pg-tag-filter-clear").addEventListener("click", () => {
+            activeTagFilter = "";
+            loadMeetings();
+            // Reset sidebar active states
+            const sidebar = document.getElementById("pg-sidebar");
+            if (sidebar) {
+              sidebar.querySelectorAll(".sb-item.is-tag").forEach((s) => s.classList.remove("is-active"));
+              const homeEl = sidebar.querySelector('[data-sb-item="home"]');
+              if (homeEl) homeEl.classList.add("is-active");
+            }
+          });
+          root.appendChild(banner);
+        }
+
+        if (filtered.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.innerHTML =
-            '<div class="title">No meetings yet</div>' +
-            '<div class="sub">Record your first conversation to get started.</div>';
+          if (activeTagFilter) {
+            empty.innerHTML =
+              '<div class="title">No meetings with this tag</div>' +
+              '<div class="sub">Tag meetings from the list to see them here.</div>';
+          } else {
+            empty.innerHTML =
+              '<div class="title">No meetings yet</div>' +
+              '<div class="sub">Record your first conversation to get started.</div>';
+          }
           root.appendChild(empty);
           return;
         }
 
-        const groups = groupByDate(meetings);
+        const groups = groupByDate(filtered);
         for (const [label, items] of Object.entries(groups)) {
           const group = document.createElement("div");
           group.className = "pg-day-group";
@@ -10047,7 +10772,10 @@
 
             const avatar = document.createElement("div");
             avatar.className = "pg-avatar " + pgAvatarClass(m.title || m.path);
-            avatar.textContent = (m.title || "U").trim().charAt(0).toUpperCase();
+            avatar.textContent = (m.title || "U")
+              .trim()
+              .charAt(0)
+              .toUpperCase();
 
             const text = document.createElement("div");
             text.className = "pg-row-text";
@@ -10061,9 +10789,13 @@
             if (attendees.length > 0) {
               const sub = document.createElement("div");
               sub.className = "pg-row-attendees";
-              sub.textContent = attendees.length <= 3
-                ? attendees.join(", ")
-                : attendees.slice(0, 2).join(", ") + " & " + (attendees.length - 2) + " others";
+              sub.textContent =
+                attendees.length <= 3
+                  ? attendees.join(", ")
+                  : attendees.slice(0, 2).join(", ") +
+                    " & " +
+                    (attendees.length - 2) +
+                    " others";
               text.appendChild(sub);
             } else if (m.content_type && m.content_type !== "meeting") {
               const sub = document.createElement("div");
@@ -10081,8 +10813,45 @@
               const tag = document.createElement("button");
               tag.className = "pg-row-tag";
               tag.title = "Change tag";
-              tag.innerHTML = '<span class="dot"></span>' + tags[0];
-              tag.addEventListener("click", (e) => e.stopPropagation());
+              tag.innerHTML =
+                '<span class="dot" style="background:' +
+                tagColor(tags[0]) +
+                '"></span>' +
+                tags[0] +
+                '<span class="pg-row-tag-x" title="Remove tag">×</span>';
+              tag.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (e.target.classList.contains("pg-row-tag-x")) return;
+                openTagPicker(tag, m.path, m.tags || []);
+              });
+              // Wire x button
+              tag
+                .querySelector(".pg-row-tag-x")
+                .addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  invoke("cmd_set_meeting_tags", {
+                    path: m.path,
+                    tags: [],
+                  }).catch(() => {});
+                  tag.className = "pg-row-tag is-empty";
+                  tag.innerHTML = "+ tag";
+                  tag.title = "Add tag";
+                  // Re-wire click to open picker with empty tags
+                  tag.onclick = (ev) => {
+                    ev.stopPropagation();
+                    openTagPicker(tag, m.path, []);
+                  };
+                });
+              meta.appendChild(tag);
+            } else {
+              const tag = document.createElement("button");
+              tag.className = "pg-row-tag is-empty";
+              tag.title = "Add tag";
+              tag.textContent = "+ tag";
+              tag.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openTagPicker(tag, m.path, []);
+              });
               meta.appendChild(tag);
             }
 
@@ -10180,9 +10949,50 @@
             close();
             openSettings();
           });
-        // Cosmetic items: close the drawer; real surfaces land later.
+        // Wire sidebar nav items.
         sidebar.querySelectorAll(".sb-item").forEach((el) => {
-          el.addEventListener("click", () => close());
+          el.addEventListener("click", () => {
+            const action = el.getAttribute("data-sb-item");
+            // Tag items are wired separately in refreshSidebarTags
+            if (el.classList.contains("is-tag") && action !== "new-tag") return;
+            close();
+            if (action === "home") {
+              if (activeTagFilter) {
+                activeTagFilter = "";
+                loadMeetings();
+              }
+            } else if (action === "new-tag") {
+              // Open a minimal tag creation prompt via the search bar
+              const searchInput = document.getElementById("pg-search");
+              if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
+                searchInput.placeholder = "Type a new tag name and press Enter…";
+                const handler = (e) => {
+                  if (e.key === "Enter" && searchInput.value.trim()) {
+                    e.preventDefault();
+                    const newTag = searchInput.value.trim().toLowerCase();
+                    searchInput.value = "";
+                    searchInput.placeholder = "Search meetings, transcripts…";
+                    searchInput.removeEventListener("keydown", handler);
+                    searchInput.blur();
+                    // Set this tag as active filter (it'll show 0 meetings, which is fine)
+                    activeTagFilter = newTag;
+                    loadMeetings();
+                    refreshSidebarTags();
+                  } else if (e.key === "Escape") {
+                    searchInput.value = "";
+                    searchInput.placeholder = "Search meetings, transcripts…";
+                    searchInput.removeEventListener("keydown", handler);
+                    searchInput.blur();
+                  }
+                };
+                searchInput.addEventListener("keydown", handler);
+              }
+            } else if (action === "recall" && window._openRecallRoom) {
+              window._openRecallRoom();
+            }
+          });
         });
         // Global S shortcut (ignore when typing in a field).
         document.addEventListener("keydown", (e) => {
@@ -10213,7 +11023,60 @@
               el.textContent = String(items.length);
           })
           .catch(() => {});
+        // Populate the Tags section in the sidebar from cmd_list_tags.
+        refreshSidebarTags(sidebar, close);
       })();
+
+      // ── Sidebar Tag Helpers ───────────────────────────────────────
+      function refreshSidebarTags(sidebar, closeSidebar) {
+        if (!sidebar) sidebar = document.getElementById("pg-sidebar");
+        if (!sidebar) return;
+        // Remove existing dynamic tag items (keep "New tag")
+        sidebar.querySelectorAll('.sb-item.is-tag:not([data-sb-item="new-tag"])').forEach((el) => el.remove());
+        invoke("cmd_list_tags")
+          .then((tags) => {
+            if (!Array.isArray(tags) || tags.length === 0) return;
+            const section = sidebar.querySelector(".sb-section");
+            if (!section) return;
+            const newTagEl = sidebar.querySelector('[data-sb-item="new-tag"]');
+            tags.forEach((t) => {
+              const el = document.createElement("div");
+              el.className = "sb-item is-tag" + (activeTagFilter === t.name ? " is-active" : "");
+              el.setAttribute("data-tag-name", t.name);
+              el.innerHTML =
+                '<span class="sb-tag-dot" style="background:' +
+                tagColor(t.name) +
+                '"></span>' +
+                t.name +
+                '<span class="sb-count">' +
+                t.count +
+                "</span>";
+              el.addEventListener("click", () => {
+                if (activeTagFilter === t.name) {
+                  // Clicking active tag clears the filter
+                  activeTagFilter = "";
+                } else {
+                  activeTagFilter = t.name;
+                }
+                if (closeSidebar) closeSidebar();
+                loadMeetings();
+                // Update active states
+                sidebar.querySelectorAll(".sb-item.is-tag").forEach((s) => {
+                  s.classList.toggle("is-active", s.getAttribute("data-tag-name") === activeTagFilter);
+                });
+                // Home loses active when a tag is active
+                const homeEl = sidebar.querySelector('[data-sb-item="home"]');
+                if (homeEl) homeEl.classList.toggle("is-active", !activeTagFilter);
+              });
+              if (newTagEl) section.parentNode.insertBefore(el, newTagEl);
+              else section.parentNode.appendChild(el);
+            });
+            // Update Home active state based on current filter
+            const homeEl = sidebar.querySelector('[data-sb-item="home"]');
+            if (homeEl) homeEl.classList.toggle("is-active", !activeTagFilter);
+          })
+          .catch(() => {});
+      }
 
       // ── Command Palette (⌘K / K) ─────────────────────────────────
       (function wirePalette() {
@@ -10277,22 +11140,28 @@
                 if (diff < 1) return "today";
                 if (diff === 1) return "yesterday";
                 if (diff < 7) return diff + "d";
-                return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                return d.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                });
               }
               function shortDate(raw) {
                 if (!raw) return "";
                 const d = new Date(raw);
                 if (isNaN(d)) return raw;
-                return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                return d.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                });
               }
               let html = '<div class="palette-section">Meetings</div>';
               meetings.slice(0, 8).forEach((m, i) => {
                 const title = (m.title || "Untitled").replace(
                   new RegExp(
                     `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-                    "gi"
+                    "gi",
                   ),
-                  "<mark>$1</mark>"
+                  "<mark>$1</mark>",
                 );
                 const sub = [shortDate(m.date), m.snippet]
                   .filter(Boolean)
@@ -10368,10 +11237,7 @@
             return;
           }
           // Escape from anywhere closes if open.
-          if (
-            e.key === "Escape" &&
-            scrim.classList.contains("is-visible")
-          ) {
+          if (e.key === "Escape" && scrim.classList.contains("is-visible")) {
             close();
             return;
           }
@@ -10415,7 +11281,11 @@
         let threads = []; // ThreadSummary[] loaded from backend
 
         function generateId() {
-          return "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+          return (
+            "t_" +
+            Date.now().toString(36) +
+            Math.random().toString(36).slice(2, 8)
+          );
         }
 
         function nowISO() {
@@ -10427,11 +11297,14 @@
           stopBtn = document.createElement("button");
           stopBtn.className = "stop";
           stopBtn.title = "Stop generation";
-          stopBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" rx="1.5" fill="currentColor"/></svg>';
+          stopBtn.innerHTML =
+            '<svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" rx="1.5" fill="currentColor"/></svg>';
           stopBtn.style.display = "none";
           inputWrap.appendChild(stopBtn);
           stopBtn.addEventListener("click", async () => {
-            try { await invoke("cmd_recall_stop"); } catch (_) {}
+            try {
+              await invoke("cmd_recall_stop");
+            } catch (_) {}
           });
         }
 
@@ -10458,22 +11331,31 @@
           section.className = "rr-rail-section";
           section.textContent = "Threads";
           rail.appendChild(section);
-          threads.forEach(t => {
+          threads.forEach((t) => {
             const el = document.createElement("div");
-            el.className = "rr-thread" + (currentThread && currentThread.id === t.id ? " is-active" : "");
+            el.className =
+              "rr-thread" +
+              (currentThread && currentThread.id === t.id ? " is-active" : "");
             el.dataset.id = t.id;
             el.innerHTML =
-              '<div class="rr-thread-title">' + escapeHtml(t.title.slice(0, 32)) + '</div>' +
-              '<div class="rr-thread-meta">' + formatThreadDate(t.updated) + '</div>' +
+              '<div class="rr-thread-title">' +
+              escapeHtml(t.title.slice(0, 32)) +
+              "</div>" +
+              '<div class="rr-thread-meta">' +
+              formatThreadDate(t.updated) +
+              "</div>" +
               '<button class="rr-thread-delete" title="Delete thread">×</button>';
             el.addEventListener("click", (e) => {
               if (e.target.closest(".rr-thread-delete")) return;
               switchToThread(t.id);
             });
-            el.querySelector(".rr-thread-delete").addEventListener("click", (e) => {
-              e.stopPropagation();
-              deleteThread(t.id);
-            });
+            el.querySelector(".rr-thread-delete").addEventListener(
+              "click",
+              (e) => {
+                e.stopPropagation();
+                deleteThread(t.id);
+              },
+            );
             rail.appendChild(el);
           });
         }
@@ -10486,7 +11368,10 @@
           if (diff < 60000) return "just now";
           if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
           if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
-          return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+          return d.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          });
         }
 
         async function loadThreads() {
@@ -10522,7 +11407,7 @@
             return;
           }
           hideEmptyState();
-          thread.messages.forEach(m => {
+          thread.messages.forEach((m) => {
             addMessage(m.role === "user" ? "you" : "recall", m.content, true);
           });
         }
@@ -10531,7 +11416,7 @@
           try {
             await invoke("cmd_recall_delete_thread", { id });
           } catch (_) {}
-          threads = threads.filter(t => t.id !== id);
+          threads = threads.filter((t) => t.id !== id);
           if (currentThread && currentThread.id === id) {
             currentThread = null;
             threadView.innerHTML = "";
@@ -10547,7 +11432,7 @@
           try {
             await invoke("cmd_recall_save_thread", { thread: currentThread });
             // Update summary in local list
-            const idx = threads.findIndex(t => t.id === currentThread.id);
+            const idx = threads.findIndex((t) => t.id === currentThread.id);
             const summary = {
               id: currentThread.id,
               title: currentThread.title,
@@ -10611,11 +11496,12 @@
           const addBtn = chipsContainer.querySelector(".rr-chip.add");
           const chip = document.createElement("span");
           chip.className = "rr-chip is-meeting";
-          chip.innerHTML = escapeHtml(title.slice(0, 24)) +
+          chip.innerHTML =
+            escapeHtml(title.slice(0, 24)) +
             ' <span class="rr-chip-x" title="Remove">&times;</span>';
           chip.querySelector(".rr-chip-x").addEventListener("click", (e) => {
             e.stopPropagation();
-            addedContextFiles = addedContextFiles.filter(p => p !== path);
+            addedContextFiles = addedContextFiles.filter((p) => p !== path);
             chip.remove();
           });
           if (addBtn) {
@@ -10651,22 +11537,32 @@
 
           function renderList(filter) {
             const filtered = filter
-              ? meetings.filter(m => (m.title || m.path || "").toLowerCase().includes(filter.toLowerCase()))
+              ? meetings.filter((m) =>
+                  (m.title || m.path || "")
+                    .toLowerCase()
+                    .includes(filter.toLowerCase()),
+                )
               : meetings;
             if (filtered.length === 0) {
-              listEl.innerHTML = '<div class="rr-ctx-empty">No meetings found</div>';
+              listEl.innerHTML =
+                '<div class="rr-ctx-empty">No meetings found</div>';
               return;
             }
             listEl.innerHTML = "";
-            filtered.forEach(m => {
-              const title = m.title || m.path.split("/").pop().replace(".md", "");
+            filtered.forEach((m) => {
+              const title =
+                m.title || m.path.split("/").pop().replace(".md", "");
               const date = m.date || "";
               const item = document.createElement("div");
               item.className = "rr-ctx-item";
               item.innerHTML =
                 '<svg class="rr-ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' +
-                '<span class="rr-ctx-title">' + escapeHtml(title) + '</span>' +
-                '<span class="rr-ctx-date">' + escapeHtml(date) + '</span>';
+                '<span class="rr-ctx-title">' +
+                escapeHtml(title) +
+                "</span>" +
+                '<span class="rr-ctx-date">' +
+                escapeHtml(date) +
+                "</span>";
               item.addEventListener("click", () => {
                 addContextChip(title, m.path);
                 contextPopover.remove();
@@ -10685,7 +11581,11 @@
           // Close on click outside
           setTimeout(() => {
             document.addEventListener("click", function closePopover(e) {
-              if (contextPopover && !contextPopover.contains(e.target) && !e.target.classList.contains("add")) {
+              if (
+                contextPopover &&
+                !contextPopover.contains(e.target) &&
+                !e.target.classList.contains("add")
+              ) {
                 contextPopover.remove();
                 contextPopover = null;
                 document.removeEventListener("click", closePopover);
@@ -10726,7 +11626,11 @@
               }
               // Persist assistant message
               if (currentThread && data.text) {
-                currentThread.messages.push({ role: "assistant", content: data.text, ts: nowISO() });
+                currentThread.messages.push({
+                  role: "assistant",
+                  content: data.text,
+                  ts: nowISO(),
+                });
                 if (data.session_id) currentThread.session_id = data.session_id;
                 saveCurrentThread();
               }
@@ -10735,19 +11639,27 @@
               updateInputState();
             } else if (data.type === "stopped") {
               if (currentMsgEl) {
-                const text = data.text || currentMsgEl.querySelector(".bubble")?.textContent || "";
+                const text =
+                  data.text ||
+                  currentMsgEl.querySelector(".bubble")?.textContent ||
+                  "";
                 finalizeMessage(currentMsgEl, data.text || null);
                 // Add stopped indicator
                 const bubble = currentMsgEl.querySelector(".bubble");
                 if (bubble) {
                   const tag = document.createElement("span");
-                  tag.style.cssText = "display:block;font-size:10px;color:var(--text-tertiary);margin-top:6px;font-family:var(--font-mono)";
+                  tag.style.cssText =
+                    "display:block;font-size:10px;color:var(--text-tertiary);margin-top:6px;font-family:var(--font-mono)";
                   tag.textContent = "(stopped)";
                   bubble.appendChild(tag);
                 }
                 // Persist partial response
                 if (currentThread && text) {
-                  currentThread.messages.push({ role: "assistant", content: text + "\n(stopped)", ts: nowISO() });
+                  currentThread.messages.push({
+                    role: "assistant",
+                    content: text + "\n(stopped)",
+                    ts: nowISO(),
+                  });
                   saveCurrentThread();
                 }
               }
@@ -10795,7 +11707,12 @@
           if (role !== "you" && !isReplay) {
             bubble.classList.add("is-thinking"); // thinking until first delta
           }
-          if (role !== "you" && isReplay && typeof marked !== "undefined" && text) {
+          if (
+            role !== "you" &&
+            isReplay &&
+            typeof marked !== "undefined" &&
+            text
+          ) {
             try {
               bubble.innerHTML = marked.parse(text);
               bubble.classList.add("has-markdown");
@@ -10812,15 +11729,18 @@
             const copyBtn = document.createElement("button");
             copyBtn.className = "copy-btn";
             copyBtn.title = "Copy";
-            copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+            copyBtn.innerHTML =
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
             copyBtn.addEventListener("click", () => {
               const text = bubble.textContent || "";
               navigator.clipboard.writeText(text).then(() => {
                 copyBtn.classList.add("is-copied");
-                copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+                copyBtn.innerHTML =
+                  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
                 setTimeout(() => {
                   copyBtn.classList.remove("is-copied");
-                  copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+                  copyBtn.innerHTML =
+                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
                 }, 1500);
               });
             });
@@ -10847,7 +11767,10 @@
             if (fullText) bubble.textContent = fullText;
             bubble.classList.remove("is-streaming", "is-thinking");
             // Render markdown for assistant messages
-            if (!msgEl.classList.contains("me") && typeof marked !== "undefined") {
+            if (
+              !msgEl.classList.contains("me") &&
+              typeof marked !== "undefined"
+            ) {
               const raw = bubble.textContent || "";
               try {
                 bubble.innerHTML = marked.parse(raw);
@@ -10872,7 +11795,11 @@
           }
 
           // Persist user message
-          currentThread.messages.push({ role: "user", content: text, ts: nowISO() });
+          currentThread.messages.push({
+            role: "user",
+            content: text,
+            ts: nowISO(),
+          });
           saveCurrentThread();
 
           addMessage("you", text);
@@ -10925,7 +11852,7 @@
           const val = textarea.value;
           if (val.startsWith("/") && !val.includes(" ") && val.length <= 12) {
             const q = val.toLowerCase();
-            slashFiltered = SLASH_COMMANDS.filter(c => c.cmd.startsWith(q));
+            slashFiltered = SLASH_COMMANDS.filter((c) => c.cmd.startsWith(q));
             if (slashFiltered.length > 0) {
               showSlashMenu(slashFiltered);
               return;
@@ -10942,12 +11869,23 @@
             inputWrap.parentElement.appendChild(slashMenu);
           }
           slashIdx = 0;
-          slashMenu.innerHTML = items.map((c, i) =>
-            '<div class="rr-slash-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + i + '">' +
-            '<span class="rr-slash-cmd">' + escapeHtml(c.cmd) + '</span>' +
-            '<span class="rr-slash-desc">' + escapeHtml(c.desc) + '</span>' +
-            '</div>'
-          ).join("");
+          slashMenu.innerHTML = items
+            .map(
+              (c, i) =>
+                '<div class="rr-slash-item' +
+                (i === 0 ? " is-active" : "") +
+                '" data-idx="' +
+                i +
+                '">' +
+                '<span class="rr-slash-cmd">' +
+                escapeHtml(c.cmd) +
+                "</span>" +
+                '<span class="rr-slash-desc">' +
+                escapeHtml(c.desc) +
+                "</span>" +
+                "</div>",
+            )
+            .join("");
           slashMenu.style.display = "flex";
           slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => {
             el.addEventListener("click", () => selectSlashItem(i));
@@ -10968,17 +11906,30 @@
         }
 
         textarea.addEventListener("keydown", (e) => {
-          if (slashMenu && slashMenu.style.display !== "none" && slashFiltered.length > 0) {
+          if (
+            slashMenu &&
+            slashMenu.style.display !== "none" &&
+            slashFiltered.length > 0
+          ) {
             if (e.key === "ArrowDown") {
               e.preventDefault();
               slashIdx = (slashIdx + 1) % slashFiltered.length;
-              slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => el.classList.toggle("is-active", i === slashIdx));
+              slashMenu
+                .querySelectorAll(".rr-slash-item")
+                .forEach((el, i) =>
+                  el.classList.toggle("is-active", i === slashIdx),
+                );
               return;
             }
             if (e.key === "ArrowUp") {
               e.preventDefault();
-              slashIdx = (slashIdx - 1 + slashFiltered.length) % slashFiltered.length;
-              slashMenu.querySelectorAll(".rr-slash-item").forEach((el, i) => el.classList.toggle("is-active", i === slashIdx));
+              slashIdx =
+                (slashIdx - 1 + slashFiltered.length) % slashFiltered.length;
+              slashMenu
+                .querySelectorAll(".rr-slash-item")
+                .forEach((el, i) =>
+                  el.classList.toggle("is-active", i === slashIdx),
+                );
               return;
             }
             if (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey)) {
@@ -11038,6 +11989,7 @@
           body.classList.add("is-recall-room");
           setTimeout(() => textarea.focus(), 150);
         }
+        window._openRecallRoom = openRecallRoom;
         function closeRecallRoom() {
           body.classList.remove("is-recall-room");
         }
@@ -11056,7 +12008,12 @@
           if (e.metaKey || e.ctrlKey || e.altKey) return;
           const t = e.target;
           const tag = (t && t.tagName) || "";
-          if (tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
+          if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            (t && t.isContentEditable)
+          )
+            return;
           if (e.key === "w" || e.key === "W") {
             e.preventDefault();
             toggleRecallRoom();
@@ -11096,16 +12053,178 @@
           }
         });
 
-        // Ask pill integration — opens Recall and sends the question
+        // Ask pill integration — opens recall drawer for Q&A
         const pgAskInput = document.getElementById("pg-ask-input");
+        const inlineRecall = document.getElementById("inline-recall");
+        const irBody = document.getElementById("ir-body");
+        const irCloseBtn = document.getElementById("ir-close-btn");
+        const rdInput = document.getElementById("rd-input");
+
+        function closeInlineRecall() {
+          if (inlineRecall) inlineRecall.hidden = true;
+        }
+
+        if (irCloseBtn) irCloseBtn.addEventListener("click", closeInlineRecall);
+
+        let irStreaming = false;
+
+        async function sendToDrawer(question) {
+          if (!inlineRecall || !irBody || irStreaming) return;
+
+          // Append question to body
+          const qEl = document.createElement("div");
+          qEl.className = "ir-q";
+          qEl.textContent = question;
+          irBody.appendChild(qEl);
+          const aEl = document.createElement("div");
+          aEl.className = "ir-a is-streaming";
+          irBody.appendChild(aEl);
+
+          inlineRecall.hidden = false;
+          irStreaming = true;
+
+          let fullText = "";
+
+          try {
+            const { getCurrentWindow } = window.__TAURI__.window;
+            const irWin = getCurrentWindow();
+            const unlisten = await irWin.listen("recall:chat", (ev) => {
+              const d = ev.payload;
+              if (d.type === "delta") {
+                fullText += d.text;
+                aEl.textContent = fullText;
+                // Auto-scroll
+                irBody.scrollTop = irBody.scrollHeight;
+              } else if (
+                d.type === "done" ||
+                d.type === "error" ||
+                d.type === "stopped"
+              ) {
+                aEl.classList.remove("is-streaming");
+                irStreaming = false;
+                unlisten();
+                if (window.marked && fullText) {
+                  aEl.innerHTML = window.marked.parse(fullText);
+                }
+                // Focus follow-up input
+                if (rdInput) rdInput.focus();
+              }
+            });
+            await invoke("cmd_recall_chat", { message: question });
+          } catch (err) {
+            aEl.textContent = "Error: " + err;
+            aEl.classList.remove("is-streaming");
+            irStreaming = false;
+          }
+        }
+
         if (pgAskInput) {
           pgAskInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && pgAskInput.value.trim()) {
+            if (e.key === "Enter" && pgAskInput.value.trim() && !irStreaming) {
               e.preventDefault();
               const question = pgAskInput.value.trim();
               pgAskInput.value = "";
-              openRecallRoom();
-              setTimeout(() => sendMessage(question), 200);
+              // Don't clear conversation — keep thread continuity
+              sendToDrawer(question);
+            }
+            if (e.key === "Escape") {
+              closeInlineRecall();
+            }
+          });
+        }
+
+        // Follow-up input inside drawer
+        if (rdInput) {
+          rdInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && rdInput.value.trim() && !irStreaming) {
+              e.preventDefault();
+              const question = rdInput.value.trim();
+              rdInput.value = "";
+              sendToDrawer(question);
+            }
+            if (e.key === "Escape") {
+              closeInlineRecall();
+            }
+          });
+        }
+
+        // Escape anywhere closes drawer
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && inlineRecall && !inlineRecall.hidden) {
+            closeInlineRecall();
+          }
+        });
+
+        // New Conversation button — resets Claude session and clears chat
+        const irNewBtn = document.getElementById("ir-new-btn");
+        if (irNewBtn) {
+          irNewBtn.addEventListener("click", async () => {
+            if (irStreaming) return;
+            try { await invoke("cmd_recall_chat_reset"); } catch (_) {}
+            if (irBody) irBody.innerHTML = "";
+            // Hide threads panel if open
+            const threadsPanel = document.getElementById("ir-threads");
+            if (threadsPanel) threadsPanel.hidden = true;
+            if (rdInput) rdInput.focus();
+          });
+        }
+
+        // Thread History button — lists past threads
+        const irThreadsBtn = document.getElementById("ir-threads-btn");
+        const irThreadsPanel = document.getElementById("ir-threads");
+        const irThreadsList = document.getElementById("ir-threads-list");
+        if (irThreadsBtn && irThreadsPanel && irThreadsList) {
+          irThreadsBtn.addEventListener("click", async () => {
+            // Toggle panel
+            if (!irThreadsPanel.hidden) {
+              irThreadsPanel.hidden = true;
+              return;
+            }
+            try {
+              const threads = await invoke("cmd_recall_list_threads");
+              irThreadsList.innerHTML = "";
+              if (!threads || threads.length === 0) {
+                irThreadsList.innerHTML = '<div class="rd-thread-empty">No previous threads</div>';
+              } else {
+                for (const t of threads) {
+                  const el = document.createElement("button");
+                  el.className = "rd-thread-item";
+                  el.innerHTML = `<span class="rd-thread-title">${t.title || t.id}</span><span class="rd-thread-date">${t.updated || ""}</span>`;
+                  el.addEventListener("click", async () => {
+                    // Resume this thread
+                    try {
+                      const thread = await invoke("cmd_recall_resume_thread", { threadId: t.id });
+                      if (irBody) {
+                        irBody.innerHTML = "";
+                        // Show the thread messages
+                        if (thread && thread.messages && thread.messages.length) {
+                          for (const m of thread.messages) {
+                            const div = document.createElement("div");
+                            div.className = m.role === "user" ? "ir-q" : "ir-a";
+                            if (m.role !== "user" && window.marked) {
+                              div.innerHTML = window.marked.parse(m.content);
+                            } else {
+                              div.textContent = m.content;
+                            }
+                            irBody.appendChild(div);
+                          }
+                          irBody.scrollTop = irBody.scrollHeight;
+                        }
+                      }
+                    } catch (err) {
+                      console.warn("Failed to resume thread:", err);
+                    }
+                    irThreadsPanel.hidden = true;
+                    inlineRecall.hidden = false;
+                    if (rdInput) rdInput.focus();
+                  });
+                  irThreadsList.appendChild(el);
+                }
+              }
+              irThreadsPanel.hidden = false;
+              inlineRecall.hidden = false;
+            } catch (err) {
+              console.warn("Failed to list threads:", err);
             }
           });
         }
@@ -11136,7 +12255,10 @@
           if (data.url) {
             try {
               const host = new URL(data.url).hostname.replace("www.", "");
-              parts.push(host.split(".")[0].charAt(0).toUpperCase() + host.split(".")[0].slice(1));
+              parts.push(
+                host.split(".")[0].charAt(0).toUpperCase() +
+                  host.split(".")[0].slice(1),
+              );
             } catch (_) {}
           }
           metaEl.textContent = parts.join(" · ");
@@ -11254,11 +12376,29 @@
           }
           const now = new Date();
           const dayNum = now.getDate();
-          const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-          const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+          const monthNames = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           let html = `<div class="cu-row"><div class="cu-date"><span class="cu-date-num">${dayNum}</span><div class="cu-date-meta"><span class="month">${monthNames[now.getMonth()]}</span><span>${dayNames[now.getDay()]}</span></div></div><div class="cu-events">`;
-          events.slice(0, 4).forEach(ev => {
-            const timeStr = ev.minutes_until <= 0 ? "Now" : ev.minutes_until < 60 ? `In ${ev.minutes_until}m` : `In ${Math.floor(ev.minutes_until / 60)}h`;
+          events.slice(0, 4).forEach((ev) => {
+            const timeStr =
+              ev.minutes_until <= 0
+                ? "Now"
+                : ev.minutes_until < 60
+                  ? `In ${ev.minutes_until}m`
+                  : `In ${Math.floor(ev.minutes_until / 60)}h`;
             html += `<div class="cu-event"><div class="cu-event-bar"></div><div class="cu-event-info"><div class="cu-event-title">${ev.title}</div><div class="cu-event-time">${timeStr}</div></div></div>`;
           });
           html += `</div></div>`;
@@ -11307,6 +12447,11 @@
       }
 
       function scheduleMeetingsRefresh(delay = 350) {
+        // Suppress refresh if we just wrote tags (avoid clobbering DOM)
+        if (suppressNextRefresh && Date.now() - suppressNextRefresh < 2000) {
+          return;
+        }
+        suppressNextRefresh = 0;
         if (meetingsRefreshTimer) clearTimeout(meetingsRefreshTimer);
         meetingsRefreshTimer = setTimeout(() => {
           meetingsRefreshTimer = null;
@@ -11653,11 +12798,62 @@
       }
 
       document
-        .getElementById("btn-detail-close")
+        .getElementById("btn-detail-back")
         .addEventListener("click", closeDetailView);
-      detailOverlay.addEventListener("click", (e) => {
-        if (e.target === detailOverlay) closeDetailView();
+      // ⋯ More menu toggle
+      const detailMoreBtn = document.getElementById("btn-detail-more");
+      const detailMoreMenu = document.getElementById("detail-more-menu");
+      detailMoreBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        detailMoreMenu.classList.toggle("is-open");
       });
+      document.addEventListener("click", () => {
+        detailMoreMenu.classList.remove("is-open");
+      });
+      document.getElementById("btn-more-open-editor").addEventListener("click", () => {
+        detailMoreMenu.classList.remove("is-open");
+        document.getElementById("btn-open-external").click();
+      });
+      document.getElementById("btn-more-create-draft").addEventListener("click", () => {
+        detailMoreMenu.classList.remove("is-open");
+        document.getElementById("btn-create-artifact").click();
+      });
+      document.getElementById("btn-more-delete").addEventListener("click", () => {
+        detailMoreMenu.classList.remove("is-open");
+        showConfirmDialog(
+          "Delete this meeting?",
+          `This will permanently remove the meeting and its transcript. This cannot be undone.`,
+          "Delete",
+          () => { document.getElementById("btn-delete-meeting").click(); }
+        );
+      });
+      // New more-menu items
+      document.getElementById("btn-more-reprocess")?.addEventListener("click", async () => {
+        detailMoreMenu.classList.remove("is-open");
+        if (!currentMeetingPath) return;
+        try {
+          await invoke("cmd_reprocess_meeting", { path: currentMeetingPath });
+          openMeetingDetail(currentMeetingPath);
+        } catch (e) {
+          console.error("Reprocess:", e);
+        }
+      });
+      document.getElementById("btn-more-export")?.addEventListener("click", async () => {
+        detailMoreMenu.classList.remove("is-open");
+        if (!currentMeetingPath) return;
+        try {
+          const text = await invoke("cmd_get_meeting_content", { path: currentMeetingPath });
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          console.error("Export:", e);
+        }
+      });
+      document.getElementById("btn-more-copy-path")?.addEventListener("click", async () => {
+        detailMoreMenu.classList.remove("is-open");
+        if (!currentMeetingPath) return;
+        await navigator.clipboard.writeText(currentMeetingPath);
+      });
+      // No scrim-click dismiss for full-pane detail view
       // Settings overlay
       const settingsOverlay = document.getElementById("settings-overlay");
       function openSettings() {
@@ -12186,7 +13382,8 @@
             setupBtn.classList.remove("btn-primary");
             setupBtn.classList.add("btn-secondary");
             unlinkRow.classList.remove("is-hidden");
-            activePath.textContent = "Sync mode (" + v.strategy + "): " + v.path;
+            activePath.textContent =
+              "Sync mode (" + v.strategy + "): " + v.path;
           } else if (v.enabled) {
             detail.textContent = v.detail;
             detail.style.color = "var(--yellow, var(--orange))";
@@ -12309,8 +13506,7 @@
           const tx = (settings && settings.transcription) || {};
           const backend = tx.backend || "whisper";
           const model = tx.model || "default";
-          const accel =
-            tx.metal === false ? "CPU" : "Apple Silicon Metal";
+          const accel = tx.metal === false ? "CPU" : "Apple Silicon Metal";
           setRow("whisper", {
             help: `${backend} · ${model} · ${accel}`,
             status: "ready",
@@ -14829,7 +16025,10 @@
           }
 
           await currentWindow.setSize(
-            new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, PLAYGROUND_HEIGHT),
+            new window.__TAURI__.window.LogicalSize(
+              EXPANDED_WIDTH,
+              PLAYGROUND_HEIGHT,
+            ),
           );
         }
 
@@ -14869,7 +16068,10 @@
         setTimeout(async () => {
           if (!isFullscreen) {
             await currentWindow.setSize(
-              new window.__TAURI__.window.LogicalSize(COLLAPSED_WIDTH, PLAYGROUND_HEIGHT),
+              new window.__TAURI__.window.LogicalSize(
+                COLLAPSED_WIDTH,
+                PLAYGROUND_HEIGHT,
+              ),
             );
           }
           recallExpanded = false;
@@ -16481,7 +17683,10 @@
         if (wasFullscreen && !fs && recallExpanded) {
           await currentWindow
             .setSize(
-              new window.__TAURI__.window.LogicalSize(EXPANDED_WIDTH, PLAYGROUND_HEIGHT),
+              new window.__TAURI__.window.LogicalSize(
+                EXPANDED_WIDTH,
+                PLAYGROUND_HEIGHT,
+              ),
             )
             .catch(() => {});
           if (recallFitAddon) recallFitAddon.fit();
@@ -16614,7 +17819,10 @@
         }
 
         if (!isRecording && prevRecording) {
-          if (!recallExpanded) {
+          if (
+            !recallExpanded &&
+            !document.body.classList.contains("is-playground-shell")
+          ) {
             autoExpandRecall("debrief", null);
           }
         }
@@ -16627,6 +17835,7 @@
       const originalCheckUpcoming = checkUpcoming;
       checkUpcoming = async function () {
         await originalCheckUpcoming();
+        if (document.body.classList.contains("is-playground-shell")) return;
         const upcomingEl = document.getElementById("upcoming");
         if (
           upcomingEl &&
@@ -17626,6 +18835,356 @@
           }, 650);
         }
       })();
+
+      // ══════════════════════════════════════════════════════════════
+      // CONFIRMATION DIALOG
+      // ══════════════════════════════════════════════════════════════
+      let confirmCallback = null;
+      function showConfirmDialog(title, body, actionLabel, onConfirm) {
+        document.getElementById("confirm-title").textContent = title;
+        document.getElementById("confirm-body").textContent = body;
+        document.getElementById("confirm-ok").textContent = actionLabel;
+        confirmCallback = onConfirm;
+        document.getElementById("confirm-scrim").classList.add("is-visible");
+      }
+      document.getElementById("confirm-cancel")?.addEventListener("click", () => {
+        document.getElementById("confirm-scrim").classList.remove("is-visible");
+        confirmCallback = null;
+      });
+      document.getElementById("confirm-ok")?.addEventListener("click", () => {
+        document.getElementById("confirm-scrim").classList.remove("is-visible");
+        if (confirmCallback) confirmCallback();
+        confirmCallback = null;
+      });
+      document.getElementById("confirm-scrim")?.addEventListener("click", (e) => {
+        if (e.target.id === "confirm-scrim") {
+          e.target.classList.remove("is-visible");
+          confirmCallback = null;
+        }
+      });
+
+      // ══════════════════════════════════════════════════════════════
+      // RECIPE LIBRARY
+      // ══════════════════════════════════════════════════════════════
+      const recipesOverlay = document.getElementById("recipes-overlay");
+      const recipeEditorOverlay = document.getElementById("recipe-editor-overlay");
+      let editingRecipeSlug = null;
+
+      function openRecipes() {
+        recipesOverlay.classList.add("active");
+        loadRecipeList();
+        loadProfileCard();
+      }
+      function closeRecipes() {
+        recipesOverlay.classList.remove("active");
+      }
+      document.getElementById("rp-back")?.addEventListener("click", closeRecipes);
+      document.getElementById("settings-open-recipes")?.addEventListener("click", () => {
+        closeSettings();
+        setTimeout(openRecipes, 100);
+      });
+
+      async function loadRecipeList() {
+        try {
+          const recipes = await invoke("cmd_recipe_list");
+          const countEl = document.getElementById("rp-count");
+          countEl.textContent = `${recipes.length} recipe${recipes.length === 1 ? "" : "s"} · ~/.minutes/recipes/`;
+          document.getElementById("settings-recipe-count").textContent =
+            `${recipes.length} recipe${recipes.length === 1 ? "" : "s"}`;
+
+          const list = document.getElementById("rp-list");
+          list.innerHTML = "";
+
+          const triggered = recipes.filter(r => r.has_triggers);
+          const general = recipes.filter(r => !r.has_triggers);
+
+          if (triggered.length) {
+            list.appendChild(createRecipeSection("With calendar triggers", triggered));
+          }
+          if (general.length) {
+            list.appendChild(createRecipeSection("General", general));
+          }
+        } catch (e) {
+          console.warn("Failed to load recipes:", e);
+          document.getElementById("rp-count").textContent = "No recipes found";
+        }
+      }
+
+      function createRecipeSection(label, recipes) {
+        const frag = document.createDocumentFragment();
+        const lbl = document.createElement("div");
+        lbl.className = "rp-section-label";
+        lbl.textContent = label;
+        frag.appendChild(lbl);
+
+        const card = document.createElement("div");
+        card.className = "rp-card";
+        for (const r of recipes) {
+          const item = document.createElement("div");
+          item.className = "rp-item";
+          item.innerHTML = `
+            <div class="rp-item-body">
+              <div class="rp-item-name">${escapeHtml(r.name)}</div>
+              <div class="rp-item-desc">${escapeHtml(r.description)}</div>
+              <div class="rp-item-meta">
+                ${r.is_fallback ? '<span class="rp-item-tag" style="background:rgba(255,165,0,0.1);color:#d4832a">default</span>' : ""}
+                <span class="rp-item-tag">${escapeHtml(r.version)}</span>
+              </div>
+            </div>
+            <div class="rp-item-actions">
+              <button class="rp-item-btn" title="Edit" data-slug="${escapeHtml(r.slug)}">✎</button>
+              <button class="rp-item-btn rp-item-delete" title="Delete" data-slug="${escapeHtml(r.slug)}">×</button>
+            </div>
+          `;
+          item.querySelector("[title='Edit']").addEventListener("click", () => openRecipeEditor(r.slug));
+          item.querySelector(".rp-item-delete").addEventListener("click", () => {
+            showConfirmDialog(
+              `Delete "${r.name}"?`,
+              "This recipe will be permanently removed.",
+              "Delete",
+              async () => {
+                try {
+                  await invoke("cmd_recipe_delete", { slug: r.slug });
+                  loadRecipeList();
+                } catch (e) { console.error("Delete recipe:", e); }
+              }
+            );
+          });
+          card.appendChild(item);
+        }
+        frag.appendChild(card);
+        return frag;
+      }
+
+      document.getElementById("rp-new")?.addEventListener("click", () => openRecipeEditor(null));
+
+      async function openRecipeEditor(slug) {
+        editingRecipeSlug = slug;
+        if (slug) {
+          try {
+            const recipe = await invoke("cmd_recipe_get", { slug });
+            document.getElementById("re-name").value = recipe.name;
+            document.getElementById("re-description").value = recipe.description;
+            document.getElementById("re-body").value = recipe.body;
+            document.getElementById("re-triggers").value = (recipe.triggers.calendar_keywords || []).join(", ");
+            document.getElementById("re-priority").value = recipe.priority;
+            document.getElementById("re-version").value = recipe.version;
+            document.getElementById("re-fallback").checked = recipe.fallback;
+          } catch (e) {
+            console.error("Load recipe:", e);
+            return;
+          }
+        } else {
+          document.getElementById("re-name").value = "";
+          document.getElementById("re-description").value = "";
+          document.getElementById("re-body").value = "";
+          document.getElementById("re-triggers").value = "";
+          document.getElementById("re-priority").value = "0";
+          document.getElementById("re-version").value = "1.0.0";
+          document.getElementById("re-fallback").checked = false;
+        }
+        recipeEditorOverlay.classList.add("active");
+      }
+
+      function closeRecipeEditor() {
+        recipeEditorOverlay.classList.remove("active");
+        editingRecipeSlug = null;
+      }
+      document.getElementById("re-back")?.addEventListener("click", closeRecipeEditor);
+      document.getElementById("re-cancel")?.addEventListener("click", closeRecipeEditor);
+      document.getElementById("re-save")?.addEventListener("click", async () => {
+        const name = document.getElementById("re-name").value.trim();
+        if (!name) return;
+        const slug = editingRecipeSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const triggersRaw = document.getElementById("re-triggers").value;
+        const calendarKeywords = triggersRaw
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean);
+        try {
+          await invoke("cmd_recipe_save", {
+            slug,
+            name,
+            description: document.getElementById("re-description").value.trim(),
+            version: document.getElementById("re-version").value.trim() || "1.0.0",
+            priority: parseInt(document.getElementById("re-priority").value) || 0,
+            fallback: document.getElementById("re-fallback").checked,
+            calendarKeywords,
+            attendees: [],
+            body: document.getElementById("re-body").value,
+          });
+          closeRecipeEditor();
+          loadRecipeList();
+        } catch (e) {
+          console.error("Save recipe:", e);
+        }
+      });
+
+      // ══════════════════════════════════════════════════════════════
+      // PROFILE EDITOR
+      // ══════════════════════════════════════════════════════════════
+      async function loadProfileCard() {
+        try {
+          const profile = await invoke("cmd_profile_load");
+          const card = document.getElementById("rp-profile");
+          if (!profile) {
+            card.style.display = "none";
+            return;
+          }
+          card.style.display = "";
+          document.getElementById("rp-profile-name").textContent = profile.name;
+          document.getElementById("rp-profile-role").textContent =
+            [profile.role, profile.company, profile.team].filter(Boolean).join(" · ");
+          document.getElementById("rp-profile-body").textContent = profile.context || "";
+        } catch (e) {
+          console.warn("Profile load:", e);
+        }
+      }
+
+      document.getElementById("rp-profile-edit-btn")?.addEventListener("click", async () => {
+        try {
+          const profile = await invoke("cmd_profile_load");
+          if (profile) {
+            document.getElementById("pe-name").value = profile.name;
+            document.getElementById("pe-role").value =
+              [profile.role, profile.company, profile.team].filter(Boolean).join(" · ");
+            document.getElementById("pe-context").value = profile.context || "";
+          }
+        } catch (e) { /* start empty */ }
+        document.getElementById("rp-profile").style.display = "none";
+        document.getElementById("profile-editor").classList.add("is-visible");
+      });
+      document.getElementById("pe-cancel")?.addEventListener("click", () => {
+        document.getElementById("profile-editor").classList.remove("is-visible");
+        document.getElementById("rp-profile").style.display = "";
+      });
+      document.getElementById("pe-save")?.addEventListener("click", async () => {
+        const name = document.getElementById("pe-name").value.trim();
+        const roleParts = document.getElementById("pe-role").value.split("·").map(s => s.trim());
+        try {
+          await invoke("cmd_profile_save", {
+            name: name || "User",
+            role: roleParts[0] || "",
+            company: roleParts[1] || "",
+            team: roleParts[2] || "",
+            focus: "",
+            context: document.getElementById("pe-context").value,
+          });
+          document.getElementById("profile-editor").classList.remove("is-visible");
+          loadProfileCard();
+        } catch (e) {
+          console.error("Save profile:", e);
+        }
+      });
+
+      // ══════════════════════════════════════════════════════════════
+      // RECIPE SELECTOR (detail view)
+      // ══════════════════════════════════════════════════════════════
+      let currentRecipeSlug = null;
+
+      async function renderRecipeSelector(container, meetingRecipe) {
+        let recipes = [];
+        try {
+          recipes = await invoke("cmd_recipe_list");
+        } catch (e) { return; }
+        if (!recipes.length) return;
+
+        currentRecipeSlug = meetingRecipe || (recipes.find(r => r.is_fallback) || recipes[0])?.slug;
+        const activeName = recipes.find(r => r.slug === currentRecipeSlug)?.name || "Select recipe";
+
+        const sel = document.createElement("div");
+        sel.className = "detail-recipe-selector";
+        sel.id = "detail-recipe-selector";
+        sel.innerHTML = `
+          <button class="detail-recipe-btn" id="detail-recipe-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span class="detail-recipe-name">${escapeHtml(activeName)}</span>
+            <svg class="detail-recipe-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="detail-recipe-dropdown">
+            <div class="drd-head">Recipe</div>
+            ${recipes.map(r => `
+              <div class="drd-item${r.slug === currentRecipeSlug ? " is-active" : ""}" data-slug="${escapeHtml(r.slug)}">
+                <span class="drd-name">${escapeHtml(r.name)}</span>
+                <span class="drd-check">✓</span>
+              </div>
+            `).join("")}
+            <div class="drd-divider"></div>
+            <div class="drd-item is-reprocess" id="drd-reprocess">
+              <span class="drd-name">Reprocess with selected</span>
+              <span class="drd-check">✓</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(sel);
+
+        // Wire interactions
+        const btn = sel.querySelector(".detail-recipe-btn");
+        const dropdown = sel.querySelector(".detail-recipe-dropdown");
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          sel.classList.toggle("is-open");
+        });
+        sel.querySelectorAll(".drd-item:not(.is-reprocess)").forEach(item => {
+          item.addEventListener("click", () => {
+            sel.querySelectorAll(".drd-item").forEach(i => i.classList.remove("is-active"));
+            item.classList.add("is-active");
+            currentRecipeSlug = item.dataset.slug;
+            sel.querySelector(".detail-recipe-name").textContent = item.querySelector(".drd-name").textContent;
+            sel.classList.remove("is-open");
+          });
+        });
+        sel.querySelector("#drd-reprocess")?.addEventListener("click", async () => {
+          sel.classList.remove("is-open");
+          if (!currentMeetingPath || !currentRecipeSlug) return;
+          try {
+            await invoke("cmd_reprocess_meeting", { path: currentMeetingPath, recipe: currentRecipeSlug });
+            openMeetingDetail(currentMeetingPath);
+          } catch (e) { console.error("Reprocess:", e); }
+        });
+        document.addEventListener("click", (e) => {
+          if (!sel.contains(e.target)) sel.classList.remove("is-open");
+        });
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // VOICE ENROLLMENT
+      // ══════════════════════════════════════════════════════════════
+      const enrollOverlay = document.getElementById("enroll-overlay");
+      function openEnrollment() {
+        document.getElementById("enroll-name").value = "";
+        document.getElementById("enroll-bar").style.width = "0%";
+        document.getElementById("enroll-ring").classList.remove("is-recording");
+        document.getElementById("enroll-start").textContent = "Start recording";
+        enrollOverlay.classList.add("active");
+      }
+      function closeEnrollment() {
+        enrollOverlay.classList.remove("active");
+      }
+      document.getElementById("enroll-close")?.addEventListener("click", closeEnrollment);
+      document.getElementById("enroll-start")?.addEventListener("click", async () => {
+        const nameInput = document.getElementById("enroll-name");
+        const name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+        const ring = document.getElementById("enroll-ring");
+        const bar = document.getElementById("enroll-bar");
+        const btn = document.getElementById("enroll-start");
+        ring.classList.add("is-recording");
+        btn.textContent = "Recording...";
+        btn.disabled = true;
+        try {
+          await invoke("cmd_enroll_voice", { name });
+          bar.style.width = "100%";
+          ring.classList.remove("is-recording");
+          btn.textContent = "Done ✓";
+          setTimeout(closeEnrollment, 1000);
+        } catch (e) {
+          console.error("Enroll:", e);
+          ring.classList.remove("is-recording");
+          btn.textContent = "Start recording";
+          btn.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>
