@@ -263,6 +263,24 @@ pub enum TemplateError {
     Io(#[from] std::io::Error),
 }
 
+#[derive(Debug, Error)]
+pub enum RecipeError {
+    #[error("recipe not found: {0}")]
+    NotFound(String),
+
+    #[error("invalid recipe at {path}: {message}")]
+    Invalid { path: String, message: String },
+
+    #[error("recipe at {path} has invalid slug '{slug}': must be lowercase alphanumeric with hyphens")]
+    InvalidSlug { path: String, slug: String },
+
+    #[error("profile not found at ~/.minutes/profile.md")]
+    ProfileNotFound,
+
+    #[error("I/O error: {0}")]
+    Io(String),
+}
+
 /// Unified error type for the minutes-core crate.
 /// CLI matches on this for user-facing error messages.
 #[derive(Debug, Error)]
@@ -299,6 +317,9 @@ pub enum MinutesError {
 
     #[error(transparent)]
     Template(#[from] TemplateError),
+
+    #[error(transparent)]
+    Recipe(#[from] RecipeError),
 
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
