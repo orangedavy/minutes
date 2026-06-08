@@ -100,44 +100,47 @@ body.is-playground-shell
 }
 
 body.is-playground-shell .about-overlay#settings-overlay #btn-settings-close {
-  /* Match playground .st-back exactly: 28×28, 7px radius, bg-elev fill,
-     thin border, centered ‹ character. No dramatic hover — just a quiet
-     ghost button that matches the icon-btn / sidebar button language. */
-  width: 28px;
-  height: 28px;
+  /* Match Recall .recall-close: 26×26, 6px radius, transparent bg,
+     quiet hover fill, no border — minimal ghost button. */
+  width: 26px;
+  height: 26px;
   min-width: 0;
   padding: 0;
   margin: 0;
   font-size: 0;
   color: transparent;
-  background: var(--bg-elevated, var(--neutral-tint));
-  border: 1px solid var(--border);
-  border-radius: 7px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   position: relative;
   cursor: pointer;
-  transition: background 100ms ease;
+  transition: background 100ms ease, color 100ms ease;
 }
 body.is-playground-shell
   .about-overlay#settings-overlay
   #btn-settings-close:hover {
-  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
 }
 body.is-playground-shell
   .about-overlay#settings-overlay
   #btn-settings-close:active {
-  background: var(--bg-elev-2, rgba(255, 255, 255, 0.08));
-  transform: scale(0.94);
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
 }
 body.is-playground-shell
   .about-overlay#settings-overlay
   #btn-settings-close::before {
   content: "\2039"; /* ‹ */
-  color: var(--text);
+  color: var(--text-tertiary);
   font-size: 18px;
   font-weight: 400;
   line-height: 1;
+}
+body.is-playground-shell
+  .about-overlay#settings-overlay
+  #btn-settings-close:hover::before {
+  color: var(--text);
 }
 
 /* ────────────────────────────────────────────────────────────────────

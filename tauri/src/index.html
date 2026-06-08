@@ -4809,17 +4809,6 @@
             </svg>
             Settings
           </button>
-          <button class="sb-foot-btn" id="pg-sb-health" title="Health">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-            >
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-            Health
-          </button>
         </div>
       </aside>
 
@@ -7923,7 +7912,8 @@
       let processingJobs = [];
       let readinessItems = [];
       let recoveryItems = [];
-      let retryingAllRecovery = false;      let jobsHistory = [];
+      let retryingAllRecovery = false;
+      let jobsHistory = [];
       let notifyOnCompletion = true;
       let playCaptureCues = true;
       let stopRequested = false;
@@ -11209,12 +11199,6 @@
         scrim.addEventListener("click", close);
         document
           .getElementById("pg-sb-settings")
-          ?.addEventListener("click", () => {
-            close();
-            openSettings();
-          });
-        document
-          .getElementById("pg-sb-health")
           ?.addEventListener("click", () => {
             close();
             openSettings();
