@@ -312,10 +312,12 @@ export default function Home() {
         </p>
 
         <p className="mx-auto mt-4 max-w-[620px] text-[14px] leading-6 text-[var(--text-secondary)]">
-          v{MINUTES_RELEASE_VERSION} fixes Windows live transcript: a healthy
-          session no longer freezes the in-app timer and line count at 0:00, and
-          a concurrent recording can no longer clobber the live transcript file.
-          macOS and Linux were never affected.
+          v{MINUTES_RELEASE_VERSION} fixes a macOS slowdown: an idle Minutes kept
+          repainting its translucent window every couple of seconds, churning the
+          window server and making scrolling and app-switching stutter across the
+          whole Mac. Idle now stays quiet, and the AI assistant degrades
+          gracefully when no agent CLI is installed. Windows and Linux were never
+          affected.
         </p>
 
         <div className="mt-12">

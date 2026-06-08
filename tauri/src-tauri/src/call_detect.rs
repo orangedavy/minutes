@@ -393,24 +393,31 @@ impl CallDetector {
                                     "[call-detect] {}: {} ({})",
                                     action, display_name, process_name
                                 );
+                                let recording_active = recording.load(Ordering::Relaxed);
                                 log_call_detect_event(
                                     "info",
                                     action,
                                     Some(&display_name),
                                     Some(&process_name),
                                     serde_json::json!({
-                                        "recording_active": recording.load(Ordering::Relaxed),
+                                        "recording_active": recording_active,
                                         "reminder_interval_secs": SAME_APP_REMINDER_SECS,
                                     }),
                                 );
 
-                                // Only show a macOS notification on first detection,
-                                // not on periodic reminders — those are too noisy.
-                                if !is_reminder {
+                                // Repeat the system prompt while recording is still
+                                // off. A logged "reminder" that never reaches the
+                                // user is worse than a little notification noise.
+                                if !is_reminder || !recording_active {
+                                    let body = if is_reminder {
+                                        "Recording is still off. Open Minutes to start recording."
+                                    } else {
+                                        "Open Minutes to start recording"
+                                    };
                                     crate::commands::show_user_notification(
                                         &app,
                                         &format!("{} call detected", display_name),
-                                        "Open Minutes to start recording",
+                                        body,
                                     );
                                 }
 
@@ -744,6 +751,27 @@ impl CallDetector {
             return DetectActiveCallResult::None;
         }
 
+        if (has_google_meet || has_teams_web) && (force_browser_probe || self.browser_probe_due()) {
+            if let Some(probe) = browser_probe(self, running, has_google_meet, has_teams_web) {
+                match probe {
+                    BrowserMeetProbe::Detected { provider } => {
+                        let sticky = match provider {
+                            MeetingProvider::GoogleMeet => &self.recent_google_meet_until,
+                            MeetingProvider::TeamsWeb => &self.recent_teams_web_until,
+                        };
+                        remember_sticky(sticky, provider.sticky_duration());
+                        return detected_for(provider);
+                    }
+                    BrowserMeetProbe::PermissionDenied { browser_app } => {
+                        return DetectActiveCallResult::PermissionWarning { browser_app };
+                    }
+                    BrowserMeetProbe::Error
+                    | BrowserMeetProbe::NoBrowserProcesses
+                    | BrowserMeetProbe::NoMatch => {}
+                }
+            }
+        }
+
         let mut high_confidence_native_apps = Vec::new();
         let mut low_confidence_native_apps = Vec::new();
         for config_app in native_apps {
@@ -765,27 +793,6 @@ impl CallDetector {
                     display_name: display,
                     process_name: config_app.clone(),
                 };
-            }
-        }
-
-        if (has_google_meet || has_teams_web) && (force_browser_probe || self.browser_probe_due()) {
-            if let Some(probe) = browser_probe(self, running, has_google_meet, has_teams_web) {
-                match probe {
-                    BrowserMeetProbe::Detected { provider } => {
-                        let sticky = match provider {
-                            MeetingProvider::GoogleMeet => &self.recent_google_meet_until,
-                            MeetingProvider::TeamsWeb => &self.recent_teams_web_until,
-                        };
-                        remember_sticky(sticky, provider.sticky_duration());
-                        return detected_for(provider);
-                    }
-                    BrowserMeetProbe::PermissionDenied { browser_app } => {
-                        return DetectActiveCallResult::PermissionWarning { browser_app };
-                    }
-                    BrowserMeetProbe::Error
-                    | BrowserMeetProbe::NoBrowserProcesses
-                    | BrowserMeetProbe::NoMatch => {}
-                }
             }
         }
 
@@ -1601,7 +1608,7 @@ mod tests {
     }
 
     #[test]
-    fn high_confidence_native_app_still_beats_browser_probe() {
+    fn browser_meeting_probe_beats_loose_native_process_match() {
         let detector = CallDetector::new(test_call_detection_config(vec![
             "zoom.us".into(),
             "google-meet".into(),
@@ -1614,9 +1621,33 @@ mod tests {
             true,
             &running,
             false,
-            |_detector, _running, _want_meet, _want_teams| {
-                panic!("Zoom should be detected before browser probing")
+            |_detector, _running, want_meet, want_teams| {
+                assert!(want_meet);
+                assert!(!want_teams);
+                Some(BrowserMeetProbe::Detected {
+                    provider: MeetingProvider::GoogleMeet,
+                })
             },
+        );
+
+        assert_eq!(result, detected_for(MeetingProvider::GoogleMeet));
+    }
+
+    #[test]
+    fn high_confidence_native_app_falls_back_after_browser_no_match() {
+        let detector = CallDetector::new(test_call_detection_config(vec![
+            "zoom.us".into(),
+            "google-meet".into(),
+        ]));
+        let config = detector.current_config();
+        let running = vec!["zoom.us".into(), "Google Chrome".into()];
+
+        let result = detector.detect_active_call_from_snapshot(
+            &config,
+            true,
+            &running,
+            false,
+            |_detector, _running, _want_meet, _want_teams| Some(BrowserMeetProbe::NoMatch),
         );
 
         assert_eq!(

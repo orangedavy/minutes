@@ -1401,6 +1401,21 @@ pub struct RecoveryItem {
     pub path: String,
     pub detail: String,
     pub retry_type: String,
+    pub modified_at: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecoveryRetryFailure {
+    pub path: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecoveryRetryAllResult {
+    pub queued: usize,
+    pub failed: Vec<RecoveryRetryFailure>,
 }
 
 fn activation_state_path() -> PathBuf {
@@ -4714,6 +4729,26 @@ fn recovery_title(path: &std::path::Path, fallback: &str) -> String {
         .unwrap_or_else(|| fallback.to_string())
 }
 
+/// A dual-source capture writes `<name>.voice.wav` / `<name>.system.wav`
+/// sidecars next to the primary `<name>.wav`. Those stems are processed as part
+/// of the primary, never on their own, so they must not appear as independent
+/// recovery items when their primary is present: otherwise "Retry all" would
+/// enqueue them as standalone jobs that race (and break) the primary's job. An
+/// orphaned stem with no primary still surfaces so the user can see it.
+fn is_dual_source_stem_with_primary(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+        return false;
+    };
+    let Some(dir) = path.parent() else {
+        return false;
+    };
+    [".voice.wav", ".system.wav"].iter().any(|suffix| {
+        name.strip_suffix(suffix)
+            .map(|base| dir.join(format!("{}.wav", base)).exists())
+            .unwrap_or(false)
+    })
+}
+
 fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
     let mut found: Vec<(SystemTime, RecoveryItem)> = Vec::new();
 
@@ -4729,6 +4764,7 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
                     path: current_wav.display().to_string(),
                     detail: "Minutes found an unfinished live capture that never made it through the pipeline.".into(),
                     retry_type: "meeting".into(),
+                    modified_at: system_time_to_rfc3339(modified),
                 },
             ));
         }
@@ -4738,7 +4774,10 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
     if let Ok(entries) = std::fs::read_dir(&failed_captures) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() && !is_hidden_or_system_file(&path) {
+            if path.is_file()
+                && !is_hidden_or_system_file(&path)
+                && !is_dual_source_stem_with_primary(&path)
+            {
                 let modified = entry
                     .metadata()
                     .ok()
@@ -4754,6 +4793,7 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
                             "A live recording was preserved because capture or processing failed."
                                 .into(),
                         retry_type: "meeting".into(),
+                        modified_at: system_time_to_rfc3339(modified),
                     },
                 ));
             }
@@ -4765,7 +4805,10 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
         if let Ok(entries) = std::fs::read_dir(&failed_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.is_file() && !is_hidden_or_system_file(&path) {
+                if path.is_file()
+                    && !is_hidden_or_system_file(&path)
+                    && !is_dual_source_stem_with_primary(&path)
+                {
                     let modified = entry
                         .metadata()
                         .ok()
@@ -4779,6 +4822,7 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
                             path: path.display().to_string(),
                             detail: "A watched audio file failed to process and is waiting for manual retry.".into(),
                             retry_type: config.watch.r#type.clone(),
+                            modified_at: system_time_to_rfc3339(modified),
                         },
                     ));
                 }
@@ -4786,8 +4830,22 @@ fn scan_recovery_items(config: &Config) -> Vec<RecoveryItem> {
         }
     }
 
+    // Hide items that already have an active (queued or processing) job, so a
+    // retried item disappears from the list without us moving its file out of
+    // the recovery folder. A failed job is terminal (not active), so a failed
+    // retry correctly re-surfaces the file here; a successful one is moved out
+    // by the worker (`preserve_audio_alongside_output`) and is gone regardless.
+    let active_paths: std::collections::HashSet<PathBuf> = minutes_core::jobs::active_jobs()
+        .into_iter()
+        .map(|job| PathBuf::from(job.audio_path))
+        .collect();
+
     found.sort_by_key(|(modified, _)| Reverse(*modified));
-    found.into_iter().map(|(_, item)| item).collect()
+    found
+        .into_iter()
+        .map(|(_, item)| item)
+        .filter(|item| !active_paths.contains(&PathBuf::from(&item.path)))
+        .collect()
 }
 
 /// Handles that `start_recording` clears at the end of a session. Keeps the
@@ -6881,6 +6939,99 @@ pub fn cmd_recovery_items() -> serde_json::Value {
     serde_json::to_value(scan_recovery_items(&config)).unwrap_or(serde_json::json!([]))
 }
 
+fn recovery_retry_mode(retry_type: &str) -> Result<CaptureMode, String> {
+    match retry_type {
+        "meeting" => Ok(CaptureMode::Meeting),
+        "memo" => Ok(CaptureMode::QuickThought),
+        other => Err(format!("Unsupported recovery type: {}", other)),
+    }
+}
+
+#[tauri::command]
+pub fn cmd_retry_all_recovery(
+    app: tauri::AppHandle,
+    state: tauri::State<AppState>,
+) -> Result<RecoveryRetryAllResult, String> {
+    if recording_active(&state.recording) || state.starting.load(Ordering::Relaxed) {
+        return Err("Finish the current recording before retrying recovery items.".into());
+    }
+
+    let config = Config::load();
+    let items = scan_recovery_items(&config);
+    let mut queued = 0;
+    let mut first_job = None;
+    let mut failed = Vec::new();
+
+    for item in items {
+        let audio_path = PathBuf::from(&item.path);
+        if !audio_path.exists() {
+            failed.push(RecoveryRetryFailure {
+                path: item.path,
+                error: "Recovery item no longer exists.".into(),
+            });
+            continue;
+        }
+
+        let mode = match recovery_retry_mode(&item.retry_type) {
+            Ok(mode) => mode,
+            Err(error) => {
+                failed.push(RecoveryRetryFailure {
+                    path: item.path,
+                    error,
+                });
+                continue;
+            }
+        };
+
+        // Queue the recovery file IN PLACE. The worker processes it where it
+        // lives; on success `preserve_audio_alongside_output` moves it out of
+        // the recovery folder, and on failure the worker leaves it there so it
+        // stays recoverable. Moving the file into the jobs dir first could
+        // strand it (invisible to recovery scanning) if the app died mid-queue
+        // or the job later failed, since a failed job never returns the file.
+        // `scan_recovery_items` hides items that already have an active job, so
+        // queued items still leave the list without the risky move.
+        match minutes_core::jobs::enqueue_capture_job(
+            mode, None, audio_path, None, None, None, None, None, None, None,
+        ) {
+            Ok(job) => {
+                if first_job.is_none() {
+                    first_job = Some(job.clone());
+                }
+                queued += 1;
+            }
+            Err(error) => {
+                failed.push(RecoveryRetryFailure {
+                    path: item.path,
+                    error: error.to_string(),
+                });
+            }
+        }
+    }
+
+    if let Some(job) = first_job {
+        minutes_core::pid::set_processing_status(
+            job.stage.as_deref(),
+            Some(job.mode),
+            job.title.as_deref(),
+            Some(&job.id),
+            minutes_core::jobs::active_job_count(),
+        )
+        .ok();
+        sync_processing_indicator(&state.processing, &state.processing_stage);
+        spawn_processing_worker(
+            app,
+            state.processing.clone(),
+            state.processing_stage.clone(),
+            state.latest_output.clone(),
+            state.activation_progress.clone(),
+            state.completion_notifications_enabled.clone(),
+        );
+    }
+
+    Ok(RecoveryRetryAllResult { queued, failed })
+}
+
 #[tauri::command]
 pub fn cmd_retry_recovery(
     state: tauri::State<AppState>,
@@ -6896,10 +7047,25 @@ pub fn cmd_retry_recovery(
         return Err(format!("Recovery item not found: {}", path));
     }
 
-    let ct = match content_type.as_str() {
-        "meeting" => ContentType::Meeting,
-        "memo" => ContentType::Memo,
-        other => return Err(format!("Unsupported recovery type: {}", other)),
+    // Don't run the pipeline in place on a file that "Retry all" already
+    // queued: a stale single-retry click on the same item would otherwise
+    // double-process it (or race the queued job's in-place source).
+    if minutes_core::jobs::active_jobs()
+        .iter()
+        .any(|job| Path::new(&job.audio_path) == audio_path.as_path())
+    {
+        return Err("This recovery item is already queued for processing.".into());
+    }
+
+    let ct = match recovery_retry_mode(content_type.as_str())? {
+        CaptureMode::Meeting => ContentType::Meeting,
+        CaptureMode::QuickThought => ContentType::Memo,
+        other => {
+            return Err(format!(
+                "Unsupported recovery mode for direct retry: {:?}",
+                other
+            ))
+        }
     };
 
     // Run pipeline on a background thread so the UI stays responsive
@@ -7590,6 +7756,74 @@ fn context_switch_prompt(command: &str, mode: &str, title: &str) -> String {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct AgentResolveError {
+    pub name: String,
+    pub unusable_candidates: Vec<PathBuf>,
+}
+
+impl AgentResolveError {
+    fn user_message(&self) -> String {
+        let install_hint = if self.name == "claude" {
+            " Reinstall Claude Code, or choose another assistant in Settings."
+        } else {
+            " Reinstall that assistant CLI, or choose another assistant in Settings."
+        };
+
+        if let Some(path) = self.unusable_candidates.first() {
+            format!(
+                "Recall needs '{}', but the installed copy cannot be run.{} Minutes found the broken copy at {}.",
+                self.name,
+                install_hint,
+                path.display()
+            )
+        } else {
+            let install_hint = if self.name == "claude" {
+                " Install Claude Code, or choose another assistant in Settings."
+            } else {
+                " Install it, or choose another assistant in Settings."
+            };
+            format!(
+                "'{}' was not found on PATH or in common install locations.{} Settings file: {}",
+                self.name,
+                install_hint,
+                user_config_path_for_display(),
+            )
+        }
+    }
+}
+
+fn is_usable_agent_binary(path: &Path) -> bool {
+    let Ok(metadata) = std::fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_file() {
+        return false;
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        metadata.permissions().mode() & 0o111 != 0
+    }
+
+    #[cfg(windows)]
+    {
+        true
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    {
+        true
+    }
+}
+
+fn remember_unusable_candidate(candidates: &mut Vec<PathBuf>, path: PathBuf) {
+    if !candidates.iter().any(|existing| existing == &path) {
+        candidates.push(path);
+    }
+}
+
 /// Resolve an agent name or path to an executable.
 ///
 /// Accepts either:
@@ -7600,11 +7834,16 @@ fn context_switch_prompt(command: &str, mode: &str, title: &str) -> String {
 ///
 /// This is intentionally open: users can set `assistant.agent` to any binary
 /// they want, including wrapper scripts or custom agent CLIs.
-pub fn find_agent_binary(name: &str) -> Option<PathBuf> {
+pub fn resolve_agent_binary(name: &str) -> Result<PathBuf, AgentResolveError> {
+    let mut unusable_candidates = Vec::new();
+
     // If it's an absolute path, check it directly
     let as_path = PathBuf::from(name);
     if as_path.is_absolute() && as_path.exists() {
-        return Some(as_path);
+        if is_usable_agent_binary(&as_path) {
+            return Ok(as_path);
+        }
+        remember_unusable_candidate(&mut unusable_candidates, as_path);
     }
 
     // PATH lookup (cross-platform). On Windows this respects PATHEXT and
@@ -7612,7 +7851,10 @@ pub fn find_agent_binary(name: &str) -> Option<PathBuf> {
     // launched from Finder/Explorer often have a minimal PATH, so the
     // fallback below catches common install dirs that aren't on PATH.
     if let Ok(path) = which::which(name) {
-        return Some(path);
+        if is_usable_agent_binary(&path) {
+            return Ok(path);
+        }
+        remember_unusable_candidate(&mut unusable_candidates, path);
     }
 
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
@@ -7654,11 +7896,21 @@ pub fn find_agent_binary(name: &str) -> Option<PathBuf> {
                 candidate.set_extension(ext);
             }
             if candidate.exists() {
-                return Some(candidate);
+                if is_usable_agent_binary(&candidate) {
+                    return Ok(candidate);
+                }
+                remember_unusable_candidate(&mut unusable_candidates, candidate);
             }
         }
     }
-    None
+    Err(AgentResolveError {
+        name: name.into(),
+        unusable_candidates,
+    })
+}
+
+pub fn find_agent_binary(name: &str) -> Option<PathBuf> {
+    resolve_agent_binary(name).ok()
 }
 
 /// Platform-correct path to the user's config file, used in error messages.
@@ -7695,20 +7947,7 @@ pub fn spawn_terminal(
         }
     } else {
         let agent_name = agent_override.unwrap_or(&config.assistant.agent);
-        let agent_bin = find_agent_binary(agent_name).ok_or_else(|| {
-            let install_hint = if agent_name == "claude" {
-                " Install Claude Code with `npm i -g @anthropic-ai/claude-code`."
-            } else {
-                ""
-            };
-            format!(
-                "'{}' not found on PATH or in common install dirs.{} \
-                 Then set the agent in {} under [assistant].",
-                agent_name,
-                install_hint,
-                user_config_path_for_display(),
-            )
-        })?;
+        let agent_bin = resolve_agent_binary(agent_name).map_err(|err| err.user_message())?;
 
         let agent_args = filtered_agent_args(agent_name, &config.assistant.agent_args);
 
@@ -7788,8 +8027,13 @@ pub fn cmd_pty_resize(
 
 #[tauri::command]
 pub fn cmd_pty_kill(state: tauri::State<AppState>, session_id: String) -> Result<(), String> {
-    let mut manager = state.pty_manager.lock().map_err(|_| "Lock failed")?;
-    manager.kill_session(&session_id);
+    let session = {
+        let mut manager = state.pty_manager.lock().map_err(|_| "Lock failed")?;
+        manager.take_session(&session_id)
+    };
+    if let Some(session) = session {
+        crate::pty::kill_session(session);
+    }
     Ok(())
 }
 
@@ -8828,6 +9072,39 @@ mod tests {
         assert_eq!(
             filtered_agent_args("opencode", &args),
             vec!["--model".to_string(), "gpt-5-codex".to_string()]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn agent_binary_resolver_rejects_non_executable_absolute_path() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = TempDir::new().unwrap();
+        let broken = dir.path().join("claude");
+        fs::write(&broken, "").unwrap();
+        fs::set_permissions(&broken, fs::Permissions::from_mode(0o644)).unwrap();
+
+        let err = resolve_agent_binary(broken.to_str().unwrap()).unwrap_err();
+        assert_eq!(err.unusable_candidates, vec![broken.clone()]);
+        assert!(err.user_message().contains("installed copy cannot be run"));
+        assert!(err.user_message().contains("choose another assistant"));
+        assert!(find_agent_binary(broken.to_str().unwrap()).is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn agent_binary_resolver_accepts_executable_absolute_path() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = TempDir::new().unwrap();
+        let executable = dir.path().join("custom-agent");
+        fs::write(&executable, "#!/bin/sh\nexit 0\n").unwrap();
+        fs::set_permissions(&executable, fs::Permissions::from_mode(0o755)).unwrap();
+
+        assert_eq!(
+            resolve_agent_binary(executable.to_str().unwrap()).unwrap(),
+            executable
         );
     }
 

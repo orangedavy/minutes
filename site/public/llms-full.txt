@@ -2,13 +2,17 @@
 
 > Generated file. Do not edit by hand.
 > Source: manifest.json + crates/mcp/src/index.ts + site/lib/skills-catalog.json
-> Last generated: 2026-05-29
+> Last generated: 2026-06-02
 
 ## Product
 
 Minutes is an open-source meeting corpus you own. Record, transcribe, search, and query every meeting and voice memo on your own disk. No cloud, no vendor to outlive. Output is structured markdown in `~/meetings/` that Claude Desktop, Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Pi, and any MCP-compatible client read from the same folder, without a proprietary SDK or API key. Ten years from now, `grep` still works on your corpus.
 
 31 tools • 7 resources • Interactive MCP App dashboard • Prompt templates
+
+**What's new in 0.18.5:**
+• **macOS: an idle Minutes no longer slows down your whole Mac.** When Minutes sat idle, usually hidden in the menu bar, its status refresh repainted the translucent main window every couple of seconds even when nothing had changed. On macOS that makes the window server re-blend the entire frosted-glass surface each time, so over a few hours it pegged a CPU core and made scrolling and switching apps stutter across the whole system. Idle refreshes now skip redundant redraws, so a hidden, idle Minutes leaves your Mac alone. Windows and Linux were not affected.
+• **The AI assistant is now optional.** If you do not have an agent CLI installed (Claude Code by default), Minutes no longer auto-opens the assistant panel and then fails to launch it. It degrades quietly, the rest of the app keeps working, and the assistant shows a calm note that it is optional. Thanks to Mike (@mquinn614) for the fix.
 
 **What's new in 0.18.4:**
 • **Windows: the app no longer hangs on quit.** Quitting on Windows (tray Quit, window close, any exit path) could leave the process alive indefinitely: window hidden, tray icon lingering, a Not Responding overlay, with Task Manager the only way out. An unconditional join on the assistant PTY reader thread blocked shutdown because Windows ConPTY never delivers EOF when the child is killed. The join is now bounded and then detached, so quit always completes within a moment. macOS and Linux were never affected. Thanks to Quinn (@mquinn614) for the precise diagnosis and the fix.

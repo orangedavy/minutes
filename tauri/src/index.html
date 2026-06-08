@@ -3307,6 +3307,12 @@
         gap: 12px;
       }
 
+      .recovery-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
       .recovery-title {
         font-size: 18px;
         font-family: var(--font-display);
@@ -6104,9 +6110,10 @@
               or open them directly in a folder.
             </div>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-recovery-close">
-            Close
-          </button>
+          <div class="recovery-header-actions">
+            <button class="btn btn-secondary btn-sm" id="btn-recovery-retry-all" disabled>Retry all</button>
+            <button class="btn btn-secondary btn-sm" id="btn-recovery-close">Close</button>
+          </div>
         </div>
         <div class="recovery-scroll" id="recovery-scroll">
           <div class="recovery-empty">No recovery items right now.</div>
@@ -7864,6 +7871,7 @@
       const recoveryCount = document.getElementById("recovery-count");
       const recoveryScroll = document.getElementById("recovery-scroll");
       const recoverySubtitle = document.getElementById("recovery-subtitle");
+      const recoveryRetryAllButton = document.getElementById("btn-recovery-retry-all");
       const recordButton = document.getElementById("btn-record");
       const liveButton = document.getElementById("btn-live");
       const quickThoughtButton = document.getElementById("btn-quick-thought");
@@ -7915,7 +7923,7 @@
       let processingJobs = [];
       let readinessItems = [];
       let recoveryItems = [];
-      let jobsHistory = [];
+      let retryingAllRecovery = false;      let jobsHistory = [];
       let notifyOnCompletion = true;
       let playCaptureCues = true;
       let stopRequested = false;
@@ -7926,6 +7934,7 @@
       let processingStartTime = null;
       let processingTimerInterval = null;
       let updaterDebugEnabled = false;
+      let lastUpdateNotesBody = null;
       let updateState = {
         available: false,
         version: null,
@@ -8075,12 +8084,12 @@
           !activation.hasModel &&
           activation.nextAction === "setup-parakeet"
         ) {
-          if (modelStatus) modelStatus.textContent = "Needs setup";
+          setText(modelStatus, "Needs setup");
         }
 
         if (activation.hasModel || milestones.modelReadyAt) {
           modelStep?.classList.add("done");
-          if (modelStatus) modelStatus.textContent = "Done";
+          setText(modelStatus, "Done");
           modelBody?.classList.add("ui-hidden");
           artifactStep?.classList.remove("disabled");
         }
@@ -8093,18 +8102,13 @@
           artifactStep?.classList.add("done");
           watchStep?.classList.remove("disabled");
           watchStep?.classList.add("done");
-          if (watchStatus) watchStatus.textContent = "Saved";
+          setText(watchStatus, "Saved");
         } else if (
           activation.phase === "processing-first-artifact" ||
           activation.phase === "recording-first-artifact"
         ) {
           watchStep?.classList.remove("disabled");
-          if (watchStatus) {
-            watchStatus.textContent =
-              activation.phase === "processing-first-artifact"
-                ? "Processing..."
-                : "Recording...";
-          }
+          setText(watchStatus, activation.phase === "processing-first-artifact" ? "Processing..." : "Recording...");
         }
       }
 
@@ -8312,6 +8316,61 @@
           : `${s}s elapsed`;
       }
 
+      function processingJobCounts(jobs) {
+        const list = Array.isArray(jobs) ? jobs : [];
+        return {
+          active: list.filter((job) => job.state !== 'queued').length,
+          queued: list.filter((job) => job.state === 'queued').length,
+          total: list.length,
+        };
+      }
+
+      function processingJobSummaryText(jobs) {
+        const counts = processingJobCounts(jobs);
+        if (!counts.total) return '';
+        const parts = [];
+        if (counts.active) parts.push(`${counts.active} running`);
+        if (counts.queued) parts.push(`${counts.queued} waiting`);
+        return `${parts.join(' · ')}. Jobs run one at a time and continue in the background.`;
+      }
+
+      function queuedJobPosition(job, jobs) {
+        const queued = (Array.isArray(jobs) ? jobs : []).filter((candidate) => candidate.state === 'queued');
+        const index = queued.findIndex((candidate) => candidate.id === job.id);
+        return index >= 0 ? { index: index + 1, total: queued.length } : null;
+      }
+
+      function processingJobDetail(job, jobs) {
+        const counts = processingJobCounts(jobs);
+        const summary = counts.total ? `${counts.active} running · ${counts.queued} waiting` : '';
+        const withSummary = (text) => summary ? `${text} · ${summary}` : text;
+        if (job.error) return job.error;
+        if (job.state === 'queued') {
+          const position = queuedJobPosition(job, jobs);
+          if (position) return withSummary(`Waiting in queue (${position.index} of ${position.total})`);
+          return 'Waiting in queue.';
+        }
+        if (job.state === 'transcribing') {
+          return withSummary(job.stage || 'Transcribing meeting');
+        }
+        if (job.state === 'transcript-only') {
+          return withSummary('Transcript is ready. The richer summary is still running.');
+        }
+        if (job.state === 'complete') return 'Finished processing.';
+        if (job.state === 'needs-review') return 'Transcript needs review. Raw capture was preserved for retry.';
+        return withSummary(job.stage || 'Processing in the background.');
+      }
+
+      function processingJobMeta(job) {
+        const mode = job.mode === 'quick-thought' ? 'Quick thought' : 'Meeting';
+        if (job.state === 'queued') {
+          const elapsed = formatIsoElapsed(job.createdAt);
+          return elapsed ? `${mode} · waiting ${elapsed}` : `${mode} · waiting`;
+        }
+        const elapsed = formatIsoElapsed(job.startedAt || job.createdAt);
+        return elapsed ? `${mode} · running ${elapsed}` : mode;
+      }
+
       function processingStateLabel(job) {
         switch (job.state) {
           case "queued":
@@ -8418,19 +8477,16 @@
 
       function renderProcessingJobs(jobs) {
         processingJobs = Array.isArray(jobs) ? jobs : [];
-        processingJobsEl.replaceChildren();
+        clearChildren(processingJobsEl);
 
         if (!processingJobs.length) {
-          processingSummary.textContent = "";
+          setText(processingSummary, "");
           processingBar.classList.remove("has-jobs");
           return;
         }
 
         processingBar.classList.add("has-jobs");
-        processingSummary.textContent =
-          processingJobs.length > 1
-            ? `${processingJobs.length} recordings are cooking in the background.`
-            : "You can keep recording while this finishes.";
+        processingSummary.textContent = processingJobSummaryText(processingJobs);
 
         for (const job of processingJobs) {
           const card = document.createElement("div");
@@ -8452,14 +8508,11 @@
 
           const detail = document.createElement("div");
           detail.className = "processing-job-detail";
-          detail.textContent = processingStageText(job);
+          detail.textContent = processingJobDetail(job, processingJobs);
 
           const meta = document.createElement("div");
           meta.className = "processing-job-meta";
-          const elapsed = formatIsoElapsed(job.startedAt || job.createdAt);
-          const mode =
-            job.mode === "quick-thought" ? "Quick thought" : "Meeting";
-          meta.textContent = elapsed ? `${mode} · ${elapsed}` : mode;
+          meta.textContent = processingJobMeta(job);
 
           card.appendChild(top);
           card.appendChild(detail);
@@ -8490,7 +8543,7 @@
       }
 
       function updateJobsChip(activeCount) {
-        jobsCount.textContent = String(activeCount || 0);
+        setText(jobsCount, String(activeCount || 0));
         jobsButton.classList.toggle("active", (activeCount || 0) > 0);
       }
 
@@ -8505,6 +8558,7 @@
         return date.toLocaleString([], {
           month: "short",
           day: "numeric",
+          year: "numeric",
           hour: "numeric",
           minute: "2-digit",
         });
@@ -8565,18 +8619,7 @@
 
             const detail = document.createElement("div");
             detail.className = "recovery-item-detail";
-            detail.textContent =
-              job.error ||
-              (job.state === "complete"
-                ? "Finished processing."
-                : job.state === "needs-review"
-                  ? "Transcript needs review. Raw capture was preserved for retry."
-                  : job.state === "transcript-only"
-                    ? "Transcript is ready while enrichment continues."
-                    : processingStageText(
-                        job,
-                        "Queued for background processing.",
-                      ));
+            detail.textContent = processingJobDetail(job, jobs);
 
             const path = document.createElement("div");
             path.className = "recovery-item-path";
@@ -8588,7 +8631,11 @@
             const stamp = formatJobTimestamp(
               job.finishedAt || job.startedAt || job.createdAt,
             );
-            meta.textContent = `${job.mode === "quick-thought" ? "Quick thought" : "Meeting"}${stamp ? ` · ${stamp}` : ""}${job.wordCount != null ? ` · ${job.wordCount} words` : ""}`;
+            const mode = job.mode === "quick-thought" ? "Quick thought" : "Meeting";
+            const elapsed = ["queued", "transcribing", "transcript-only", "diarizing", "summarizing", "saving"].includes(job.state)
+              ? processingJobMeta(job)
+              : mode;
+            meta.textContent = `${elapsed}${stamp ? ` · ${stamp}` : ""}${job.wordCount != null ? ` · ${job.wordCount} words` : ""}`;
 
             const actions = document.createElement("div");
             actions.className = "recovery-actions";
@@ -8935,16 +8982,16 @@
 
             if (!isLiveTranscript) {
               stopRequested = false;
-              document.getElementById("btn-stop").disabled = false;
-              statusPill.className = "status-pill";
-              statusPill.textContent = "idle";
-              recordingLabel.textContent = "Recording";
+              setDisabled(document.getElementById("btn-stop"), false);
+              setClassName(statusPill, "status-pill");
+              setText(statusPill, "idle");
+              setText(recordingLabel, "Recording");
               recordingSourceHealth.classList.remove("active");
-              processingTitle.textContent = "Processing recording";
+              setText(processingTitle, "Processing recording");
               recordingBar.classList.remove("active");
               processingBar.classList.remove("active");
-              processingSummary.textContent = "";
-              processingJobsEl.replaceChildren();
+              setText(processingSummary, "");
+              clearChildren(processingJobsEl);
               quickNote.classList.remove("active");
               setFooterCaptureMode(false);
               // Hide hero processing card
@@ -8961,7 +9008,7 @@
                 processingTimerInterval = null;
               }
               processingStartTime = null;
-              processingElapsed.textContent = "";
+              setText(processingElapsed, "");
 
               // Slow down polling when recording/processing/live stops (T5)
               if (wasRecording || wasStarting || wasProcessing || wasLive) {
@@ -9027,11 +9074,11 @@
           lastOutputKey = null;
           const retryBtn = document.getElementById("btn-retry-output");
           if (retryBtn) {
-            retryBtn.hidden = true;
-            retryBtn.dataset.jobId = "";
+            setHidden(retryBtn, true);
+            setDataset(retryBtn, "jobId", "");
           }
           const openBtn = document.getElementById("btn-open-output");
-          if (openBtn) openBtn.hidden = false;
+          setHidden(openBtn, false);
           return;
         }
 
@@ -9045,36 +9092,26 @@
           playCue(isSaved ? "complete" : "error");
           lastOutputKey = nextKey;
         }
-        outputNotice.classList.toggle("capture", isCapture);
-        outputNotice.classList.add("active");
-        outputNoticeIcon.textContent = isSaved ? "✓" : "!";
-        outputNoticeTitle.textContent =
-          notice.title ||
-          (isCapture
-            ? "Capture preserved"
-            : isSaved
-              ? "Saved meeting"
-              : "Needs attention");
-        outputNoticeDetail.textContent = notice.detail || "";
-        outputNoticePath.textContent = notice.path || "";
+        setClassActive(outputNotice, "capture", isCapture);
+        setClassActive(outputNotice, "active", true);
+        setText(outputNoticeIcon, isSaved ? "✓" : "!");
+        setText(outputNoticeTitle, notice.title || (isCapture ? "Capture preserved" : isSaved ? "Saved meeting" : "Needs attention"));
+        setText(outputNoticeDetail, notice.detail || "");
+        setText(outputNoticePath, notice.path || "");
         const openOutputBtn = document.getElementById("btn-open-output");
-        openOutputBtn.textContent = isCapture
-          ? "Open Capture"
-          : isSaved
-            ? "Open Meeting"
-            : "Open";
-        openOutputBtn.hidden = !notice.path;
+        setText(openOutputBtn, isCapture ? "Open Capture" : isSaved ? "Open Meeting" : "Open");
+        setHidden(openOutputBtn, !notice.path);
         // Only saved notices auto-dismiss + can rely on click-to-dismiss; everything else
         // (preserved-capture, error, stale-recording, watch-failed, working-copy) needs the
         // user to acknowledge it explicitly, so show a Dismiss button for those cases.
         const dismissBtn = document.getElementById("btn-dismiss-output");
-        if (dismissBtn) dismissBtn.hidden = isSaved;
+        setHidden(dismissBtn, isSaved);
         const retryBtn = document.getElementById("btn-retry-output");
         if (retryBtn) {
           const showRetry =
             !!notice.jobId && notice.kind === "preserved-capture";
-          retryBtn.hidden = !showRetry;
-          retryBtn.dataset.jobId = notice.jobId || "";
+          setHidden(retryBtn, !showRetry);
+          setDataset(retryBtn, "jobId", notice.jobId || "");
         }
         if (isSaved) {
           markActivationNudgeShown("saved-artifact-draft");
@@ -9124,11 +9161,11 @@
         if (active) {
           footer.classList.remove("footer-hidden");
         }
-        footer.classList.toggle("capture-mode", active);
+        setClassActive(footer, "capture-mode", active);
 
-        recordButton.disabled = active;
-        liveButton.disabled = active;
-        quickThoughtButton.disabled = active;
+        setDisabled(recordButton, active);
+        setDisabled(liveButton, active);
+        setDisabled(quickThoughtButton, active);
 
         if (active) {
           const tooltip =
@@ -9137,14 +9174,13 @@
               : reason === "starting"
                 ? "Recording is starting. Wait for the recorder to finish connecting."
                 : "Finish the current recording before starting another capture.";
-          recordButton.title = tooltip;
-          liveButton.title = tooltip;
-          quickThoughtButton.title = tooltip;
+          setTitle(recordButton, tooltip);
+          setTitle(liveButton, tooltip);
+          setTitle(quickThoughtButton, tooltip);
         } else {
-          recordButton.title = "";
-          liveButton.title =
-            "Start live transcription — ask your agent in Recall for coaching";
-          quickThoughtButton.title = "";
+          setTitle(recordButton, "");
+          setTitle(liveButton, "Start live transcription — ask your agent in Recall for coaching");
+          setTitle(quickThoughtButton, "");
         }
       }
 
@@ -9243,6 +9279,64 @@
 
       function closeRecovery() {
         recoveryOverlay.classList.remove("active");
+      }
+
+      function updateRecoveryRetryAllButton() {
+        const count = recoveryItems.length;
+        recoveryRetryAllButton.hidden = count === 0;
+        recoveryRetryAllButton.disabled = retryingAllRecovery || count === 0;
+        recoveryRetryAllButton.textContent = retryingAllRecovery
+          ? "Retrying..."
+          : count > 1
+            ? `Retry all (${count})`
+            : "Retry all";
+      }
+
+      async function retryAllRecoveryItems() {
+        if (retryingAllRecovery || !recoveryItems.length) return;
+        retryingAllRecovery = true;
+        updateRecoveryRetryAllButton();
+        let closeAfterSuccess = false;
+        let delayReset = false;
+
+        try {
+          const result = await invoke("cmd_retry_all_recovery");
+          const queuedCount = Number(result?.queued || 0);
+          if (result?.failed?.length) {
+            console.error("Retry all recovery failures:", result.failed);
+          }
+          await loadRecoveryItems();
+          startFastPoll();
+          if (queuedCount > 0) {
+            closeAfterSuccess = true;
+            recoveryRetryAllButton.hidden = false;
+            recoveryRetryAllButton.disabled = true;
+            recoveryRetryAllButton.textContent = `Queued ${queuedCount}`;
+            window.setTimeout(() => {
+              closeRecovery();
+              retryingAllRecovery = false;
+              updateRecoveryRetryAllButton();
+            }, 450);
+          } else {
+            delayReset = true;
+            recoveryRetryAllButton.hidden = false;
+            recoveryRetryAllButton.disabled = true;
+            recoveryRetryAllButton.textContent = "Nothing queued";
+            window.setTimeout(updateRecoveryRetryAllButton, 1200);
+          }
+        } catch (e) {
+          console.error("Retry all recovery:", e);
+          delayReset = true;
+          recoveryRetryAllButton.hidden = false;
+          recoveryRetryAllButton.disabled = true;
+          recoveryRetryAllButton.textContent = "Retry failed";
+          window.setTimeout(updateRecoveryRetryAllButton, 1200);
+        } finally {
+          if (!closeAfterSuccess) {
+            retryingAllRecovery = false;
+            if (!delayReset) updateRecoveryRetryAllButton();
+          }
+        }
       }
 
       function permissionReadinessState(row) {
@@ -9483,6 +9577,7 @@
 
         recoveryCount.textContent = recoveryItems.length;
         recoveryButton.classList.toggle("active", recoveryItems.length > 0);
+        updateRecoveryRetryAllButton();
 
         recoveryScroll.replaceChildren();
         if (!recoveryItems.length) {
@@ -9505,7 +9600,7 @@
 
           const title = document.createElement("div");
           title.className = "recovery-item-title";
-          title.textContent = item.title || "Recovery item";
+          title.textContent = formatJobTimestamp(item.modified_at) || item.title || "Recovery item";
 
           const kind = document.createElement("div");
           kind.className = "recovery-kind";
@@ -9935,6 +10030,7 @@
       recoveryButton.addEventListener("click", () => {
         recoveryOverlay.classList.add("active");
       });
+      recoveryRetryAllButton.addEventListener("click", retryAllRecoveryItems);
       document
         .getElementById("btn-recovery-close")
         .addEventListener("click", closeRecovery);
@@ -16542,6 +16638,14 @@
                 }
               });
             }
+          } else if (/not found on PATH|not found in PATH|not found in common install/i.test(msg)) {
+            // The assistant needs an external agent CLI (Claude Code by
+            // default). It's OPTIONAL — the rest of the app works without it —
+            // so degrade with a calm note instead of a scary "Could not start"
+            // error for users who don't have an agent installed.
+            console.info("Recall: assistant agent not installed (optional):", msg);
+            recallLoading.querySelector("span").textContent =
+              "AI assistant is optional; install Claude Code to enable it.";
           } else {
             console.error("Recall spawn:", e);
             recallLoading.querySelector("span").textContent =
@@ -16745,8 +16849,8 @@
 
       function setButtonVisibility(button, visible, disabled = false) {
         if (!button) return;
-        button.hidden = !visible;
-        button.disabled = disabled;
+        setHidden(button, !visible);
+        setDisabled(button, disabled);
       }
 
       function renderUpdateBanner() {
@@ -16761,20 +16865,17 @@
             "ready",
             "error",
           ].includes(updateState.phase);
-        updateBanner.classList.toggle("active", showBanner);
+        setClassActive(updateBanner, "active", showBanner);
         if (!showBanner) return;
 
-        updateBanner.classList.toggle(
-          "error-state",
-          updateState.phase === "error",
-        );
+        setClassActive(updateBanner, "error-state", updateState.phase === "error");
         const activeSpinner = [
           "checking",
           "downloading",
           "verifying",
           "installing",
         ].includes(updateState.phase);
-        updateBannerSpinner?.classList.toggle("active", activeSpinner);
+        setClassActive(updateBannerSpinner, "active", activeSpinner);
 
         let title = "Update available";
         let sub = updatePreambleText();
@@ -16847,41 +16948,37 @@
             break;
         }
 
-        if (updateBannerTitle) updateBannerTitle.textContent = title;
-        if (updateBannerSub) updateBannerSub.textContent = sub;
+        setText(updateBannerTitle, title);
+        setText(updateBannerSub, sub);
         if (updateBannerMeta) {
-          updateBannerMeta.textContent = meta;
-          updateBannerMeta.classList.toggle("active", showMeta);
+          setText(updateBannerMeta, meta);
+          setClassActive(updateBannerMeta, "active", showMeta);
         }
-        if (updateBannerProgress)
-          updateBannerProgress.classList.toggle("active", showProgress);
+        setClassActive(updateBannerProgress, "active", showProgress);
         if (updateBannerProgressFill) {
-          updateBannerProgressFill.style.width = `${Math.max(0, Math.min(100, progressRatio * 100))}%`;
+          setStyleWidth(updateBannerProgressFill, `${Math.max(0, Math.min(100, progressRatio * 100))}%`);
         }
         if (updateBannerError) {
-          updateBannerError.textContent =
-            updateState.phase === "error"
-              ? updateState.errorMessage || "Update failed."
-              : "";
-          updateBannerError.classList.toggle(
-            "active",
-            updateState.phase === "error",
-          );
+          setText(updateBannerError, updateState.phase === "error" ? updateState.errorMessage || "Update failed." : "");
+          setClassActive(updateBannerError, "active", updateState.phase === "error");
         }
         const showNotes =
           updateState.phase === "available" && Boolean(updateState.body);
-        if (updateBannerNotes)
-          updateBannerNotes.classList.toggle("active", showNotes);
+        setClassActive(updateBannerNotes, "active", showNotes);
         if (showNotes && updateBannerNotesBody) {
-          renderMarkdownToElement(updateBannerNotesBody, updateState.body);
-          updateBannerNotesBody.querySelectorAll("a").forEach((a) => {
-            a.addEventListener("click", (e) => {
-              e.preventDefault();
-              window.__TAURI__.shell.open(a.href);
+          if (lastUpdateNotesBody !== updateState.body) {
+            renderMarkdownToElement(updateBannerNotesBody, updateState.body);
+            updateBannerNotesBody.querySelectorAll("a").forEach((a) => {
+              a.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.__TAURI__.shell.open(a.href);
+              });
             });
-          });
+            lastUpdateNotesBody = updateState.body;
+          }
         } else if (updateBannerNotesBody) {
-          updateBannerNotesBody.textContent = "";
+          setText(updateBannerNotesBody, "");
+          lastUpdateNotesBody = null;
         }
 
         setButtonVisibility(
@@ -16903,9 +17000,7 @@
           dismissUpdateButton,
           updateState.phase === "available" || updateState.phase === "error",
         );
-        if (dismissUpdateButton)
-          dismissUpdateButton.textContent =
-            updateState.phase === "error" ? "Cancel" : "Later";
+        setText(dismissUpdateButton, updateState.phase === "error" ? "Cancel" : "Later");
       }
 
       function resetUpdateState() {
@@ -17290,6 +17385,38 @@
 
       function clearChildren(node) {
         while (node.firstChild) node.removeChild(node.firstChild);
+      }
+
+      // Idempotent DOM writes — skip when the value is unchanged. The status poll
+      // (checkStatus) reasserts identical idle text every 2s forever; on the main
+      // window (transparent + NSVisualEffectMaterial::Sidebar vibrancy) every text
+      // mutation forces WindowServer to re-blend the whole window, so unguarded
+      // no-op writes peg WindowServer while the app sits idle. These let an
+      // unchanged idle tick produce zero DOM churn. clearChildren() above is
+      // already idempotent (no-ops when the node is empty).
+      function setText(el, value) {
+        if (el && el.textContent !== value) el.textContent = value;
+      }
+      function setClassName(el, value) {
+        if (el && el.className !== value) el.className = value;
+      }
+      function setClassActive(el, name, active) {
+        if (el && el.classList.contains(name) !== active) el.classList.toggle(name, active);
+      }
+      function setDisabled(el, value) {
+        if (el && el.disabled !== value) el.disabled = value;
+      }
+      function setHidden(el, value) {
+        if (el && el.hidden !== value) el.hidden = value;
+      }
+      function setTitle(el, value) {
+        if (el && el.title !== value) el.title = value;
+      }
+      function setDataset(el, name, value) {
+        if (el && el.dataset[name] !== value) el.dataset[name] = value;
+      }
+      function setStyleWidth(el, value) {
+        if (el && el.style.width !== value) el.style.width = value;
       }
 
       function setBody(node, ...elements) {
@@ -19160,6 +19287,27 @@
 
       // Restore panel state from previous session
       (async () => {
+        // The assistant auto-open below spawns the *configured* agent CLI
+        // (settings.assistant.agent, default "claude"). It's optional — when
+        // that agent isn't installed, skip ONLY the auto-open so the panel
+        // doesn't pop up and immediately fail to spawn. Everything else in the
+        // restore (recallRatio, last open document, last open meeting) is
+        // untouched. The assistant is still reachable manually, where it shows
+        // the calm "optional" note.
+        //
+        // NOTE: gate on the *configured* agent specifically — cmd_list_agents
+        // also enumerates shells (bash/zsh) that exist on every machine, so a
+        // bare "any agent installed?" check would never report unavailable.
+        let assistantAvailable = true;
+        try {
+          const [agents, settings] = await Promise.all([
+            invoke("cmd_list_agents"),
+            invoke("cmd_get_settings"),
+          ]);
+          const configured = settings?.assistant?.agent || "claude";
+          assistantAvailable = Array.isArray(agents) && agents.some(a => a.name === configured);
+        } catch (_) { /* on any error, assume available and fall through */ }
+
         try {
           recallWorkspaceState = await invoke("cmd_get_recall_workspace_state");
         } catch (e) {
@@ -19171,6 +19319,7 @@
           // on startup. User must explicitly open via the Ask pill or palette.
           if (
             !document.body.classList.contains("is-playground-shell") &&
+            assistantAvailable &&
             localStorage.getItem("minutes.recallExpanded") === "true"
           ) {
             setTimeout(() => openRecall("assistant"), 500);
@@ -19192,6 +19341,7 @@
         }
 
         if (
+          assistantAvailable &&
           recallWorkspaceState.recallExpanded &&
           !document.body.classList.contains("is-playground-shell")
         ) {
