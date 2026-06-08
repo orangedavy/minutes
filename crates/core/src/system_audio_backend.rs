@@ -36,6 +36,12 @@ pub struct ProbeResult {
 
 pub const CPAL_CAPTURE_BACKEND: &str = "cpal";
 pub const CORE_AUDIO_TAP_CAPTURE_BACKEND: &str = "core-audio-tap";
+
+/// System audio chunks are emitted at 1600 samples (100ms at 16kHz),
+/// matching the voice stream's chunk size for correct dual-source alignment.
+#[cfg(all(target_os = "macos", feature = "streaming"))]
+const CHUNK_SAMPLES: usize = 1600;
+
 pub const CORE_AUDIO_TAP_ROUTE_NAME: &str = "Core Audio Process Tap";
 pub const CORE_AUDIO_TAP_MIN_MACOS: MacOsVersion = MacOsVersion {
     major: 14,
@@ -445,6 +451,9 @@ struct CoreAudioTapCallbackContext {
     interleaved: bool,
     resample_pos: f64,
     input_samples: Vec<f32>,
+    /// Buffer for accumulating resampled samples until a full 1600-sample
+    /// chunk can be emitted — matching the voice stream's chunk cadence.
+    chunk_buf: Vec<f32>,
     chunk_index: u64,
 }
 
@@ -463,6 +472,7 @@ impl CoreAudioTapCallbackContext {
             interleaved: asbd.is_interleaved(),
             resample_pos: 0.0,
             input_samples: Vec::new(),
+            chunk_buf: Vec::with_capacity(CHUNK_SAMPLES),
             chunk_index: 0,
         }
     }
@@ -475,13 +485,31 @@ impl CoreAudioTapCallbackContext {
         };
         self.input_samples.extend(mono);
 
-        let mut resampled = Vec::new();
         while self.resample_pos < self.input_samples.len() as f64 {
             let idx = self.resample_pos as usize;
-            if let Some(sample) = self.input_samples.get(idx) {
-                resampled.push(*sample);
+            if let Some(&sample) = self.input_samples.get(idx) {
+                self.chunk_buf.push(sample);
             }
             self.resample_pos += self.ratio;
+
+            if self.chunk_buf.len() >= CHUNK_SAMPLES {
+                let samples: Vec<f32> = self.chunk_buf.drain(..CHUNK_SAMPLES).collect();
+                let rms = (samples
+                    .iter()
+                    .map(|s| (*s as f64) * (*s as f64))
+                    .sum::<f64>()
+                    / samples.len() as f64)
+                    .sqrt() as f32;
+                let index = self.chunk_index;
+                self.chunk_index += 1;
+                let _ = self.sink.try_send(AudioChunk {
+                    samples,
+                    rms,
+                    timestamp: std::time::Instant::now(),
+                    index,
+                    source: SourceRole::Call,
+                });
+            }
         }
 
         let consumed = (self.resample_pos as usize).min(self.input_samples.len());
@@ -489,26 +517,6 @@ impl CoreAudioTapCallbackContext {
             self.input_samples.drain(..consumed);
             self.resample_pos -= consumed as f64;
         }
-
-        if resampled.is_empty() {
-            return;
-        }
-
-        let rms = (resampled
-            .iter()
-            .map(|sample| (*sample as f64) * (*sample as f64))
-            .sum::<f64>()
-            / resampled.len() as f64)
-            .sqrt() as f32;
-        let index = self.chunk_index;
-        self.chunk_index += 1;
-        let _ = self.sink.try_send(AudioChunk {
-            samples: resampled,
-            rms,
-            timestamp: std::time::Instant::now(),
-            index,
-            source: SourceRole::Call,
-        });
     }
 }
 

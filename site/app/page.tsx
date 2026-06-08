@@ -12,8 +12,7 @@ const featureGrid = [
   {
     label: "For agents",
     title: "Local audio context",
-    description:
-      `${MINUTES_MCP_TOOL_COUNT} MCP tools, live transcript reads, and structured markdown let Claude, Codex, Gemini CLI, and Cowork work from what was actually said.`,
+    description: `${MINUTES_MCP_TOOL_COUNT} MCP tools, live transcript reads, and structured markdown let Claude, Codex, Gemini CLI, and Cowork work from what was actually said.`,
   },
   {
     label: "For developers",
@@ -117,7 +116,13 @@ const comparisons = [
   ["Local transcription", "No", "No", "Yes", "Yes"],
   ["Open source", "No", "No", "Yes", "MIT"],
   ["Free", "$18/mo", "Freemium", "Free", "Free"],
-  ["Agent surface", "Hosted MCP/API", "Hosted integrations", "Local app", `Files + ${MINUTES_MCP_TOOL_COUNT} MCP tools`],
+  [
+    "Agent surface",
+    "Hosted MCP/API",
+    "Hosted integrations",
+    "Local app",
+    `Files + ${MINUTES_MCP_TOOL_COUNT} MCP tools`,
+  ],
   ["Cross-meeting intelligence", "No", "No", "No", "Yes"],
   ["Dictation mode", "No", "No", "No", "Yes"],
   ["Voice memos", "No", "No", "No", "iPhone pipeline"],
@@ -220,7 +225,10 @@ export default function Home() {
           minutes
         </a>
         <div className="flex flex-wrap justify-end gap-x-6 gap-y-2 text-sm text-[var(--text-secondary)] max-sm:gap-x-4 max-sm:text-xs [&>a]:py-2">
-          <a href="https://github.com/silverstein/minutes" className="hover:text-[var(--accent)]">
+          <a
+            href="https://github.com/silverstein/minutes"
+            className="hover:text-[var(--accent)]"
+          >
             GitHub
           </a>
           <a href="#install" className="hover:text-[var(--accent)]">
@@ -252,12 +260,15 @@ export default function Home() {
         <h1 className="mx-auto max-w-[720px] font-serif text-[40px] leading-[0.98] tracking-[-0.03em] text-[var(--text)] sm:text-[58px]">
           Every meeting, memo, and voice note,
           <br />
-          <span className="italic text-[var(--accent)]">structured and searchable.</span>
+          <span className="italic text-[var(--accent)]">
+            structured and searchable.
+          </span>
         </h1>
         <p className="mx-auto mt-5 max-w-[600px] text-[16px] leading-7 text-[var(--text-secondary)] sm:text-[17px]">
           Cloud meeting tools rent your own conversations back to you. Minutes
           captures meetings and voice memos locally, writes them as structured
-          markdown to your disk, and lets you and every AI you use read the same folder.
+          markdown to your disk, and lets you and every AI you use read the same
+          folder.
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -317,10 +328,7 @@ export default function Home() {
           readable even before an assistant touches them.
         </p>
 
-        <div
-          id="install"
-          className="mt-14 flex flex-wrap justify-center gap-3"
-        >
+        <div id="install" className="mt-14 flex flex-wrap justify-center gap-3">
           <a
             href={APPLE_SILICON_DOWNLOAD_PATH}
             className="inline-flex items-center gap-2 rounded-[5px] border border-[color:var(--border)] bg-[var(--bg-elevated)] px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--text)] shadow-[var(--shadow-panel)] hover:border-[color:var(--border-mid)] hover:bg-[var(--bg-hover)]"
@@ -365,9 +373,13 @@ export default function Home() {
 
         <p className="mt-4 text-[13px] text-[var(--text-secondary)]">
           Download, install, done. First launch downloads a speech model. Run
-          <span className="mx-1 font-mono text-[var(--text)]">minutes setup --parakeet</span>
+          <span className="mx-1 font-mono text-[var(--text)]">
+            minutes setup --parakeet
+          </span>
           for the multilingual Parakeet backend, or
-          <span className="mx-1 font-mono text-[var(--text)]">minutes setup --demo</span>
+          <span className="mx-1 font-mono text-[var(--text)]">
+            minutes setup --demo
+          </span>
           to try the pipeline on five bundled fixture meetings.
         </p>
 
@@ -445,24 +457,26 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="pipeline" className="border-t border-[color:var(--border)] py-16">
+      <section
+        id="pipeline"
+        className="border-t border-[color:var(--border)] py-16"
+      >
         <SectionLabel label="Pipeline" />
         <h2 className="font-serif text-[30px] leading-tight tracking-[-0.035em] text-[var(--text)] sm:text-[32px]">
           How it works
         </h2>
         <pre className="mt-6 overflow-x-auto rounded-[8px] border border-[color:var(--border)] bg-[var(--bg-elevated)] p-5 font-mono text-[13px] leading-7 text-[var(--text-secondary)] shadow-[var(--shadow-panel)]">
-{`Audio -> Transcribe -> Diarize -> Summarize -> Markdown -> Relationship Graph
+          {`Audio -> Transcribe -> Diarize -> Summarize -> Markdown -> Relationship Graph
        (local)      (local)    (your LLM)  (decisions,   (people, commitments,
       whisper.cpp   pyannote   Claude /     action items) topics, scores)
                                 Ollama`}
         </pre>
         <p className="mt-5 max-w-[660px] text-[15px] leading-7 text-[var(--text-secondary)]">
           Transcription is local via whisper.cpp or parakeet.cpp. Parakeet is
-          multilingual by default with native VAD. Live transcription falls
-          back cleanly through Apple Speech, Parakeet, and Whisper.
-          Summarization is optional — Claude can do it conversationally when
-          you ask, using your existing subscription. No API keys are required
-          to get useful output.
+          multilingual by default with native VAD. Live transcription falls back
+          cleanly through Apple Speech, Parakeet, and Whisper. Summarization is
+          optional — Claude can do it conversationally when you ask, using your
+          existing subscription. No API keys are required to get useful output.
         </p>
       </section>
 

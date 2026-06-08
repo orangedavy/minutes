@@ -2096,6 +2096,189 @@ pub fn map_speakers(
     }
 }
 
+// ── Speaker discovery (no attendee list required) ────────────────────────
+
+const SPEAKER_DISCOVERY_PROMPT: &str = r#"Given this conversation transcript with anonymous speaker labels (SPEAKER_1, SPEAKER_2, etc.), identify each speaker's real name using ONLY evidence from the transcript text.
+
+Look for these patterns:
+- Direct address right before/after a speaker's line: "Let's see it, Chantal" → the next speaker responding is Chantal
+- Self-introduction: "I'm Sandra" or "Hi, judges" after being introduced
+- Host introductions: "Next up is Jimmy" → the speaker who responds is Jimmy
+- Third-person tied to speech: "as Sandy just said" identifies a prior speaker as Sandy
+- Name in response: "That's great, Jimmy" → the person being spoken to is Jimmy
+
+Important rules:
+- Speaker labels may be inconsistent (same person may get different labels for different segments due to audio processing). Focus on the MOST FREQUENT label for each identified person.
+- If a name appears in the transcript but you cannot determine which speaker label it belongs to, use UNKNOWN for that label.
+- Only assign names that are clearly spoken in the transcript text. Do NOT invent names.
+- Each unique name should be assigned to at most one speaker label.
+
+TRANSCRIPT:
+{transcript}
+
+For each speaker label that appears in the transcript, respond in this exact format (one per line):
+SPEAKER_1 = Name
+SPEAKER_2 = Name
+
+If you cannot determine a speaker's identity, respond:
+SPEAKER_X = UNKNOWN
+
+Only output the mappings, nothing else."#;
+
+/// Discover speaker names directly from transcript context clues.
+///
+/// Unlike `map_speakers` which requires a known attendee list, this function
+/// asks the LLM to infer identities purely from what is said in the conversation
+/// (direct address, self-introductions, host naming guests, etc.).
+///
+/// Returns Medium-confidence attributions for discovered speakers.
+pub fn discover_speakers_from_context(
+    transcript: &str,
+    config: &Config,
+    log_file: Option<&str>,
+) -> Vec<crate::diarize::SpeakerAttribution> {
+    if !transcript.contains("SPEAKER_") {
+        return Vec::new();
+    }
+
+    let speakers = extract_speaker_labels(transcript);
+    if speakers.len() < 2 {
+        return Vec::new();
+    }
+
+    tracing::info!(
+        speakers = speakers.len(),
+        "Speaker discovery: inferring names from transcript context"
+    );
+
+    // Use more of the transcript for discovery (names may appear late).
+    // Send up to 6000 chars to give the LLM enough context.
+    let max_chars = 6000;
+    let truncated = if transcript.len() > max_chars {
+        let mut end = max_chars;
+        while end > 0 && !transcript.is_char_boundary(end) {
+            end -= 1;
+        }
+        &transcript[..end]
+    } else {
+        transcript
+    };
+
+    let prompt = SPEAKER_DISCOVERY_PROMPT.replace("{transcript}", truncated);
+    let step_started = Instant::now();
+    let model = speaker_mapping_model_hint(config);
+
+    let response = if config.summarization.engine != "none" {
+        run_speaker_mapping_prompt(&prompt, config)
+    } else {
+        run_speaker_mapping_via_agent(&prompt, config)
+    };
+
+    match response {
+        Ok(text) => {
+            let mappings = parse_speaker_discovery(&text, &speakers);
+            if let Some(file) = log_file {
+                let outcome = if mappings.is_empty() { "empty" } else { "ok" };
+                log_llm_step(
+                    "speaker_discovery",
+                    file,
+                    step_started,
+                    LlmLogFields {
+                        outcome,
+                        model: model.clone(),
+                        input_chars: prompt.len(),
+                        output_chars: text.len(),
+                        extra: serde_json::json!({
+                            "speaker_labels": speakers.len(),
+                            "discovered": mappings.len(),
+                        }),
+                    },
+                );
+            }
+            if !mappings.is_empty() {
+                tracing::info!(
+                    discovered = mappings.len(),
+                    total = speakers.len(),
+                    "Speaker discovery: identified names from context"
+                );
+            } else {
+                tracing::info!(
+                    "Speaker discovery: no names could be confidently identified from transcript"
+                );
+            }
+            mappings
+        }
+        Err(e) => {
+            if let Some(file) = log_file {
+                log_llm_step(
+                    "speaker_discovery",
+                    file,
+                    step_started,
+                    LlmLogFields {
+                        outcome: llm_error_outcome(&*e),
+                        model: model.clone(),
+                        input_chars: prompt.len(),
+                        output_chars: 0,
+                        extra: serde_json::json!({
+                            "speaker_labels": speakers.len(),
+                            "reason": e.to_string(),
+                        }),
+                    },
+                );
+            }
+            tracing::warn!(error = %e, "Speaker discovery failed");
+            Vec::new()
+        }
+    }
+}
+
+/// Parse LLM response for speaker discovery (no attendee validation needed).
+/// Only accepts names that look like real names (not UNKNOWN, not labels).
+fn parse_speaker_discovery(
+    response: &str,
+    valid_speakers: &[String],
+) -> Vec<crate::diarize::SpeakerAttribution> {
+    let valid_set: std::collections::HashSet<&str> =
+        valid_speakers.iter().map(|s| s.as_str()).collect();
+    let mut results = Vec::new();
+    let mut used_names: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    for line in response.lines() {
+        let trimmed = line.trim();
+        if let Some(eq_pos) = trimmed.find('=') {
+            let label = trimmed[..eq_pos].trim();
+            let name = trimmed[eq_pos + 1..].trim();
+            if !valid_set.contains(label) {
+                continue;
+            }
+            if name.is_empty()
+                || name.eq_ignore_ascii_case("UNKNOWN")
+                || name.starts_with("SPEAKER_")
+            {
+                continue;
+            }
+            // Basic name validation: must contain at least one letter,
+            // not be suspiciously long (hallucination guard).
+            if !name.chars().any(|c| c.is_alphabetic()) || name.len() > 50 {
+                continue;
+            }
+            // Prevent duplicate name assignments.
+            let name_lower = name.to_lowercase();
+            if used_names.contains(&name_lower) {
+                continue;
+            }
+            used_names.insert(name_lower);
+            results.push(crate::diarize::SpeakerAttribution {
+                speaker_label: label.to_string(),
+                name: name.to_string(),
+                confidence: crate::diarize::Confidence::Medium,
+                source: crate::diarize::AttributionSource::Llm,
+            });
+        }
+    }
+    results
+}
+
 /// Extract unique SPEAKER_X labels from a transcript. Public for pipeline use.
 pub fn extract_speaker_labels_pub(transcript: &str) -> Vec<String> {
     extract_speaker_labels(transcript)
@@ -2786,6 +2969,48 @@ PARTICIPANTS:
     fn map_speakers_empty_when_no_attendees() {
         let config = Config::default();
         assert!(map_speakers("[SPEAKER_1 0:00] hi", &[], &config, None).is_empty());
+    }
+
+    #[test]
+    fn parse_speaker_discovery_valid() {
+        let response = "SPEAKER_1 = Chantal\nSPEAKER_2 = Jimmy\nSPEAKER_3 = UNKNOWN\n";
+        let speakers = vec![
+            "SPEAKER_1".into(),
+            "SPEAKER_2".into(),
+            "SPEAKER_3".into(),
+        ];
+        let result = parse_speaker_discovery(response, &speakers);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].speaker_label, "SPEAKER_1");
+        assert_eq!(result[0].name, "Chantal");
+        assert_eq!(result[1].speaker_label, "SPEAKER_2");
+        assert_eq!(result[1].name, "Jimmy");
+    }
+
+    #[test]
+    fn parse_speaker_discovery_rejects_duplicates() {
+        // Same name assigned to two speakers — only first wins
+        let response = "SPEAKER_1 = Bob\nSPEAKER_2 = Bob\n";
+        let speakers = vec!["SPEAKER_1".into(), "SPEAKER_2".into()];
+        let result = parse_speaker_discovery(response, &speakers);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].speaker_label, "SPEAKER_1");
+    }
+
+    #[test]
+    fn parse_speaker_discovery_rejects_speaker_labels_as_names() {
+        let response = "SPEAKER_1 = SPEAKER_2\n";
+        let speakers = vec!["SPEAKER_1".into(), "SPEAKER_2".into()];
+        let result = parse_speaker_discovery(response, &speakers);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn parse_speaker_discovery_rejects_invalid_labels() {
+        let response = "SPEAKER_99 = Phantom\n";
+        let speakers = vec!["SPEAKER_1".into(), "SPEAKER_2".into()];
+        let result = parse_speaker_discovery(response, &speakers);
+        assert!(result.is_empty());
     }
 
     #[test]

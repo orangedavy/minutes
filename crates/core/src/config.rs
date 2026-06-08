@@ -230,8 +230,9 @@ pub struct DiarizationConfig {
     /// pyannote-rs engine clusters remote voices into SPEAKER_1, SPEAKER_2,
     /// SPEAKER_3, etc. instead of collapsing all remote audio to SPEAKER_1.
     /// SPEAKER_0 always remains the local user (from the voice/mic stem).
-    /// Default: false — preserves the original 2-speaker behavior and avoids
-    /// extra ML inference time for users who don't need per-remote labeling.
+    /// Default: true — enables per-remote speaker labeling. Falls back
+    /// gracefully to 2-speaker stem-only when ML finds no meaningful
+    /// multi-party structure (e.g. 1-on-1 calls).
     pub diarize_system_stem: bool,
 }
 
@@ -817,10 +818,10 @@ impl Default for DiarizationConfig {
         Self {
             engine: "auto".into(),
             model_path: minutes_dir().join("models").join("diarization"),
-            threshold: 0.4,
+            threshold: 0.55,
             embedding_model: "cam++".into(),
             stem_correlation_threshold: 0.85,
-            diarize_system_stem: false,
+            diarize_system_stem: true,
         }
     }
 }

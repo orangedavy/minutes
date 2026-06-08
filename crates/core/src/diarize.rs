@@ -2098,9 +2098,41 @@ fn diarize_with_pyannote_rs(
     // Per-segment: which speaker index was assigned
     let mut seg_speaker_ids: Vec<usize> = Vec::new();
 
-    // Minimum samples for reliable embedding extraction (~1.5s at 16kHz).
-    // Shorter segments produce unstable embeddings that corrupt clustering.
-    let min_embed_samples = (sample_rate as f64 * 1.5) as usize;
+    // Minimum samples for reliable embedding extraction (~0.8s at 16kHz).
+    // Shorter segments produce less stable embeddings, but excluding them
+    // entirely prevents short-utterance speakers from forming clusters.
+    let min_embed_samples = (sample_rate as f64 * 0.8) as usize;
+
+    // Split long segments (>5s) into ~3s chunks. Long contiguous speech
+    // regions often contain multiple speakers in fast dialogue; splitting
+    // prevents blended embeddings that confuse clustering.
+    let max_seg_samples = (sample_rate as f64 * 5.0) as usize;
+    let target_chunk_samples = (sample_rate as f64 * 3.0) as usize;
+    let mut split_segments: Vec<SpeechSegment> = Vec::new();
+    for seg in &speech_segments {
+        let seg_samples = seg.end_sample - seg.start_sample;
+        if seg_samples <= max_seg_samples {
+            split_segments.push(seg.clone());
+        } else {
+            let num_chunks = (seg_samples + target_chunk_samples - 1) / target_chunk_samples;
+            let chunk_samples = seg_samples / num_chunks;
+            for c in 0..num_chunks {
+                let c_start_sample = seg.start_sample + c * chunk_samples;
+                let c_end_sample = if c == num_chunks - 1 {
+                    seg.end_sample
+                } else {
+                    c_start_sample + chunk_samples
+                };
+                split_segments.push(SpeechSegment {
+                    start: c_start_sample as f64 / sample_rate as f64,
+                    end: c_end_sample as f64 / sample_rate as f64,
+                    start_sample: c_start_sample,
+                    end_sample: c_end_sample,
+                });
+            }
+        }
+    }
+    let speech_segments = split_segments;
 
     for seg in &speech_segments {
         let seg_i16 = &i16_samples[seg.start_sample..seg.end_sample];
@@ -2154,10 +2186,13 @@ fn diarize_with_pyannote_rs(
     // This catches cases where early segments created separate speakers
     // that converged as more data came in.
     //
-    // The merge threshold is set to max(threshold - 0.05, 0.3) to avoid
-    // merging genuinely different speakers. The 0.3 floor prevents overly
-    // aggressive merging when the user sets a low diarization threshold.
-    let merge_threshold = (threshold - 0.05).max(0.3);
+    // The merge threshold must be stricter than the initial assignment
+    // threshold: template averages are more stable than single-segment
+    // comparisons, so we require higher confidence to merge two
+    // already-established speaker clusters. A floor of 0.6 prevents
+    // merging genuinely different speakers (same-gender speakers commonly
+    // score 0.4–0.6 in cosine similarity on compressed audio).
+    let merge_threshold = threshold.max(0.6);
     let num_templates = speaker_templates.len();
     let mut merge_map: Vec<usize> = (0..num_templates).collect();
 
@@ -2334,11 +2369,11 @@ fn merge_short_segments(segments: Vec<SpeechSegment>, sample_rate: u32) -> Vec<S
         return segments;
     }
 
-    let max_gap_samples = (sample_rate as f64 * 0.3) as usize; // 300ms gap tolerance
-    let min_dur_samples = (sample_rate as f64 * 0.5) as usize; // 0.5s minimum
+    let max_gap_samples = (sample_rate as f64 * 0.2) as usize; // 200ms gap tolerance
+    let min_dur_samples = (sample_rate as f64 * 0.3) as usize; // 0.3s minimum
 
     // Cap gap tolerance for short segments so they don't absorb across long pauses.
-    let max_short_gap_samples = (sample_rate as f64 * 1.0) as usize; // 1s ceiling
+    let max_short_gap_samples = (sample_rate as f64 * 0.5) as usize; // 0.5s ceiling
 
     let mut merged: Vec<SpeechSegment> = Vec::new();
     let mut current = segments[0].clone();
@@ -3911,7 +3946,7 @@ mod tests {
         let mut config = Config::default();
         config.diarization.engine = "pyannote-rs".into();
         assert_eq!(config.diarization.engine, "pyannote-rs");
-        assert_eq!(config.diarization.threshold, 0.4);
+        assert_eq!(config.diarization.threshold, 0.55);
     }
 
     // ── l2_normalize tests ──────────────────────────────────────
@@ -4008,29 +4043,29 @@ mod tests {
     #[cfg(feature = "diarize")]
     #[test]
     fn merge_short_segments_short_segment_respects_gap_ceiling() {
-        // A short segment (0.3s) followed by another 1.5s away.
-        // Even though the first is <0.5s (min_dur), the gap exceeds the 1s
+        // A short segment (0.2s) followed by another 1.0s away.
+        // Even though the first is <0.3s (min_dur), the gap exceeds the 0.5s
         // ceiling so they should NOT merge.
-        let segs = vec![make_seg(0.0, 0.3, 16000), make_seg(1.8, 3.0, 16000)];
+        let segs = vec![make_seg(0.0, 0.2, 16000), make_seg(1.2, 3.0, 16000)];
         let result = merge_short_segments(segs, 16000);
         assert_eq!(
             result.len(),
             2,
-            "short segment should not absorb across >1s gap"
+            "short segment should not absorb across >0.5s gap"
         );
     }
 
     #[cfg(feature = "diarize")]
     #[test]
     fn merge_short_segments_short_segment_merges_within_ceiling() {
-        // A short segment (0.3s) followed by another 0.8s away.
-        // First is <0.5s and gap is <1s ceiling → should merge.
-        let segs = vec![make_seg(0.0, 0.3, 16000), make_seg(1.1, 2.0, 16000)];
+        // A short segment (0.2s) followed by another 0.3s away.
+        // First is <0.3s and gap is <0.5s ceiling → should merge.
+        let segs = vec![make_seg(0.0, 0.2, 16000), make_seg(0.5, 2.0, 16000)];
         let result = merge_short_segments(segs, 16000);
         assert_eq!(
             result.len(),
             1,
-            "short segment should absorb within 1s ceiling"
+            "short segment should absorb within 0.5s ceiling"
         );
     }
 

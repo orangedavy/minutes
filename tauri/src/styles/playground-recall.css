@@ -158,3 +158,225 @@ body.is-playground-shell .split-handle.dragging {
   background: var(--accent-soft, rgba(255, 255, 255, 0.04));
   border-left-color: var(--accent);
 }
+
+/* ── Recall Drawer (Granola-style bottom sheet) ──────────────── */
+body.is-playground-shell .recall-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 55vh;
+  min-height: 280px;
+  max-height: calc(100vh - 80px);
+  background: var(--bg-elev-1, #1c1c1e);
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  z-index: 600;
+  transform: translateY(0);
+  animation: rd-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.is-playground-shell .recall-drawer[hidden] {
+  display: none;
+}
+@keyframes rd-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Drag handle */
+body.is-playground-shell .rd-handle {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 2px;
+  cursor: grab;
+}
+body.is-playground-shell .rd-handle span {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Toolbar */
+body.is-playground-shell .rd-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 16px 8px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+body.is-playground-shell .rd-tb-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.is-playground-shell .rd-tb-label {
+  font:
+    600 12px/1 "Geist",
+    sans-serif;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  letter-spacing: 0.02em;
+}
+body.is-playground-shell .rd-tb-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+body.is-playground-shell .rd-tb-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+/* Scrollable body */
+body.is-playground-shell .rd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 12px;
+  font:
+    14px/1.6 "Geist",
+    sans-serif;
+  color: var(--text);
+}
+body.is-playground-shell .rd-body .ir-q {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+body.is-playground-shell .rd-body .ir-a {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+body.is-playground-shell .rd-body .ir-a p {
+  margin: 0 0 10px;
+}
+body.is-playground-shell .rd-body .ir-a ul,
+body.is-playground-shell .rd-body .ir-a ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+body.is-playground-shell .rd-body .ir-a li {
+  margin-bottom: 4px;
+}
+body.is-playground-shell .rd-body .ir-a strong {
+  color: var(--text);
+  font-weight: 600;
+}
+body.is-playground-shell .rd-body .ir-a code {
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+body.is-playground-shell .rd-body .ir-a.is-streaming::after {
+  content: "▊";
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--accent, #30d158);
+  animation: rd-blink 0.7s step-end infinite;
+}
+@keyframes rd-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Input row */
+body.is-playground-shell .rd-input-row {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+body.is-playground-shell .rd-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 10px 14px;
+  font:
+    13px/1.4 "Geist",
+    sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+body.is-playground-shell .rd-input:focus {
+  border-color: var(--accent, #30d158);
+}
+body.is-playground-shell .rd-input::placeholder {
+  color: var(--text-dim, rgba(255, 255, 255, 0.35));
+}
+
+/* ── Thread history dropdown ──────────────────────────────────── */
+body.is-playground-shell .rd-threads {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  width: 220px;
+  max-height: 240px;
+  background: var(--bg-elev-1, #1c1c1e);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  overflow-y: auto;
+  padding: 6px;
+}
+body.is-playground-shell .rd-threads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+body.is-playground-shell .rd-thread-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+body.is-playground-shell .rd-thread-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+body.is-playground-shell .rd-thread-title {
+  font: 13px/1.3 var(--font-sans, "Geist", sans-serif);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+body.is-playground-shell .rd-thread-date {
+  display: none;
+}
+body.is-playground-shell .rd-thread-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font: 13px/1.4 var(--font-sans, "Geist", sans-serif);
+  color: var(--text-dim, rgba(255, 255, 255, 0.35));
+}

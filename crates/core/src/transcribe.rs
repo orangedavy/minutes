@@ -14,7 +14,7 @@ use std::path::Path;
 use std::path::PathBuf;
 #[cfg(feature = "parakeet")]
 use std::sync::atomic::{AtomicBool, Ordering};
-#[cfg(feature = "parakeet")]
+#[cfg(any(feature = "parakeet", feature = "whisper"))]
 use std::sync::{Mutex, OnceLock};
 #[cfg(feature = "parakeet")]
 use std::time::Instant;
@@ -737,18 +737,33 @@ pub(crate) fn whisper_context_params() -> whisper_rs::WhisperContextParameters<'
 /// When `force_disable_vad` is true, Silero VAD is not passed to whisper even if
 /// the model exists. Used for retry after VAD-enabled transcription produced a blank.
 #[cfg(feature = "whisper")]
-fn transcribe_with_whisper(
-    samples: &[f32],
-    _audio_path: &Path,
-    config: &Config,
-    mut stats: FilterStats,
-    force_disable_vad: bool,
-    hints: &DecodeHints,
-) -> Result<TranscribeResult, TranscribeError> {
-    // Load whisper model
-    let model_path = resolve_model_path(config)?;
-    tracing::info!(model = %model_path.display(), vad_disabled = force_disable_vad, "loading whisper model");
+static WHISPER_MODEL_CACHE: OnceLock<Mutex<Option<(PathBuf, std::sync::Arc<whisper_rs::WhisperContext>)>>> =
+    OnceLock::new();
 
+/// Get or load the whisper model context, caching it across calls.
+/// The large-v3 model is 2.9 GB — reloading it for every VAD chunk is
+/// catastrophically slow and memory-intensive. This cache keeps it in
+/// memory for the duration of the process.
+#[cfg(feature = "whisper")]
+fn get_or_load_whisper_context(
+    model_path: &Path,
+) -> Result<std::sync::Arc<whisper_rs::WhisperContext>, TranscribeError> {
+    let cache = WHISPER_MODEL_CACHE.get_or_init(|| Mutex::new(None));
+    let mut guard = cache.lock().unwrap_or_else(|e| e.into_inner());
+
+    if let Some((cached_path, ctx)) = guard.as_ref() {
+        if cached_path == model_path {
+            tracing::debug!(model = %model_path.display(), "reusing cached whisper model");
+            return Ok(std::sync::Arc::clone(ctx));
+        }
+        tracing::info!(
+            old = %cached_path.display(),
+            new = %model_path.display(),
+            "whisper model path changed — reloading"
+        );
+    }
+
+    tracing::info!(model = %model_path.display(), "loading whisper model (will be cached)");
     let ctx = whisper_rs::WhisperContext::new_with_params(
         model_path
             .to_str()
@@ -757,9 +772,29 @@ fn transcribe_with_whisper(
     )
     .map_err(|e| TranscribeError::ModelLoadError(format!("{}", e)))?;
 
+    let ctx = std::sync::Arc::new(ctx);
+    *guard = Some((model_path.to_path_buf(), std::sync::Arc::clone(&ctx)));
+    Ok(ctx)
+}
+
+#[cfg(feature = "whisper")]
+fn transcribe_with_whisper(
+    samples: &[f32],
+    _audio_path: &Path,
+    config: &Config,
+    mut stats: FilterStats,
+    force_disable_vad: bool,
+    hints: &DecodeHints,
+) -> Result<TranscribeResult, TranscribeError> {
+    // Load whisper model (cached across calls to avoid reloading 2.9 GB for each chunk)
+    let model_path = resolve_model_path(config)?;
+
+    let ctx = get_or_load_whisper_context(&model_path)?;
+
     tracing::info!(
         samples = samples.len(),
         duration_secs = samples.len() as f64 / 16000.0,
+        vad_disabled = force_disable_vad,
         "starting whisper transcription"
     );
 

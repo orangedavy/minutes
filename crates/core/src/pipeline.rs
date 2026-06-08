@@ -1199,6 +1199,39 @@ fn attribute_meeting_speakers(
                     speaker_map.push(attribution);
                 }
             }
+
+            // If there are still unmapped speakers after L1 attendee-based mapping
+            // (e.g. no attendees known, or LLM couldn't match all labels), try
+            // discovering names directly from transcript context clues.
+            let mapped_after_l1: std::collections::HashSet<String> = speaker_map
+                .iter()
+                .map(|a| a.speaker_label.clone())
+                .collect();
+            let still_unmapped = transcript.lines().any(|line| {
+                if let Some(rest) = line.strip_prefix('[') {
+                    if let Some(bracket_end) = rest.find(']') {
+                        let inside = &rest[..bracket_end];
+                        if let Some(space_pos) = inside.find(' ') {
+                            let label = &inside[..space_pos];
+                            return label.starts_with("SPEAKER_")
+                                && !mapped_after_l1.contains(label);
+                        }
+                    }
+                }
+                false
+            });
+            if still_unmapped {
+                let log_file = audio_path.display().to_string();
+                for attribution in summarize::discover_speakers_from_context(
+                    &transcript,
+                    config,
+                    Some(&log_file),
+                ) {
+                    if !mapped_after_l1.contains(&attribution.speaker_label) {
+                        speaker_map.push(attribution);
+                    }
+                }
+            }
         }
 
         let effective_transcript_speaker_labels =
